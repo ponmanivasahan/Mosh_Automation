@@ -1,6 +1,7 @@
-import AppShell from '../components/AppShell';
-import { getNotifications, markAllNotificationsRead } from '../utils/storage';
-import { formatDateTime } from '../utils/format';
+import AppShell from '../../../components/AppShell';
+import { getNotifications, markAllNotificationsRead } from '../../../utils/storage';
+import { formatDateTime } from '../../../utils/format';
+import './AdminNotificationsPage.css';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
@@ -20,7 +21,7 @@ const AdminNotificationsPage = () => {
 
   return (
     <AppShell title="Admin Notifications" links={adminLinks}>
-      <section className="panel">
+      <section className="panel admin-notifications-page">
         <div className="panel-head">
           <h2>Customer Order Notifications</h2>
           <button className="btn btn-outline" type="button" onClick={markRead}>

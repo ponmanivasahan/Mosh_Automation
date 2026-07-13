@@ -1,14 +1,14 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
-import AdminBillingPage from './pages/AdminBillingPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-import AdminEstimationsPage from './pages/AdminEstimationsPage';
-import AdminNotificationsPage from './pages/AdminNotificationsPage';
-import AdminProductsPage from './pages/AdminProductsPage';
-import CustomerCartPage from './pages/CustomerCartPage';
-import CustomerEstimatePage from './pages/CustomerEstimatePage';
-import CustomerProductsPage from './pages/CustomerProductsPage';
-import LoginPage from './pages/LoginPage';
+import AdminBillingPage from './pages/admin/billing/AdminBillingPage';
+import AdminDashboardPage from './pages/admin/dashboard/AdminDashboardPage';
+import AdminEstimationsPage from './pages/admin/estimations/AdminEstimationsPage';
+import AdminNotificationsPage from './pages/admin/notifications/AdminNotificationsPage';
+import AdminProductsPage from './pages/admin/products/AdminProductsPage';
+import CustomerCartPage from './pages/customer/cart/CustomerCartPage';
+import CustomerEstimatePage from './pages/customer/estimate/CustomerEstimatePage';
+import CustomerProductsPage from './pages/customer/products/CustomerProductsPage';
+import LoginPage from './pages/login/LoginPage';
 
 const App = () => (
   <Routes>

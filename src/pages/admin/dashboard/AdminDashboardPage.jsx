@@ -1,6 +1,7 @@
-import AppShell from '../components/AppShell';
-import { getEstimations, getNotifications, getOrders, getProducts } from '../utils/storage';
-import { formatCurrency, formatDateTime } from '../utils/format';
+import AppShell from '../../../components/AppShell';
+import { getEstimations, getNotifications, getOrders, getProducts } from '../../../utils/storage';
+import { formatCurrency, formatDateTime } from '../../../utils/format';
+import './AdminDashboardPage.css';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
@@ -21,7 +22,7 @@ const AdminDashboardPage = () => {
 
   return (
     <AppShell title="Admin Dashboard" links={adminLinks}>
-      <section className="grid stats">
+      <section className="grid stats admin-dashboard-page">
         <article className="stat-card">
           <p>Products</p>
           <h2>{products.length}</h2>

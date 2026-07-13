@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import AppShell from '../components/AppShell';
-import { useAuth } from '../utils/AuthContext';
+import AppShell from '../../../components/AppShell';
+import { useAuth } from '../../../utils/AuthContext';
 import {
   addNotification,
   addOrder,
@@ -8,8 +8,9 @@ import {
   getCart,
   getOrders,
   setCart
-} from '../utils/storage';
-import { formatCurrency, formatDateTime } from '../utils/format';
+} from '../../../utils/storage';
+import { formatCurrency, formatDateTime } from '../../../utils/format';
+import './CustomerCartPage.css';
 
 const customerLinks = [
   { to: '/customer/products', label: 'Products' },
@@ -67,7 +68,7 @@ const CustomerCartPage = () => {
 
   return (
     <AppShell title="Cart And Order Details" links={customerLinks}>
-      <section className="panel">
+      <section className="panel customer-cart-page">
         <h2>Current Cart</h2>
         {!cartItems.length && <p>No items in cart.</p>}
 
@@ -98,7 +99,7 @@ const CustomerCartPage = () => {
         {message && <p className="success-text">{message}</p>}
       </section>
 
-      <section className="panel">
+      <section className="panel customer-cart-page">
         <h2>Your Previous Orders</h2>
         {!orders.length && <p>No previous orders yet.</p>}
 

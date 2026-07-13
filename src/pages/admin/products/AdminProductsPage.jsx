@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import AppShell from '../components/AppShell';
-import { getProducts, setProducts } from '../utils/storage';
-import { formatCurrency } from '../utils/format';
+import AppShell from '../../../components/AppShell';
+import { getProducts, setProducts } from '../../../utils/storage';
+import { formatCurrency } from '../../../utils/format';
+import './AdminProductsPage.css';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
@@ -56,7 +57,7 @@ const AdminProductsPage = () => {
 
   return (
     <AppShell title="Add And Delete Products" links={adminLinks}>
-      <section className="panel split">
+      <section className="panel split admin-products-page">
         <article>
           <h2>Add Product</h2>
           <form className="form-grid" onSubmit={addProduct}>

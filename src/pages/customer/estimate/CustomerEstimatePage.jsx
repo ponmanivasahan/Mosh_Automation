@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import AppShell from '../components/AppShell';
-import { useAuth } from '../utils/AuthContext';
+import AppShell from '../../../components/AppShell';
+import { useAuth } from '../../../utils/AuthContext';
 import {
   addEstimation,
   getBillingSettings,
   getProducts,
   getCart,
   setCart
-} from '../utils/storage';
-import { formatCurrency } from '../utils/format';
+} from '../../../utils/storage';
+import { formatCurrency } from '../../../utils/format';
+import './CustomerEstimatePage.css';
 
 const customerLinks = [
   { to: '/customer/products', label: 'Products' },
@@ -56,27 +57,6 @@ const CustomerEstimatePage = () => {
     };
   }, [billing, complexity, product, quantity]);
 
-  useEffect(() => {
-    if (!product || !estimate || !session) {
-      return;
-    }
-
-    const entry = {
-      id: `est-${Date.now()}`,
-      customerName: session.name,
-      customerPhone: session.phone,
-      productId: product.id,
-      productName: product.name,
-      quantity,
-      complexity,
-      total: estimate.total,
-      createdAt: new Date().toISOString(),
-      stage: 'viewed'
-    };
-
-    addEstimation(entry);
-  }, [product?.id]);
-
   if (!product || !estimate) {
     return (
       <AppShell title="Estimation" links={customerLinks}>
@@ -91,6 +71,10 @@ const CustomerEstimatePage = () => {
   }
 
   const saveEstimation = () => {
+    if (!session) {
+      return;
+    }
+
     const entry = {
       id: `est-${Date.now()}`,
       customerName: session.name,
@@ -101,7 +85,7 @@ const CustomerEstimatePage = () => {
       complexity,
       total: estimate.total,
       createdAt: new Date().toISOString(),
-      stage: 'calculated'
+      stage: 'saved'
     };
 
     addEstimation(entry);
@@ -126,7 +110,7 @@ const CustomerEstimatePage = () => {
 
   return (
     <AppShell title="Product Estimation" links={customerLinks}>
-      <section className="panel split">
+      <section className="panel split customer-estimate-page">
         <article>
           <h2>{product.name}</h2>
           <p>{product.description}</p>
@@ -155,7 +139,7 @@ const CustomerEstimatePage = () => {
 
           <div className="action-row">
             <button className="btn btn-primary" type="button" onClick={saveEstimation}>
-              Save Estimation
+              Save For Review
             </button>
             <button className="btn btn-outline" type="button" onClick={addToCart}>
               Add to Cart
@@ -169,7 +153,7 @@ const CustomerEstimatePage = () => {
         </article>
 
         <aside className="summary-card">
-          <h3>Estimation Cost Breakdown</h3>
+          <h3>Estimation Summary</h3>
           <p>
             <span>Base</span>
             <strong>{formatCurrency(estimate.base)}</strong>

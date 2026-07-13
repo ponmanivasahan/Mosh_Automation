@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import AppShell from '../components/AppShell';
-import { getCart, getProducts } from '../utils/storage';
-import { formatCurrency } from '../utils/format';
+import AppShell from '../../../components/AppShell';
+import { getCart, getProducts } from '../../../utils/storage';
+import { formatCurrency } from '../../../utils/format';
+import './CustomerProductsPage.css';
 
 const customerLinks = [
   { to: '/customer/products', label: 'Products' },
@@ -14,7 +15,7 @@ const CustomerProductsPage = () => {
 
   return (
     <AppShell title="Customer Product Catalog" links={customerLinks}>
-      <section className="panel">
+      <section className="panel customer-products-page">
         <div className="panel-head">
           <h2>Available Automation Products</h2>
           <Link to="/customer/cart" className="btn btn-primary">

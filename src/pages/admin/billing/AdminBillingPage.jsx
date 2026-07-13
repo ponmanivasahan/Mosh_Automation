@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import AppShell from '../components/AppShell';
-import { getBillingSettings, setBillingSettings } from '../utils/storage';
+import AppShell from '../../../components/AppShell';
+import { getBillingSettings, setBillingSettings } from '../../../utils/storage';
+import './AdminBillingPage.css';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
@@ -33,7 +34,7 @@ const AdminBillingPage = () => {
 
   return (
     <AppShell title="Estimation Billing Configuration" links={adminLinks}>
-      <section className="panel">
+      <section className="panel admin-billing-page">
         <h2>Set Billing Rules</h2>
         <form className="form-grid two-col" onSubmit={save}>
           <label>

@@ -1,6 +1,7 @@
-import AppShell from '../components/AppShell';
-import { getEstimations } from '../utils/storage';
-import { formatCurrency, formatDateTime } from '../utils/format';
+import AppShell from '../../../components/AppShell';
+import { getEstimations } from '../../../utils/storage';
+import { formatCurrency, formatDateTime } from '../../../utils/format';
+import './AdminEstimationsPage.css';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
@@ -15,7 +16,7 @@ const AdminEstimationsPage = () => {
 
   return (
     <AppShell title="Customer Estimation Records" links={adminLinks}>
-      <section className="panel">
+      <section className="panel admin-estimations-page">
         <h2>Estimation Requests (With Name And Phone)</h2>
         {!estimations.length && <p>No estimation records yet.</p>}
 

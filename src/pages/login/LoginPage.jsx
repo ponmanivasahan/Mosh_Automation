@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { loginPhones } from '../data/defaults';
-import { useAuth } from '../utils/AuthContext';
+import { loginPhones } from '../../data/defaults';
+import { useAuth } from '../../utils/AuthContext';
+import './LoginPage.css';
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -49,7 +50,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="login-wrap">
+    <div className="login-page">
       <section className="login-card">
         <p className="eyebrow">Automation Workflow Portal</p>
         <h1>Mosh Automation Access</h1>
