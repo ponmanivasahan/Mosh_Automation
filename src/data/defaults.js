@@ -33,6 +33,5 @@ export const defaultBillingSettings = {
 };
 
 export const loginPhones = {
-  customer: '1234567890',
   admin: '0987654321'
 };

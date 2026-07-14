@@ -11,37 +11,38 @@ const LoginPage = () => {
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
 
-  const getRoleFromPhone = (value) => {
-    if (value === loginPhones.customer) {
-      return 'customer';
-    }
+  const currentYear = new Date().getFullYear();
 
+  // Map the registered phone to a role.
+  const getRoleFromPhone = (value) => {
     if (value === loginPhones.admin) {
       return 'admin';
     }
 
-    return null;
+    return 'customer';
   };
 
+  // Submit login payload.
   const submit = (event) => {
     event.preventDefault();
-    const cleaned = phone.trim();
-    const role = getRoleFromPhone(cleaned);
+    const cleanedName = name.trim();
+    const cleanedPhone = phone.trim();
+    const role = getRoleFromPhone(cleanedPhone);
 
-    if (!name.trim()) {
-      setError('Please enter your name.');
+    if (!cleanedName) {
+      setError('Please enter your user name.');
       return;
     }
 
-    if (!role) {
-      setError('Phone number not recognized. Please enter a valid registered number.');
+    if (!cleanedPhone) {
+      setError('Please enter your phone number.');
       return;
     }
 
     const payload = {
       role,
-      name: name.trim(),
-      phone: cleaned,
+      name: cleanedName,
+      phone: cleanedPhone,
       loggedInAt: new Date().toISOString()
     };
 
@@ -51,44 +52,51 @@ const LoginPage = () => {
 
   return (
     <div className="login-page">
-      <section className="login-card">
-        <p className="eyebrow">Automation Workflow Portal</p>
-        <h1>Mosh Automation Access</h1>
-        <p className="subtle">Role is automatically confirmed from your phone number.</p>
+      <div className="login-shell fade-in">
+        <section className="login-panel" aria-label="Mosh Automation login">
+          <div className="login-panel-header">
+            <img className="login-panel-logo" src="/logo%20background.png" alt="Mosh Automation logo" />
+            <p className="login-panel-title">Create Account at Mosh Automation</p>
+            
+          </div>
 
-        <form className="form-grid" onSubmit={submit}>
-          <label>
-            Name
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name"
-              required
-            />
-          </label>
+          <form className="login-form" onSubmit={submit}>
+            <label className="field-label">
+              User Name
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your user name"
+                autoComplete="name"
+                required
+              />
+            </label>
 
-          <label>
-            Phone Number
-            <input
-              type="password"
-              inputMode="numeric"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Enter phone number"
-              maxLength={10}
-              required
-            />
-          </label>
+            <label className="field-label">
+              Phone Number
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="Enter your phone number"
+                autoComplete="tel"
+                maxLength={10}
+                required
+              />
+            </label>
 
-          {error && <p className="error-text">{error}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-          <button type="submit" className="btn btn-primary">
-            Login
-          </button>
-        </form>
-      </section>
+            <button type="submit" className="create-account-button">Create Acoount</button>
+          </form>
+
+          <p className="login-footer">Copyright © {currentYear} Mosh Automation. All Rights Reserved.</p>
+        </section>
+      </div>
     </div>
   );
 };
 
 export default LoginPage;
+

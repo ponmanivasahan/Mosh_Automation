@@ -2,7 +2,7 @@ import { useState } from 'react';
 import AppShell from '../../../components/AppShell';
 import { getProducts, setProducts } from '../../../utils/storage';
 import { formatCurrency } from '../../../utils/format';
-import './AdminProductsPage.css';
+import './AdminProductsPage.css'; 
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
