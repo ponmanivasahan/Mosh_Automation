@@ -1,8 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginPhones } from '../../data/defaults';
 import { useAuth } from '../../utils/AuthContext';
 import './LoginPage.css';
+
+const rotatingMessages = [
+  'Mosh Automation delivers innovative water level controller solutions.',
+  'Our intelligent systems help monitor, control, and optimize water usage.',
+  'We combine advanced technology with dependable engineering.'
+];
+
+const typingDelay = 26;
+const pauseDelay = 1400;
+const deleteDelay = 16;
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -10,6 +20,56 @@ const LoginPage = () => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
+  const [typedMessage, setTypedMessage] = useState('');
+  const messageIndexRef = useRef(0);
+  const phaseRef = useRef('typing');
+  const currentIndexRef = useRef(0);
+
+  useEffect(() => {
+    let timeoutId;
+
+    const tick = () => {
+      const currentMessage = rotatingMessages[messageIndexRef.current];
+
+      if (phaseRef.current === 'typing') {
+        currentIndexRef.current += 1;
+        setTypedMessage(currentMessage.slice(0, currentIndexRef.current));
+
+        if (currentIndexRef.current >= currentMessage.length) {
+          phaseRef.current = 'pausing';
+          timeoutId = window.setTimeout(tick, pauseDelay);
+          return;
+        }
+      }
+
+      if (phaseRef.current === 'pausing') {
+        phaseRef.current = 'deleting';
+        timeoutId = window.setTimeout(tick, deleteDelay);
+        return;
+      }
+
+      if (phaseRef.current === 'deleting') {
+        currentIndexRef.current -= 1;
+        setTypedMessage(currentMessage.slice(0, currentIndexRef.current));
+
+        if (currentIndexRef.current <= 0) {
+          currentIndexRef.current = 0;
+          messageIndexRef.current = (messageIndexRef.current + 1) % rotatingMessages.length;
+          phaseRef.current = 'typing';
+          timeoutId = window.setTimeout(tick, 240);
+          return;
+        }
+      }
+
+      timeoutId = window.setTimeout(tick, phaseRef.current === 'deleting' ? deleteDelay : typingDelay);
+    };
+
+    timeoutId = window.setTimeout(tick, 320);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
 
   const currentYear = new Date().getFullYear();
 
@@ -47,16 +107,24 @@ const LoginPage = () => {
     };
 
     login(payload);
-    navigate(role === 'admin' ? '/admin/dashboard' : '/customer/products');
+    navigate(role === 'admin' ? '/admin/dashboard' : '/customer/dashboard');
   };
 
   return (
     <div className="login-page">
+      <section className="login-story" aria-label="Mosh Automation message">
+        <p className="login-story-kicker">Automation for reliable water management</p>
+        <p className="login-story-typing">
+          {typedMessage}
+          <span className="typing-caret" aria-hidden="true" />
+        </p>
+      </section>
+
       <div className="login-shell fade-in">
         <section className="login-panel" aria-label="Mosh Automation login">
           <div className="login-panel-header">
             <img className="login-panel-logo" src="/logo%20background.png" alt="Mosh Automation logo" />
-            <p className="login-panel-title">Create Account at Mosh Automation</p>
+            <p className="login-panel-title">Create Connection With Mosh Automation</p>
             
           </div>
 

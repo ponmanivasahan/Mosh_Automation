@@ -13,7 +13,7 @@ import { formatCurrency } from '../../../utils/format';
 import './CustomerEstimatePage.css';
 
 const customerLinks = [
-  { to: '/customer/products', label: 'Products' },
+  { to: '/customer/dashboard', label: 'Dashboard' },
   { to: '/customer/cart', label: 'Cart & Order Details' }
 ];
 
@@ -62,7 +62,7 @@ const CustomerEstimatePage = () => {
       <AppShell title="Estimation" links={customerLinks}>
         <section className="panel">
           <p>Product not found.</p>
-          <Link to="/customer/products" className="btn btn-primary">
+          <Link to="/customer/dashboard" className="btn btn-primary">
             Back to Products
           </Link>
         </section>
@@ -96,8 +96,10 @@ const CustomerEstimatePage = () => {
     const cart = getCart();
     const item = {
       id: `cart-${Date.now()}`,
+      source: 'estimate',
       productId: product.id,
       name: product.name,
+      image: product.image,
       quantity,
       complexity,
       unitPrice: product.price,
@@ -113,6 +115,7 @@ const CustomerEstimatePage = () => {
       <section className="panel split customer-estimate-page">
         <article>
           <h2>{product.name}</h2>
+          <img className="estimate-product-image" src={product.image} alt={product.name} />
           <p>{product.description}</p>
           <p className="price">Base Price: {formatCurrency(product.price)}</p>
 

@@ -15,12 +15,16 @@ const App = () => (
     <Route path="/" element={<LoginPage />} />
 
     <Route
-      path="/customer/products"
+      path="/customer/dashboard"
       element={
         <ProtectedRoute role="customer">
           <CustomerProductsPage />
         </ProtectedRoute>
       }
+    />
+    <Route
+      path="/customer/products"
+      element={<Navigate to="/customer/dashboard" replace />}
     />
     <Route
       path="/customer/products/:id"

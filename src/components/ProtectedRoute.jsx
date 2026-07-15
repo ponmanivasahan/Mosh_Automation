@@ -9,7 +9,7 @@ const ProtectedRoute = ({ role, children }) => {
   }
 
   if (role && session.role !== role) {
-    return <Navigate to={session.role === 'admin' ? '/admin/dashboard' : '/customer/products'} replace />;
+    return <Navigate to={session.role === 'admin' ? '/admin/dashboard' : '/customer/dashboard'} replace />;
   }
 
   return children;

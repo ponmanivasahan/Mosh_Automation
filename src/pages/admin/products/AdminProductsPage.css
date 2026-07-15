@@ -1,3 +1,40 @@
 .admin-products-page {
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 16px;
+}
+
+.admin-product-form-card,
+.admin-product-list-card {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-product-list {
+  gap: 12px;
+}
+
+.admin-product-image {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  border-radius: 14px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-product-details {
+  min-width: 0;
+}
+
+.admin-product-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1024px) {
+  .admin-products-page {
+    grid-template-columns: 1fr;
+  }
 }

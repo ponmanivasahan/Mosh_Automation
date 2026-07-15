@@ -13,7 +13,7 @@ import { formatCurrency, formatDateTime } from '../../../utils/format';
 import './CustomerCartPage.css';
 
 const customerLinks = [
-  { to: '/customer/products', label: 'Products' },
+  { to: '/customer/dashboard', label: 'Dashboard' },
   { to: '/customer/cart', label: 'Cart & Order Details' }
 ];
 
@@ -75,11 +75,11 @@ const CustomerCartPage = () => {
         <div className="stack">
           {cartItems.map((item) => (
             <article className="row-card" key={item.id}>
+              {item.image && <img className="cart-item-image" src={item.image} alt={item.name} />}
               <div>
                 <h3>{item.name}</h3>
-                <p>
-                  Qty: {item.quantity} | Complexity: {item.complexity}
-                </p>
+                <p>Qty: {item.quantity || 1}</p>
+                {item.complexity && <p>Complexity: {item.complexity}</p>}
                 <p>Total: {formatCurrency(item.total)}</p>
               </div>
               <button className="btn btn-ghost" type="button" onClick={() => removeItem(item.id)}>

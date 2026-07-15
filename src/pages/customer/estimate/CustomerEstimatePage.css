@@ -5,3 +5,14 @@
 .customer-estimate-page .action-row {
   margin-top: 14px;
 }
+
+.estimate-product-image {
+  width: 100%;
+  max-width: 340px;
+  height: 180px;
+  object-fit: contain;
+  border-radius: 16px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 16px 0;
+}

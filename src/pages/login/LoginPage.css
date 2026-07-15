@@ -4,6 +4,7 @@
 */
 
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
 
 :root {
   --card-bg: rgba(255, 255, 255, 0.92);
@@ -30,14 +31,71 @@
 
 .login-page {
   position: relative;
-  width: 100vw;
-  height: 100vh;
+  width: 1600px;
+  height: 890px;
   overflow: hidden;
   background-image: url('/background.png');
   background-size: cover;
   background-position: center;
+  background-position: center;
   background-repeat: no-repeat;
-  font-family: 'Poppins', sans-serif;
+}
+
+.login-story {
+  position: absolute;
+  left: 4vw;
+  bottom: 12vh;
+  z-index: 1;
+  width: min(84vw, 1120px);
+  max-width: 1120px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.login-story-kicker {
+  margin: 0 0 8px;
+  color: rgba(12, 45, 99, 0.9);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.login-story-typing {
+  margin: 0;
+  color: #0c2d63;
+  font-size: clamp(16px, 1.25vw, 22px);
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  font-family: 'Montserrat', sans-serif;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.typing-caret {
+  display: inline-block;
+  width: 0.18em;
+  height: 0.95em;
+  margin-left: 0.12em;
+  border-radius: 999px;
+  background: #0c2d63;
+  vertical-align: -0.08em;
+  animation: blinkCaret 900ms steps(1) infinite;
+}
+
+@keyframes blinkCaret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
 }
 
 .login-page::before {
@@ -195,6 +253,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .typing-caret {
+    animation: none;
+  }
+
   .login-panel,
   .create-account-button,
   .field-label input {
@@ -220,6 +282,14 @@
 }
 
 @media (max-width: 1024px) {
+  .login-story {
+    left: 24px;
+    right: 24px;
+    bottom: 18px;
+    width: auto;
+    max-width: none;
+  }
+
   .login-shell {
     justify-content: center;
     padding: 24px;
@@ -231,6 +301,21 @@
 }
 
 @media (max-width: 640px) {
+  .login-story {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+  }
+
+  .login-story-kicker {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .login-story-typing {
+    font-size: 14px;
+  }
+
   .login-shell {
     padding: 14px;
   }

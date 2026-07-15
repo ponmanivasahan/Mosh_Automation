@@ -1,4 +1,4 @@
-import { defaultBillingSettings, defaultProducts } from '../data/defaults';
+import { defaultBillingSettings, defaultProducts, productImageOptions } from '../data/defaults';
 
 const KEYS = {
   products: 'mosh_products',
@@ -21,6 +21,18 @@ const read = (key, fallback) => {
 
 const write = (key, value) => {
   localStorage.setItem(key, JSON.stringify(value));
+};
+
+const fallbackImage = productImageOptions[0]?.value || '';
+
+const normalizeProduct = (product, index) => {
+  const defaultProduct = defaultProducts[index] || defaultProducts.find((item) => item.id === product.id);
+
+  return {
+    ...defaultProduct,
+    ...product,
+    image: product.image || defaultProduct?.image || fallbackImage
+  };
 };
 
 export const ensureInitialData = () => {
@@ -49,8 +61,8 @@ export const ensureInitialData = () => {
   }
 };
 
-export const getProducts = () => read(KEYS.products, defaultProducts);
-export const setProducts = (products) => write(KEYS.products, products);
+export const getProducts = () => read(KEYS.products, defaultProducts).map(normalizeProduct);
+export const setProducts = (products) => write(KEYS.products, products.map(normalizeProduct));
 
 export const getBillingSettings = () => read(KEYS.billingSettings, defaultBillingSettings);
 export const setBillingSettings = (settings) => write(KEYS.billingSettings, settings);
