@@ -1,0 +1,57 @@
+.customer-success-stories-page {
+  display: grid;
+  gap: 24px;
+}
+
+.story-hero {
+  padding: 30px;
+  border-radius: 32px;
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(37, 99, 235, 0.08));
+}
+
+.story-hero h2 {
+  margin-top: 16px;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.story-card {
+  display: grid;
+  gap: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 28px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow-soft);
+}
+
+.story-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 22px;
+}
+
+.story-body {
+  display: grid;
+  gap: 12px;
+}
+
+.story-card h3 {
+  margin: 0;
+}
+
+.story-subtitle {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .story-grid {
+    grid-template-columns: 1fr;
+  }
+}

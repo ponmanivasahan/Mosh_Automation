@@ -1,38 +1,133 @@
 import { NavLink } from 'react-router-dom';
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  ClipboardList,
+  Sparkles,
+  MessageSquare,
+  HelpCircle,
+  LogOut,
+  Bell
+} from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
+import { useEffect, useState } from 'react';
+import { getCart } from '../utils/storage';
+
+const iconMap = {
+  Dashboard: LayoutDashboard,
+  Products: Package,
+  Cart: ShoppingCart,
+  'Cart & Order Details': ShoppingCart,
+  Estimations: ClipboardList,
+  Queries: ClipboardList,
+  'Rate & Reviews': MessageSquare,
+  'Success Stories': Sparkles,
+  'Help Center': HelpCircle
+};
 
 const AppShell = ({ title, links, children }) => {
   const { session, logout } = useAuth();
+  const [cartCount, setCartCount] = useState(() => getCart().length);
+
+  useEffect(() => {
+    const handler = (e) => setCartCount(Array.isArray(e?.detail) ? e.detail.length : getCart().length);
+    window.addEventListener('mosh_cart_updated', handler);
+    return () => window.removeEventListener('mosh_cart_updated', handler);
+  }, []);
 
   return (
-    <div className="app-layout">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <p className="eyebrow">Mosh Automation</p>
-          <h1>{title}</h1>
-          <p className="identity">
-            {session?.name} ({session?.phone})
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <aside className="fixed inset-y-0 left-0 z-20 w-full max-w-[320px] overflow-hidden border-r border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,118,110,0.06)] md:block">
+        <div className="flex h-full flex-col justify-between px-6 py-8">
+          <div className="space-y-8">
+            <div className="flex items-center gap-4 rounded-3xl bg-slate-100/80 p-4 shadow-sm shadow-slate-200/50 backdrop-blur-xl">
+              <img src="/logo background.png" alt="Mosh Automation" className="h-12 w-12 rounded-2xl object-cover" />
+              <div>
+                <p className="text-xs uppercase tracking-[0.35em] text-teal-700/80">Mosh Automation</p>
+                <p className="text-sm text-slate-500">Customer Portal</p>
+              </div>
+            </div>
 
-        <nav className="sidebar-nav" aria-label="Primary">
-          {links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+           
+
+            <nav className="space-y-1">
+              {links.map((link) => {
+                const Icon = iconMap[link.label] || LayoutDashboard;
+                return (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    className={({ isActive }) =>
+                      `group flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-semibold transition-all duration-300 ${
+                        isActive
+                          ? 'border-l-4 border-teal-600 bg-teal-50 text-slate-900 shadow-sm shadow-teal-100'
+                          : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                      }`
+                    }
+                  >
+                    <Icon className="h-5 w-5 transition-colors duration-300 group-hover:text-teal-600" />
+                    {link.label}
+                  </NavLink>
+                );
+              })}
+            </nav>
+          </div>
+
+        
+            <div className="flex-1 rounded-2xl bg-white p-4 border border-slate-100 shadow-sm text-left">
+              <div className="mx-auto w-full max-w-[240px] rounded-2xl bg-white p-5 border border-slate-100 shadow-sm text-left">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 flex items-center justify-center rounded-2xl bg-teal-600 text-white font-bold text-lg shadow-sm">{session?.name?.[0] || 'G'}</div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.35em] text-slate-400 mb-1">Signed in as</p>
+                    <p className="text-lg font-semibold tracking-tight text-slate-900 leading-tight">{session?.name || 'Guest'}</p>
+                    <p className="mt-1 text-sm text-slate-500 font-medium">{session?.phone || '0000000000'}</p>
+                  </div>
+                </div>
+            </div>
+            </div>
+            <button
+              type="button"
+              onClick={logout}
+              className="inline-flex items-center gap-2 rounded-md border border-teal-600 bg-white px-3 py-2 text-teal-600 font-semibold hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-100"
+              aria-label="Logout"
             >
-              {link.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        <button type="button" className="btn btn-outline sidebar-logout" onClick={logout}>
-          Logout
-        </button>
+              <LogOut className="h-5 w-" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
+        
       </aside>
 
-      <main className="content-area">{children}</main>
+      <main className="ml-0 min-h-screen pt-6 pb-12 md:ml-[320px] overflow-x-hidden">
+        <div className="mx-auto min-h-screen max-w-[1440px] px-6 pb-12 md:px-10">
+          <div className="mb-8">
+            <div className="sticky top-6 z-30 bg-transparent">
+              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">{title}</h1>
+                 
+                </div>
+
+                <div className="inline-flex items-center gap-3 rounded-3xl bg-white/90 px-4 py-3 text-slate-700 shadow-[0_18px_55px_rgba(15,118,110,0.08)]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-teal-600 text-white shadow-sm shadow-teal-200/50">
+                    {session?.name?.[0] || 'M'}
+                  </div>
+                 
+                  <NavLink to="/customer/cart" className="relative inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-sm">
+                    <ShoppingCart className="h-5 w-5 text-slate-700" />
+                    <span className="ml-2 text-sm font-semibold text-slate-900">View Cart</span>
+                    <span className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">{cartCount}</span>
+                  </NavLink>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">{children}</div>
+        </div>
+      </main>
     </div>
   );
 };

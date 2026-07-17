@@ -1,29 +1,33 @@
 import { Link } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Eye, ShoppingCart, Info, Award } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { getCart, getProducts, setCart } from '../../../utils/storage';
 import { formatCurrency } from '../../../utils/format';
+import { customerLinks } from '../../../utils/customerLinks';
 import './CustomerProductsPage.css';
-
-const customerLinks = [
-  { to: '/customer/dashboard', label: 'Dashboard' },
-  { to: '/customer/cart', label: 'Cart & Order Details' }
-];
+import ProductsToolbar from '../../../components/products/ProductsToolbar';
+import ProductModal from '../../../components/products/ProductModal';
+import CheckoutModal from '../../../components/products/CheckoutModal';
 
 const CustomerProductsPage = () => {
   const products = getProducts();
   const [cartItems, setCartItems] = useState(getCart());
   const [message, setMessage] = useState('');
+  const [filters, setFilters] = useState({ q: '', category: '', sort: 'newest' });
+  const [viewProduct, setViewProduct] = useState(null);
+  const [checkoutProduct, setCheckoutProduct] = useState(null);
+  const [loading] = useState(false);
 
-  const cartCount = useMemo(
-    () => cartItems.reduce((total, item) => total + Number(item.quantity || 1), 0),
-    [cartItems]
-  );
-
-  const cartTotal = useMemo(
-    () => cartItems.reduce((total, item) => total + Number(item.total || 0), 0),
-    [cartItems]
-  );
+  // Auto-dismiss the success message after 3 seconds
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const addToCart = (product) => {
     const currentCart = getCart();
@@ -55,75 +59,145 @@ const CustomerProductsPage = () => {
 
     setCart(nextCart);
     setCartItems(nextCart);
-    setMessage(`${product.name} added to cart.`);
+    setMessage(`Added ${product.name} to cart successfully.`);
+  };
+
+  const categories = useMemo(() => {
+    const set = new Set();
+    products.forEach((p) => p.category && set.add(p.category));
+    return Array.from(set);
+  }, [products]);
+
+  const filtered = useMemo(() => {
+    let out = products.slice();
+    const q = filters.q?.toLowerCase?.() || '';
+    if (q) out = out.filter((p) => `${p.name} ${p.description}`.toLowerCase().includes(q));
+    if (filters.category) out = out.filter((p) => p.category === filters.category);
+    if (filters.sort === 'price-asc') out.sort((a, b) => (a.price || 0) - (b.price || 0));
+    if (filters.sort === 'price-desc') out.sort((a, b) => (b.price || 0) - (a.price || 0));
+    return out;
+  }, [products, filters]);
+
+  const placeOrderFromModal = (order) => {
+    const currentCart = getCart();
+    const item = {
+      id: `order-${Date.now()}-${order.productId}`,
+      source: 'order',
+      productId: order.productId,
+      name: order.name,
+      description: '',
+      image: order.image,
+      quantity: order.quantity,
+      unitPrice: order.unitPrice,
+      total: order.total
+    };
+
+    const nextCart = [item, ...currentCart];
+    setCart(nextCart);
+    setCartItems(nextCart);
+    setMessage(`Order placed: ${item.name} x ${item.quantity} — ${formatCurrency(item.total)}`);
   };
 
   return (
-    <AppShell title="Customer Dashboard" links={customerLinks}>
-      <section className="panel split customer-products-page">
-        <article>
-          <div className="panel-head">
-            <h2>Product Catalog</h2>
-            <Link to="/customer/cart" className="btn btn-primary">
-              Go to Cart ({cartCount})
-            </Link>
+    <AppShell title="Products & Solutions" links={customerLinks}>
+      <div className="customer-products-container">
+        {/* Page header with kicker */}
+        <div className="products-page-header">
+          <div>
+            <p className="eyebrow">Explore solutions</p>
+            <h2>Automation Catalog</h2>
+            <p>Select and order state-of-the-art water level controller solutions tailored for your requirements.</p>
           </div>
+          <ProductsToolbar filters={filters} onChange={setFilters} categories={categories} />
+        </div>
 
-          <div className="grid cards customer-product-grid">
-            {products.map((product) => (
-              <article key={product.id} className="card customer-product-card">
-                <img className="product-image" src={product.image} alt={product.name} />
-                <div className="card-body">
-                  <h3>{product.name}</h3>
-                  <p>{product.description}</p>
-                  <p className="price">{formatCurrency(product.price)}</p>
+        {/* Loading state / Grid state */}
+        {loading ? (
+          <div className="new-products-grid">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-80 bg-slate-100 animate-pulse rounded-2xl" />
+            ))}
+          </div>
+        ) : filtered.length ? (
+          <div className="new-products-grid">
+            {filtered.map((product) => (
+              <article key={product.id} className="premium-product-card">
+                <div className="card-img-container">
+                  <span className="card-badge">{product.category || 'Automation'}</span>
+                  <img src={product.image} alt={product.name} className="card-product-img" />
                 </div>
-                <div className="card-actions">
-                  <button className="btn btn-primary" type="button" onClick={() => addToCart(product)}>
-                    Add to Cart
-                  </button>
-                  <Link className="btn btn-outline" to={`/customer/products/${product.id}`}>
-                    View Details
-                  </Link>
+
+                <div className="card-info">
+                  <h3 className="card-title">{product.name}</h3>
+                  <p className="card-desc">{product.description}</p>
+                </div>
+
+                <div className="card-footer">
+                  <div className="card-price-row">
+                    <span className="price-label">Price</span>
+                    <span className="price-value">{formatCurrency(product.price)}</span>
+                  </div>
+
+                  <div className="card-btn-group">
+                    <button
+                      onClick={() => setViewProduct(product)}
+                      className="btn-card-view"
+                      type="button"
+                    >
+                      <Eye size={16} /> Details
+                    </button>
+                    <button
+                      onClick={() => addToCart(product)}
+                      className="btn-card-add"
+                      type="button"
+                    >
+                      <ShoppingCart size={16} /> Add to Cart
+                    </button>
+                  </div>
                 </div>
               </article>
             ))}
           </div>
-
-          {message && <p className="success-text">{message}</p>}
-        </article>
-
-        <aside className="catalog-summary-card">
-          <div className="summary-head">
-            <h2>Order Summary</h2>
-            <p>{cartCount} item(s) in cart</p>
+        ) : (
+          <div className="text-center py-20 bg-white border border-slate-100 rounded-3xl p-8">
+            <h3 className="text-xl font-bold text-slate-800">No Products Found</h3>
+            <p className="mt-2 text-slate-500">We couldn't find matches for current filters.</p>
+            <button
+              onClick={() => setFilters({ q: '', category: '', sort: 'newest' })}
+              className="mt-6 btn btn-outline"
+            >
+              Reset Filters
+            </button>
           </div>
+        )}
 
-          <div className="stack summary-items">
-            {cartItems.length ? (
-              cartItems.slice(0, 4).map((item) => (
-                <article className="mini-card" key={item.id}>
-                  <img className="mini-card-image" src={item.image} alt={item.name} />
-                  <div>
-                    <h3>{item.name}</h3>
-                    <p>Qty: {item.quantity || 1}</p>
-                    <p>{formatCurrency(item.total)}</p>
-                  </div>
-                </article>
-              ))
-            ) : (
-              <p>No items in cart yet.</p>
-            )}
+        {/* Alert Notification Toast */}
+        {message && (
+          <div className="toast-alert">
+            <Award size={18} />
+            <span>{message}</span>
           </div>
+        )}
 
-          <div className="summary-footer">
-            <strong>Total: {formatCurrency(cartTotal)}</strong>
-            <Link to="/customer/cart" className="btn btn-primary">
-              Open Cart
-            </Link>
-          </div>
-        </aside>
-      </section>
+        <ProductModal
+          open={!!viewProduct}
+          onClose={() => setViewProduct(null)}
+          product={viewProduct}
+          onAdd={(p) => {
+            addToCart(p);
+            setViewProduct(null);
+          }}
+        />
+        <CheckoutModal
+          open={!!checkoutProduct}
+          onClose={() => setCheckoutProduct(null)}
+          product={checkoutProduct}
+          onPlace={(order) => {
+            placeOrderFromModal(order);
+            setCheckoutProduct(null);
+          }}
+        />
+      </div>
     </AppShell>
   );
 };

@@ -62,106 +62,134 @@ export const defaultProducts = [
     id: 'p-1',
     name: 'Auto Change Water Level Controller',
     description: 'Automatic tank control with smart water level switching and overflow protection.',
-    price: 32000,
-    image: productImageOptions[0].value
+    price: 3200,
+    image: productImageOptions[0].value,
+    floatFee: 150,
+    wire: { baseFee: 300, baseMeters: 30, extraPerMeter: 10 }
   },
   {
     id: 'p-2',
     name: 'Double Tank Fully Automated',
     description: 'Dual tank automation for dependable water transfer and monitoring.',
-    price: 48000,
-    image: productImageOptions[1].value
+    price: 4800,
+    image: productImageOptions[1].value,
+    floatFee: 200,
+    wire: { baseFee: 350, baseMeters: 30, extraPerMeter: 12 }
   },
   {
     id: 'p-3',
     name: 'Wireless Tank Module',
     description: 'Remote tank module for connected water level tracking and control.',
-    price: 27000,
-    image: productImageOptions[2].value
+    price: 2700,
+    image: productImageOptions[2].value,
+    floatFee: 0,
+    wire: { baseFee: 250, baseMeters: 30, extraPerMeter: 8 }
   },
   {
     id: 'p-4',
     name: 'GSM Based On-Off with Dry Run',
     description: 'GSM enabled automation with dry run protection for safer operation.',
-    price: 39000,
-    image: productImageOptions[11].value
+    price: 3900,
+    image: productImageOptions[11].value,
+    floatFee: 0,
+    wire: { baseFee: 300, baseMeters: 30, extraPerMeter: 10 }
   },
   {
     id: 'p-5',
     name: 'Wireless Controller Base Module',
     description: 'Base unit for wireless control and tank management automation.',
-    price: 25000,
-    image: productImageOptions[3].value
+    price: 2500,
+    image: productImageOptions[3].value,
+    floatFee: 100,
+    wire: { baseFee: 300, baseMeters: 30, extraPerMeter: 10 }
   },
   {
     id: 'p-6',
     name: 'Water Level Sensors',
     description: 'Precision sensors for accurate water level monitoring and alerts.',
-    price: 18000,
-    image: productImageOptions[4].value
+    price: 1800,
+    image: productImageOptions[4].value,
+    floatFee: 80,
+    wire: { baseFee: 200, baseMeters: 30, extraPerMeter: 6 }
   },
   {
     id: 'p-7',
     name: 'Water Level Controller With Timer',
     description: 'Timer-based controller for scheduled water management.',
-    price: 29000,
-    image: productImageOptions[5].value
+    price: 2900,
+    image: productImageOptions[5].value,
+    floatFee: 120,
+    wire: { baseFee: 300, baseMeters: 30, extraPerMeter: 10 }
   },
   {
     id: 'p-8',
     name: 'Three Phase Fully Automatic Controller',
     description: 'Heavy-duty automation controller for three-phase systems.',
-    price: 54000,
-    image: productImageOptions[6].value
+    price: 5400,
+    image: productImageOptions[6].value,
+    floatFee: 0,
+    wire: { baseFee: 400, baseMeters: 30, extraPerMeter: 15 }
   },
   {
     id: 'p-9',
     name: 'Three Phase Dry Run Preventer',
     description: 'Protective dry run preventer for three-phase pump safety.',
-    price: 43000,
-    image: productImageOptions[7].value
+    price: 4300,
+    image: productImageOptions[7].value,
+    floatFee: 0,
+    wire: { baseFee: 350, baseMeters: 30, extraPerMeter: 12 }
   },
   {
     id: 'p-10',
     name: 'Single Phase Water Controller With Dry Run',
     description: 'Single-phase automation with built-in dry run protection.',
-    price: 36000,
-    image: productImageOptions[8].value
+    price: 3600,
+    image: productImageOptions[8].value,
+    floatFee: 0,
+    wire: { baseFee: 300, baseMeters: 30, extraPerMeter: 10 }
   },
   {
     id: 'p-11',
     name: 'Single Phase Fully Automatic Controller',
     description: 'Compact automatic controller for single-phase water systems.',
-    price: 34000,
-    image: productImageOptions[9].value
+    price: 3400,
+    image: productImageOptions[9].value,
+    floatFee: 80,
+    wire: { baseFee: 300, baseMeters: 30, extraPerMeter: 10 }
   },
   {
     id: 'p-12',
     name: 'Single Phase Controller Above 1.5HP',
     description: 'Controller designed for higher-load single-phase pump setups.',
-    price: 41000,
-    image: productImageOptions[10].value
+    price: 4100,
+    image: productImageOptions[10].value,
+    floatFee: 0,
+    wire: { baseFee: 350, baseMeters: 30, extraPerMeter: 12 }
   },
   {
     id: 'p-13',
     name: 'GSM Based On-Off',
     description: 'Remote GSM switching controller for flexible water management.',
-    price: 31000,
-    image: productImageOptions[12].value
+    price: 3100,
+    image: productImageOptions[12].value,
+    floatFee: 0,
+    wire: { baseFee: 300, baseMeters: 30, extraPerMeter: 10 }
   },
   {
     id: 'p-14',
     name: 'Float Switch',
     description: 'Durable float switch for simple and reliable level detection.',
-    price: 12000,
-    image: productImageOptions[13].value
+    price: 1200,
+    image: productImageOptions[13].value,
+    floatFee: 400,
+    wire: { baseFee: 150, baseMeters: 30, extraPerMeter: 5 }
   }
 ];
 
 export const defaultBillingSettings = {
-  installationRate: 0.12,
+  InstallationRate: 0.12,
   taxRate: 0.18,
-  miscellaneousFee: 500,
+  miscellaneousFee: 1000,
   notes: 'Standard billing defaults for estimation calculations.'
 };
 

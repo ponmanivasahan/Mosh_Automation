@@ -1,3 +1,11 @@
 .admin-notifications-page .stack {
   margin-top: 16px;
 }
+
+.notification-card {
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: var(--shadow-soft);
+}
