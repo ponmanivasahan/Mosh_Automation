@@ -41,9 +41,19 @@ const getSalesData = (products, orders) => {
 
 /* ── Colour palette for pie chart slices ── */
 const PIE_COLORS = [
-  '#0d9488', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ef4444',
-  '#10b981', '#6366f1', '#ec4899', '#14b8a6', '#f97316',
-  '#84cc16', '#06b6d4', '#a855f7', '#e11d48',
+  'teal',
+  'deepskyblue',
+  'blueviolet',
+  'orange',
+  'crimson',
+  'limegreen',
+  'hotpink',
+  'dodgerblue',
+  'tomato',
+  'gold',
+  'mediumpurple',
+  'turquoise',
+  'coral'
 ];
 
 /* ── Pure SVG Pie Chart ── */

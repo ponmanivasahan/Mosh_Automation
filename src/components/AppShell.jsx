@@ -8,7 +8,9 @@ import {
   MessageSquare,
   HelpCircle,
   LogOut,
-  Bell
+  Bell,
+  Menu,
+  X
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import { useEffect, useState } from 'react';
@@ -32,6 +34,7 @@ const iconMap = {
 const AppShell = ({ title, links, children }) => {
   const { session, logout } = useAuth();
   const [cartCount, setCartCount] = useState(() => getCart().length);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const handler = (e) => setCartCount(Array.isArray(e?.detail) ? e.detail.length : getCart().length);
@@ -41,8 +44,33 @@ const AppShell = ({ title, links, children }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <aside className="fixed inset-y-0 left-0 z-20 w-full max-w-[320px] overflow-hidden border-r border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,118,110,0.06)] md:block">
-        <div className="flex h-full flex-col justify-between px-6 py-8">
+      {/* Mobile Top Header */}
+      <header className="md:hidden flex items-center justify-between bg-white border-b px-4 py-3 sticky top-0 z-40 shadow-sm">
+        <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded hover:bg-slate-100" type="button">
+          <Menu size={20} className="text-slate-600" />
+        </button>
+        <span className="font-extrabold text-xs uppercase tracking-wider text-teal-700">Mosh Automation</span>
+        <div className="w-8"></div>
+      </header>
+
+      {/* Backdrop for mobile */}
+      {isSidebarOpen && (
+        <div onClick={() => setIsSidebarOpen(false)} className="md:hidden fixed inset-0 bg-black/40 z-40 backdrop-blur-sm" />
+      )}
+
+      <aside className={`fixed inset-y-0 left-0 z-50 w-full max-w-[320px] overflow-hidden border-r border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,118,110,0.06)] transition-transform duration-300 ${
+        isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      } md:translate-x-0`}>
+        <div className="flex h-full flex-col justify-between px-6 py-8 relative">
+          {/* Close button for mobile */}
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden p-2 rounded hover:bg-slate-100 absolute top-4 right-4 z-50"
+          >
+            <X size={18} className="text-slate-500" />
+          </button>
+
           <div className="space-y-8">
             <div className="flex items-center gap-4 rounded-3xl bg-slate-100/80 p-4 shadow-sm shadow-slate-200/50 backdrop-blur-xl">
               <img src="/logo background.png" alt="Mosh Automation" className="h-12 w-12 rounded-2xl object-cover" />
@@ -61,6 +89,7 @@ const AppShell = ({ title, links, children }) => {
                   <NavLink
                     key={link.to}
                     to={link.to}
+                    onClick={() => setIsSidebarOpen(false)}
                     className={({ isActive }) =>
                       `group flex items-center gap-3 rounded-3xl px-4 py-3 text-sm font-semibold transition-all duration-300 ${
                         isActive
@@ -92,6 +121,13 @@ const AppShell = ({ title, links, children }) => {
                     <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
                       {session?.phone || '0000000000'}
                     </p>
+                    <span className={`inline-block mt-1.5 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${
+                      session?.role === 'admin' 
+                        ? 'bg-indigo-50 border-indigo-150 text-indigo-600' 
+                        : 'bg-teal-50 border-teal-150 text-teal-600'
+                    }`}>
+                      {session?.role === 'admin' ? 'Admin Portal' : 'Customer Portal'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -111,7 +147,7 @@ const AppShell = ({ title, links, children }) => {
       </aside>
 
       <main className="ml-0 min-h-screen pt-6 pb-12 md:ml-[320px] overflow-x-hidden">
-        <div className="mx-auto min-h-screen max-w-[1440px] px-6 pb-12 md:px-10">
+        <div className="mx-auto px-6 pb-12 md:px-10">
           <div className="mb-8">
             <div className="sticky top-6 z-30 bg-transparent">
               <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -120,19 +156,15 @@ const AppShell = ({ title, links, children }) => {
                  
                 </div>
 
-                <div className="inline-flex items-center gap-3 rounded-3xl bg-white/90 px-4 py-3 text-slate-700 shadow-[0_18px_55px_rgba(15,118,110,0.08)]">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-teal-600 text-white shadow-sm shadow-teal-200/50">
-                    {session?.name?.[0] || 'M'}
-                  </div>
-                 
-                  {session?.role !== 'admin' && (
+                {session?.role !== 'admin' && (
+                  <div className="inline-flex items-center gap-3 rounded-3xl bg-white/90 px-4 py-3 text-slate-700 shadow-[0_18px_55px_rgba(15,118,110,0.08)]">
                     <NavLink to="/customer/cart" className="relative inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-sm">
                       <ShoppingCart className="h-5 w-5 text-slate-700" />
                       <span className="ml-2 text-sm font-semibold text-slate-900">View Cart</span>
                       <span className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">{cartCount}</span>
                     </NavLink>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

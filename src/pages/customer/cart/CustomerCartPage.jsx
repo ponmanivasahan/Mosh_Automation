@@ -135,7 +135,7 @@ const CustomerCartPage = () => {
       items: cartItems,
       total: priceDetails.finalAmount,
       createdAt: new Date().toISOString(),
-      status: 'Placed',
+      status: 'Processing',
       shippingAddress: {
         address: shippingDetails.address,
         city: shippingDetails.city,
@@ -181,6 +181,26 @@ const CustomerCartPage = () => {
       setSelectedOrder(null);
       setMessage(`Order #${order.id} has been cancelled successfully.`);
     }
+  };
+
+  const handleMarkDelivered = (order) => {
+    const updated = {
+      ...order,
+      status: 'Completed'
+    };
+    updateOrder(updated);
+
+    addNotification({
+      id: `not-${Date.now()}`,
+      title: 'Order Completed (Delivered)',
+      message: `${session.name} marked order #${order.id} as delivered successfully.`,
+      createdAt: new Date().toISOString(),
+      read: false,
+      orderId: order.id
+    });
+
+    setSelectedOrder(null);
+    setMessage(`Order #${order.id} marked as Delivered! Thank you.`);
   };
 
   return (
@@ -318,22 +338,50 @@ const CustomerCartPage = () => {
                         </span>
                       </div>
 
-                      {/* Miniature Item list inside order card */}
-                      <div className="order-items-grid">
+                      {/* Ordered Items Preview: Horizontal Grid with badges */}
+                      <div className="flex items-center gap-4 py-3 overflow-x-auto pr-2">
                         {order.items?.map((oItem, oIdx) => (
-                          <div key={oIdx} className="mini-order-item-row">
-                            <img src={oItem.image} alt={oItem.name} className="w-8 h-8 object-contain rounded bg-slate-50 p-0.5 border" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-semibold text-slate-800 truncate">{oItem.name}</p>
-                              <span className="text-[10px] text-slate-400 font-semibold">Qty: {oItem.quantity || 1}</span>
-                            </div>
+                          <div key={oIdx} className="relative shrink-0 border border-slate-100 rounded-lg p-1.5 bg-slate-50 flex items-center justify-center">
+                            <img src={oItem.image} alt={oItem.name} className="w-12 h-12 object-contain" />
+                            <span className="absolute -top-1.5 -right-1.5 bg-slate-800 text-white text-[9px] h-4.5 w-4.5 rounded-full flex items-center justify-center font-bold">
+                              {oItem.quantity || 1}
+                            </span>
                           </div>
                         ))}
                       </div>
 
-                      <div className="order-history-footer">
-                        <span className="grand-total-label">Total Amount Paid</span>
-                        <strong className="grand-total-val">{formatCurrency(order.total)}</strong>
+                      <div className="order-history-footer flex justify-between items-center mt-3 pt-3 border-t">
+                        <div>
+                          <span className="grand-total-label">Total Amount Paid</span>
+                          <strong className="grand-total-val">{formatCurrency(order.total)}</strong>
+                        </div>
+                        <div className="flex gap-2">
+                          {order.status === 'Dispatched' ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMarkDelivered(order);
+                              }}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-4 py-2 rounded transition-all animate-pulse shadow-sm"
+                            >
+                              Delivered
+                            </button>
+                          ) : (
+                            (order.status === 'Placed' || order.status === 'Processing') && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCancelOrder(order);
+                                }}
+                                className="bg-rose-50 border border-rose-200 text-rose-600 text-[10px] font-bold px-4 py-2 rounded hover:bg-rose-100 transition-all shadow-sm"
+                              >
+                                Cancel Order
+                              </button>
+                            )
+                          )}
+                        </div>
                       </div>
                     </article>
                   ))}
@@ -658,14 +706,24 @@ const CustomerCartPage = () => {
                   >
                     Close
                   </button>
-                  {selectedOrder.status !== 'Cancelled' && (
+                  {selectedOrder.status === 'Dispatched' ? (
                     <button
                       type="button"
-                      onClick={() => handleCancelOrder(selectedOrder)}
-                      className="rounded-2xl bg-rose-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-rose-200/50 hover:bg-rose-700 transition-all"
+                      onClick={() => handleMarkDelivered(selectedOrder)}
+                      className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-200/50 hover:bg-emerald-700 transition-all animate-pulse"
                     >
-                      Cancel Order
+                      Delivered
                     </button>
+                  ) : (
+                    selectedOrder.status !== 'Cancelled' && selectedOrder.status !== 'Completed' && (
+                      <button
+                        type="button"
+                        onClick={() => handleCancelOrder(selectedOrder)}
+                        className="rounded-2xl bg-rose-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-rose-200/50 hover:bg-rose-700 transition-all"
+                      >
+                        Cancel Order
+                      </button>
+                    )
                   )}
                 </div>
               </div>

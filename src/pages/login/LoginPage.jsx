@@ -75,6 +75,14 @@ const LoginPage = () => {
 
   // Map the registered phone to a role.
   const getRoleFromPhone = (value) => {
+    // Check if user is already saved in mosh_users list to preserve customized roles
+    const rawUsers = localStorage.getItem('mosh_users');
+    if (rawUsers) {
+      const users = JSON.parse(rawUsers);
+      const existing = users.find(u => u.phone === value);
+      if (existing) return existing.role;
+    }
+
     if (value === loginPhones.admin) {
       return 'admin';
     }
@@ -98,6 +106,17 @@ const LoginPage = () => {
       setError('Please enter your phone number.');
       return;
     }
+
+    // Save/update user inside database list
+    const rawUsers = localStorage.getItem('mosh_users');
+    const users = rawUsers ? JSON.parse(rawUsers) : [];
+    const existingIndex = users.findIndex(u => u.phone === cleanedPhone);
+    if (existingIndex > -1) {
+      users[existingIndex].name = cleanedName; // update name if changed
+    } else {
+      users.push({ name: cleanedName, phone: cleanedPhone, role });
+    }
+    localStorage.setItem('mosh_users', JSON.stringify(users));
 
     const payload = {
       role,

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, Trash2, CheckCircle, Reply, Check, AlertCircle } from 'lucide-react';
+import { Star, Trash2, CheckCircle, Reply, Check, AlertCircle, X } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { getReviews, updateReview, deleteReview } from '../../../utils/storage';
 import { formatDateTime } from '../../../utils/format';
@@ -10,15 +10,17 @@ const adminLinks = [
   { to: '/admin/products', label: 'Product Management' },
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' }
+  { to: '/admin/stories', label: 'Success Stories' },
+  { to: '/admin/settings', label: 'Settings' }
 ];
 
 const AdminReviewsPage = () => {
   const [reviews, setReviews] = useState(() => getReviews());
   const [replyText, setReplyText] = useState({});
   const [replyingId, setReplyingId] = useState('');
+  const [deletingId, setDeletingId] = useState('');
   const [toast, setToast] = useState(null);
-
+ 
   // Live Syncing feed
   useEffect(() => {
     const fetchLatest = () => {
@@ -31,20 +33,20 @@ const AdminReviewsPage = () => {
       window.removeEventListener('storage', fetchLatest);
     };
   }, []);
-
+ 
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [toast]);
-
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this customer review?')) {
-      const next = deleteReview(id);
-      setReviews(next);
-      setToast({ type: 'success', message: 'Review deleted successfully.' });
-    }
+ 
+  const handleConfirmDelete = () => {
+    if (!deletingId) return;
+    const next = deleteReview(deletingId);
+    setReviews(next);
+    setToast({ type: 'success', message: 'Review deleted successfully.' });
+    setDeletingId('');
   };
 
   const handleToggleFeatured = (review) => {
@@ -193,7 +195,7 @@ const AdminReviewsPage = () => {
                         </button>
                       )}
                       <button
-                        onClick={() => handleDelete(rev.id)}
+                        onClick={() => setDeletingId(rev.id)}
                         className="text-[10px] bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-lg font-bold hover:bg-rose-100 transition flex items-center gap-1"
                       >
                         <Trash2 size={12} /> Delete
@@ -206,6 +208,44 @@ const AdminReviewsPage = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal Overlay */}
+      <AnimatePresence>
+        {deletingId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-lg max-w-sm w-full p-6 shadow-2xl border flex flex-col space-y-4"
+            >
+              <div className="flex items-start justify-between">
+                <h3 className="text-base font-bold text-slate-800">Confirm Deletion</h3>
+                <button onClick={() => setDeletingId('')} className="p-1 rounded hover:bg-slate-100">
+                  <X size={16} className="text-slate-400" />
+                </button>
+              </div>
+              <p className="text-xs text-slate-600 font-semibold leading-relaxed">
+                Are you sure you want to delete the review from "{reviews.find(r => r.id === deletingId)?.customerName}"?
+              </p>
+              <div className="flex gap-3 justify-end pt-3">
+                <button
+                  onClick={handleConfirmDelete}
+                  className="text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded-lg transition"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setDeletingId('')}
+                  className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-lg transition border"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </AppShell>
   );
 };

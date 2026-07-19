@@ -117,9 +117,9 @@ const CustomerHelpCenterPage = () => {
         {/* Support Hero Header */}
         <div className="help-hero-banner">
           <div className="hero-content">
-            <span className="badge-kicker">Support Center</span>
+            
             <h2>How can we help you today?</h2>
-            <p>Search our knowledge base or troubleshoot issues using our interactive wizard.</p>
+            <p style={{ color: 'gray',marginLeft:'250px' }}>Search our knowledge base or troubleshoot issues using our interactive wizard.</p>
             
             {/* Search Input bar */}
             <div className="search-bar-wrap">
@@ -268,7 +268,9 @@ const CustomerHelpCenterPage = () => {
                   </div>
                   <div>
                     <span className="contact-label">Email Support</span>
-                    <span className="contact-val">support@moshautomation.com</span>
+                    <span className="contact-val">moshautomation@gmail.com</span>
+                    <br></br>
+                    <span className="contact-val">admin@moshautomation.com</span>
                   </div>
                 </a>
                 
@@ -295,7 +297,7 @@ const CustomerHelpCenterPage = () => {
 
               <div className="response-time-badge">
                 <ShieldCheck size={14} />
-                <span>Avg response time: 2 hours</span>
+                <span>Avg response time: 2 Monitoring days</span>
               </div>
             </div>
 

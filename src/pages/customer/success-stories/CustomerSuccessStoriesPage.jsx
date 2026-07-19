@@ -37,7 +37,7 @@ const CustomerSuccessStoriesPage = () => {
           {stories.map((story) => (
             <article key={story.id} className="story-card bg-white border border-slate-200 p-4 rounded-lg shadow-sm flex flex-col justify-between hover:shadow-md transition">
               <div>
-                <img className="story-image w-full h-40 object-cover rounded-lg border" src={story.image} alt={story.title} />
+                <img className="story-image w-full h-200 object-cover rounded-lg border" src={story.image} alt={story.title} />
                 <div className="story-body mt-4 space-y-2">
                   <span className="text-[9px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-bold uppercase">Customer success</span>
                   <h3 className="text-sm font-bold text-slate-900 leading-snug">{story.title}</h3>

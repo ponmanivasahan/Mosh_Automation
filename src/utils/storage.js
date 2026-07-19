@@ -30,10 +30,21 @@ const fallbackImage = productImageOptions[0]?.value || '';
 const normalizeProduct = (product, index) => {
   const defaultProduct = defaultProducts[index] || defaultProducts.find((item) => item.id === product.id);
 
+  let img = product.image;
+  if (img && (img.includes('src/assets') || img.includes('src\\assets'))) {
+    // Extract filename supporting both Windows and Unix slashes
+    const parts = img.split(/[/\\]/);
+    const filename = parts[parts.length - 1];
+    img = '/' + filename;
+  }
+  if (!img) {
+    img = defaultProduct?.image || fallbackImage;
+  }
+
   return {
     ...defaultProduct,
     ...product,
-    image: product.image || defaultProduct?.image || fallbackImage
+    image: img
   };
 };
 

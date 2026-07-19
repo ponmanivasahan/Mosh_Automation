@@ -11,7 +11,9 @@ import {
   MapPin,
   X,
   Star,
-  FileText
+  FileText,
+  Trash2,
+  Truck
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import {
@@ -28,7 +30,8 @@ const adminLinks = [
   { to: '/admin/products', label: 'Product Management' },
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' }
+  { to: '/admin/stories', label: 'Success Stories' },
+  { to: '/admin/settings', label: 'Settings' }
 ];
 
 const AdminDashboardPage = () => {
@@ -61,11 +64,19 @@ const AdminDashboardPage = () => {
   }, [orders]);
 
   const activeOrdersCount = useMemo(() => {
-    return orders.filter(o => o.status === 'Placed' || o.status === 'Processing').length;
+    return orders.filter(o => o.status === 'Processing' || o.status === 'Placed').length;
+  }, [orders]);
+
+  const dispatchedOrdersCount = useMemo(() => {
+    return orders.filter(o => o.status === 'Dispatched').length;
   }, [orders]);
 
   const completedOrdersCount = useMemo(() => {
-    return orders.filter(o => o.status === 'Dispatched' || o.status === 'Completed').length;
+    return orders.filter(o => o.status === 'Completed').length;
+  }, [orders]);
+
+  const cancelledOrdersCount = useMemo(() => {
+    return orders.filter(o => o.status === 'Cancelled').length;
   }, [orders]);
 
   const totalCustomers = useMemo(() => {
@@ -116,50 +127,78 @@ const AdminDashboardPage = () => {
         </header>
 
         {/* Dynamic Metric Cards Grid */}
-        <section className="admin-metrics-grid grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6">
+        <section className="admin-metrics-grid grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
           {/* Card 1: Total Products */}
           <motion.article
             whileHover={{ y: -4, scale: 1.02 }}
             onClick={() => setActiveModalType('products')}
-            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
           >
             <div className="flex justify-between items-start">
               <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Products</p>
               <Package size={16} className="text-blue-500" />
             </div>
-            <h3 className="text-2xl font-extrabold text-slate-800 mt-3">{products.length}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Click to view items</span>
+            <h3 className="text-2xl font-bold text-slate-800 mt-3">{products.length}</h3>
+            <span className="text-[10px] text-slate-400 font-bold block mt-1">Click to view items</span>
           </motion.article>
 
           {/* Card 2: Active Orders */}
           <motion.article
             whileHover={{ y: -4, scale: 1.02 }}
             onClick={() => setActiveModalType('active-orders')}
-            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
           >
             <div className="flex justify-between items-start">
               <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Active Orders</p>
               <ShoppingCart size={16} className="text-amber-500" />
             </div>
-            <h3 className="text-2xl font-extrabold text-amber-600 mt-3">{activeOrdersCount}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Placed & Processing</span>
+            <h3 className="text-2xl font-bold text-amber-600 mt-3">{activeOrdersCount}</h3>
+            <span className="text-[10px] text-slate-400 font-bold block mt-1">Placed & Processing</span>
           </motion.article>
 
-          {/* Card 3: Completed Orders */}
+          {/* Card 3: Dispatched Orders */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('dispatched-orders')}
+            className="metric-card bg-slate-100 border border-teal-200 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Dispatched</p>
+              <Truck size={16} className="text-teal-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-teal-600 mt-3">{dispatchedOrdersCount}</h3>
+            <span className="text-[10px] text-slate-400 font-bold block mt-1">On the way</span>
+          </motion.article>
+
+          {/* Card 4: Completed Orders */}
           <motion.article
             whileHover={{ y: -4, scale: 1.02 }}
             onClick={() => setActiveModalType('completed-orders')}
-            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
           >
             <div className="flex justify-between items-start">
               <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Completed</p>
               <CheckCircle size={16} className="text-emerald-500" />
             </div>
             <h3 className="text-2xl font-extrabold text-emerald-600 mt-3">{completedOrdersCount}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Dispatched orders</span>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Delivered orders</span>
           </motion.article>
 
-          {/* Card 4: Total Customers */}
+          {/* Card 5: Cancelled Orders */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('cancelled-orders')}
+            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Cancelled Orders</p>
+              <Trash2 size={16} className="text-rose-500" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-rose-600 mt-3">{cancelledOrdersCount}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Cancelled items list</span>
+          </motion.article>
+
+          {/* Card 6: Total Customers */}
           <motion.article
             whileHover={{ y: -4, scale: 1.02 }}
             onClick={() => setActiveModalType('customers')}
@@ -173,21 +212,7 @@ const AdminDashboardPage = () => {
             <span className="text-[10px] text-slate-400 font-semibold block mt-1">Registered clients</span>
           </motion.article>
 
-          {/* Card 5: Total Reviews */}
-          <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
-            onClick={() => setActiveModalType('reviews')}
-            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
-          >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Reviews</p>
-              <MessageSquare size={16} className="text-teal-500" />
-            </div>
-            <h3 className="text-2xl font-extrabold text-teal-600 mt-3">{reviews.length}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Feedback counts</span>
-          </motion.article>
-
-          {/* Card 6: Total Revenue */}
+          {/* Card 7: Total Revenue */}
           <motion.article
             whileHover={{ y: -4, scale: 1.02 }}
             onClick={() => setActiveModalType('revenue')}
@@ -203,8 +228,8 @@ const AdminDashboardPage = () => {
         </section>
 
         {/* Recent Orders - Live management list */}
-        <section className="panel bg-slate-100 border p-6 rounded-lg">
-          <div className="panel-head flex justify-between items-center mb-6">
+        <section className="panel bg-slate-100 border-2 rounded-lg max-h-[78vh] overflow-y-hidden overflow-x-hidden">
+          <div className="panel-head flex justify-between items-center ">
             <div>
               <p className="dashboard-eyebrow text-teal-700 uppercase tracking-wider text-[10px] font-bold">Client operations</p>
               <h2 className="text-lg font-bold text-slate-800">Manage Recent Orders</h2>
@@ -215,7 +240,7 @@ const AdminDashboardPage = () => {
             <p className="text-xs text-slate-400 py-6 italic text-center">No client orders placed yet.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {orders.slice(0, 6).map((order) => (
+              {orders.filter(o => o.status !== 'Cancelled').slice(0, 6).map((order) => (
                 <article key={order.id} className="border border-slate-200 p-5 rounded-lg bg-white flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition duration-300">
                   <div>
                     <div className="flex justify-between items-start gap-2">
@@ -257,15 +282,7 @@ const AdminDashboardPage = () => {
                     </div>
 
                     {order.status !== 'Cancelled' && (
-                      <div className="grid grid-cols-3 gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleStatusChange(order.id, 'Processing')}
-                          disabled={order.status === 'Processing'}
-                          className="text-[9px] bg-indigo-50 border border-indigo-200 text-indigo-700 py-1.5 rounded-lg font-bold hover:bg-indigo-100 disabled:opacity-50"
-                        >
-                          Process
-                        </button>
+                      <div className="grid grid-cols-2 gap-1">
                         <button
                           type="button"
                           onClick={() => handleStatusChange(order.id, 'Dispatched')}
@@ -350,10 +367,31 @@ const AdminDashboardPage = () => {
                     </div>
                   )}
 
+                  {/* Dispatched Orders Details Modal */}
+                  {activeModalType === 'dispatched-orders' && (
+                    <div className="space-y-3">
+                      {orders.filter(o => o.status === 'Dispatched').map(o => (
+                        <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
+                          <div>
+                            <h4 className="font-bold text-slate-800">{o.customerName} ({o.customerPhone})</h4>
+                            <p className="text-[10px] text-slate-400 mt-0.5">ID: #{o.id} · {formatDateTime(o.createdAt)}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-teal-50 text-teal-700 font-bold uppercase mb-1">{o.status}</span>
+                            <strong className="block text-teal-700">{formatCurrency(o.total)}</strong>
+                          </div>
+                        </div>
+                      ))}
+                      {orders.filter(o => o.status === 'Dispatched').length === 0 && (
+                        <p className="text-xs text-slate-400 italic text-center py-6">No dispatched orders.</p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Completed Orders Details Modal */}
                   {activeModalType === 'completed-orders' && (
                     <div className="space-y-3">
-                      {orders.filter(o => o.status === 'Dispatched' || o.status === 'Completed').map(o => (
+                      {orders.filter(o => o.status === 'Completed').map(o => (
                         <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
                           <div>
                             <h4 className="font-bold text-slate-800">{o.customerName} ({o.customerPhone})</h4>
@@ -365,7 +403,7 @@ const AdminDashboardPage = () => {
                           </div>
                         </div>
                       ))}
-                      {orders.filter(o => o.status === 'Dispatched' || o.status === 'Completed').length === 0 && (
+                      {orders.filter(o => o.status === 'Completed').length === 0 && (
                         <p className="text-xs text-slate-400 italic text-center py-6">No completed orders.</p>
                       )}
                     </div>
@@ -391,25 +429,23 @@ const AdminDashboardPage = () => {
                     </div>
                   )}
 
-                  {/* Reviews Details Modal */}
-                  {activeModalType === 'reviews' && (
+                  {/* Cancelled Orders Details Modal */}
+                  {activeModalType === 'cancelled-orders' && (
                     <div className="space-y-3">
-                      {reviews.map(r => (
-                        <div key={r.id} className="p-3 border rounded-lg bg-slate-50 space-y-1.5 text-xs">
-                          <div className="flex justify-between items-center">
-                            <h4 className="font-bold text-slate-800">{r.customerName}</h4>
-                            <div className="flex items-center gap-0.5 text-amber-500">
-                              {Array.from({ length: r.rating || 5 }).map((_, i) => (
-                                <Star key={i} size={11} fill="currentColor" />
-                              ))}
-                            </div>
+                      {orders.filter(o => o.status === 'Cancelled').map(o => (
+                        <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
+                          <div>
+                            <h4 className="font-bold text-slate-800">{o.customerName} ({o.customerPhone})</h4>
+                            <p className="text-[10px] text-slate-400 mt-0.5">ID: #{o.id} · {formatDateTime(o.createdAt)}</p>
                           </div>
-                          <p className="text-[10px] text-teal-600 font-bold">Product: {r.productName}</p>
-                          <p className="text-slate-600 italic font-semibold">"{r.comment || r.review}"</p>
+                          <div className="text-right">
+                            <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-bold uppercase mb-1">{o.status}</span>
+                            <strong className="block text-slate-400 line-through">{formatCurrency(o.total)}</strong>
+                          </div>
                         </div>
                       ))}
-                      {reviews.length === 0 && (
-                        <p className="text-xs text-slate-400 italic text-center py-6">No customer reviews yet.</p>
+                      {orders.filter(o => o.status === 'Cancelled').length === 0 && (
+                        <p className="text-xs text-slate-400 italic text-center py-6">No cancelled orders.</p>
                       )}
                     </div>
                   )}

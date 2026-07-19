@@ -5,6 +5,7 @@ import AdminDashboardPage from './pages/admin/dashboard/AdminDashboardPage';
 import AdminProductsPage from './pages/admin/products/AdminProductsPage';
 import AdminReviewsPage from './pages/admin/reviews/AdminReviewsPage';
 import AdminStoriesPage from './pages/admin/stories/AdminStoriesPage';
+import AdminSettingsPage from './pages/admin/settings/AdminSettingsPage';
 import CustomerCartPage from './pages/customer/cart/CustomerCartPage';
 import CustomerDashboardPage from './pages/customer/dashboard/CustomerDashboardPage';
 import CustomerQueryPage from './pages/customer/CustomerQueryPage';
@@ -122,6 +123,14 @@ const App = () => (
       element={
         <ProtectedRoute role="admin">
           <AdminStoriesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/settings"
+      element={
+        <ProtectedRoute role="admin">
+          <AdminSettingsPage />
         </ProtectedRoute>
       }
     />

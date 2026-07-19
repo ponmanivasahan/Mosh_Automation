@@ -21,7 +21,8 @@ const adminLinks = [
   { to: '/admin/products', label: 'Product Management' },
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' }
+  { to: '/admin/stories', label: 'Success Stories' },
+  { to: '/admin/settings', label: 'Settings' }
 ];
 
 const emptyForm = {
@@ -659,7 +660,7 @@ const AdminProductsPage = () => {
                   </button>
                 </div>
                 <p className="text-xs text-slate-600 font-semibold leading-relaxed">
-                  Are you sure you want to delete this product?
+                  Are you sure you want to delete the product "{products.find(p => p.id === deletingId)?.name}"?
                 </p>
                 <div className="flex gap-3 justify-end pt-3">
                   <button

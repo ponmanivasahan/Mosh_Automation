@@ -1,0 +1,123 @@
+/* ==========================================================================
+   MOSH AUTOMATION - MOBILE RESPONSIVE STYLING OVERRIDES
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Layout reset */
+  body {
+    font-size: 14px;
+  }
+
+  main {
+    margin-left: 0 !important;
+    padding: 16px !important;
+  }
+
+  .mx-auto {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Grid column resets to single columns */
+  .grid,
+  .new-products-grid,
+  .story-grid,
+  .reviews-layout-grid,
+  .queries-grid,
+  .admin-metrics-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  /* Flex wrap components */
+  .flex-wrap-mobile {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  /* Form & Modals scaling */
+  .modal-box,
+  .rounded-3xl,
+  .p-6,
+  .p-8 {
+    padding: 16px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Sticky top offset adjustments */
+  .lg\:sticky,
+  .sticky {
+    position: static !important;
+  }
+
+  /* Adjust metric card layouts */
+  .metric-card {
+    padding: 16px !important;
+    gap: 8px !important;
+  }
+
+  /* Scrollable tables inside wrappers on small screens */
+  .overflow-x-auto {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 600px !important;
+  }
+
+  /* Sidebar top header logo positioning */
+  header.md\:hidden {
+    display: flex !important;
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Primary typography scaling */
+  h1, .text-3xl {
+    font-size: 1.6rem !important;
+  }
+
+  h2, .text-2xl {
+    font-size: 1.35rem !important;
+  }
+
+  h3, .text-xl {
+    font-size: 1.15rem !important;
+  }
+
+  /* Horizontal catalogs inside cards view scrollability adjustments */
+  .overflow-x-auto {
+    padding-bottom: 8px;
+  }
+
+  /* Buttons stacked layouts */
+  .card-btn-group,
+  .qty-control-btn-group {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  /* Login page container fixes */
+  .login-shell {
+    width: 95% !important;
+    padding: 16px !important;
+  }
+
+  .login-page {
+    flex-direction: column !important;
+    padding: 24px 12px !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .login-story {
+    display: none !important;
+  }
+}

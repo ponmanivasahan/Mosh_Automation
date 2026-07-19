@@ -10,7 +10,8 @@ const adminLinks = [
   { to: '/admin/products', label: 'Product Management' },
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' }
+  { to: '/admin/stories', label: 'Success Stories' },
+  { to: '/admin/settings', label: 'Settings' }
 ];
 
 const AdminBillingPage = () => {

@@ -9,7 +9,8 @@ const adminLinks = [
   { to: '/admin/products', label: 'Product Management' },
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' }
+  { to: '/admin/stories', label: 'Success Stories' },
+  { to: '/admin/settings', label: 'Settings' }
 ];
 
 const emptyForm = {
@@ -25,6 +26,7 @@ const AdminStoriesPage = () => {
   const [stories, setStories] = useState(() => getStories());
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState('');
+  const [deletingId, setDeletingId] = useState('');
   const [toast, setToast] = useState(null);
 
   // Live Syncing feed
@@ -105,13 +107,13 @@ const AdminStoriesPage = () => {
     resetForm();
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this success story?')) {
-      const next = deleteStory(id);
-      setStories(next);
-      setToast({ type: 'success', message: 'Success story deleted successfully.' });
-      if (editingId === id) resetForm();
-    }
+  const handleConfirmDelete = () => {
+    if (!deletingId) return;
+    const next = deleteStory(deletingId);
+    setStories(next);
+    setToast({ type: 'success', message: 'Success story deleted successfully.' });
+    if (editingId === deletingId) resetForm();
+    setDeletingId('');
   };
 
   const triggerEdit = (story) => {
@@ -291,7 +293,7 @@ const AdminStoriesPage = () => {
                       <Edit2 size={11} /> Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(story.id)}
+                      onClick={() => setDeletingId(story.id)}
                       className="text-[10px] bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-lg font-bold hover:bg-rose-100 transition flex items-center gap-1"
                       type="button"
                     >
@@ -304,6 +306,44 @@ const AdminStoriesPage = () => {
           </article>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal Overlay */}
+      <AnimatePresence>
+        {deletingId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-lg max-w-sm w-full p-6 shadow-2xl border flex flex-col space-y-4"
+            >
+              <div className="flex items-start justify-between">
+                <h3 className="text-base font-bold text-slate-800">Confirm Deletion</h3>
+                <button onClick={() => setDeletingId('')} className="p-1 rounded hover:bg-slate-100">
+                  <X size={16} className="text-slate-400" />
+                </button>
+              </div>
+              <p className="text-xs text-slate-600 font-semibold leading-relaxed">
+                Are you sure you want to delete the success story "{stories.find(s => s.id === deletingId)?.title}"?
+              </p>
+              <div className="flex gap-3 justify-end pt-3">
+                <button
+                  onClick={handleConfirmDelete}
+                  className="text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded-lg transition"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setDeletingId('')}
+                  className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-lg transition border"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </AppShell>
   );
 };
