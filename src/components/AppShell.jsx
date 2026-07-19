@@ -17,11 +17,14 @@ import { getCart } from '../utils/storage';
 const iconMap = {
   Dashboard: LayoutDashboard,
   Products: Package,
+  'Product Management': Package,
   Cart: ShoppingCart,
   'Cart & Order Details': ShoppingCart,
   Estimations: ClipboardList,
   Queries: ClipboardList,
+  'Query Management': ClipboardList,
   'Rate & Reviews': MessageSquare,
+  Reviews: MessageSquare,
   'Success Stories': Sparkles,
   'Help Center': HelpCircle
 };
@@ -45,7 +48,7 @@ const AppShell = ({ title, links, children }) => {
               <img src="/logo background.png" alt="Mosh Automation" className="h-12 w-12 rounded-2xl object-cover" />
               <div>
                 <p className="text-xs uppercase tracking-[0.35em] text-teal-700/80">Mosh Automation</p>
-                <p className="text-sm text-slate-500">Customer Portal</p>
+                <p className="text-sm text-slate-500">{session?.role === 'admin' ? 'Admin Portal' : 'Customer Portal'}</p>
               </div>
             </div>
 
@@ -75,27 +78,34 @@ const AppShell = ({ title, links, children }) => {
           </div>
 
         
-            <div className="flex-1 rounded-2xl bg-white p-4 border border-slate-100 shadow-sm text-left">
-              <div className="mx-auto w-full max-w-[240px] rounded-2xl bg-white p-5 border border-slate-100 shadow-sm text-left">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 flex items-center justify-center rounded-2xl bg-teal-600 text-white font-bold text-lg shadow-sm">{session?.name?.[0] || 'G'}</div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.35em] text-slate-400 mb-1">Signed in as</p>
-                    <p className="text-lg font-semibold tracking-tight text-slate-900 leading-tight">{session?.name || 'Guest'}</p>
-                    <p className="mt-1 text-sm text-slate-500 font-medium">{session?.phone || '0000000000'}</p>
+            <div className="space-y-4 pt-6 border-t border-slate-100">
+              <div className="rounded-2xl bg-slate-50/50 p-4 border border-slate-100 text-left">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 flex shrink-0 items-center justify-center rounded-xl bg-teal-600 text-white font-bold text-base shadow-sm">
+                    {session?.name?.[0] || 'G'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400 font-semibold mb-0.5">Signed in as</p>
+                    <p className="text-sm font-bold tracking-tight text-slate-900 truncate leading-tight">
+                      {session?.name || 'Guest'}
+                    </p>
+                    <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
+                      {session?.phone || '0000000000'}
+                    </p>
                   </div>
                 </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={logout}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-teal-600 bg-white px-4 py-3 text-teal-600 font-bold text-sm hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-100 transition-colors"
+                aria-label="Logout"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Logout</span>
+              </button>
             </div>
-            </div>
-            <button
-              type="button"
-              onClick={logout}
-              className="inline-flex items-center gap-2 rounded-md border border-teal-600 bg-white px-3 py-2 text-teal-600 font-semibold hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-100"
-              aria-label="Logout"
-            >
-              <LogOut className="h-5 w-" />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
           </div>
         
       </aside>
@@ -115,11 +125,13 @@ const AppShell = ({ title, links, children }) => {
                     {session?.name?.[0] || 'M'}
                   </div>
                  
-                  <NavLink to="/customer/cart" className="relative inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-sm">
-                    <ShoppingCart className="h-5 w-5 text-slate-700" />
-                    <span className="ml-2 text-sm font-semibold text-slate-900">View Cart</span>
-                    <span className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">{cartCount}</span>
-                  </NavLink>
+                  {session?.role !== 'admin' && (
+                    <NavLink to="/customer/cart" className="relative inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 shadow-sm">
+                      <ShoppingCart className="h-5 w-5 text-slate-700" />
+                      <span className="ml-2 text-sm font-semibold text-slate-900">View Cart</span>
+                      <span className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-teal-600 text-xs font-bold text-white">{cartCount}</span>
+                    </NavLink>
+                  )}
                 </div>
               </div>
             </div>

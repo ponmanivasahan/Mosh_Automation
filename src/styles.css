@@ -1,4 +1,4 @@
-@tailwind base;
+  @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -231,14 +231,19 @@ a {
 .stat-card,
 .catalog-summary-card,
 .metric-card,
-.admin-mini-product {
+.admin-mini-product,
+.product-catalog-card,
+.order-history-card,
+.notification-alert-card {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  background: var(--surface);
+  background: #f1f5f9 !important; /* bg-slate-100 */
   border: 1px solid var(--edge);
-  border-radius: var(--radius);
+  border-radius: 8px !important; /* border-radius-xs */
   box-shadow: var(--shadow-soft);
   color: var(--ink);
+  font-weight: 700 !important; /* font-bold */
+  gap: 8px !important; /* gap-2 */
 }
 
 .panel {
@@ -559,3 +564,26 @@ textarea {
     text-align: left;
   }
 }
+
+/* Custom scrollbar styling for a premium look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.02);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.12);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.24);
+}
+
+/* Firefox compatibility */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(15, 23, 42, 0.12) rgba(15, 23, 42, 0.02);
+}
+

@@ -196,3 +196,63 @@ export const defaultBillingSettings = {
 export const loginPhones = {
   admin: '0987654321'
 };
+
+export const defaultStories = [
+  {
+    id: 's-1',
+    title: 'Smart Water Control for a Growing Home',
+    subtitle: 'Automated tank management built for reliability',
+    description: 'Homeowners reduced manual monitoring by 90% after installing the Auto Change Water Level Controller across twin tank setups.',
+    image: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=600&q=80',
+    youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    instagramUrl: 'https://www.instagram.com/reel/C8q_z5NoyxP/'
+  },
+  {
+    id: 's-2',
+    title: 'Dependable GSM Automation in Rural Installations',
+    subtitle: 'Safe dry-run protection with remote access',
+    description: 'Rural pumping systems now run unattended with GSM-based control and dry-run prevention for consistent uptime.',
+    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80',
+    youtubeUrl: '',
+    instagramUrl: ''
+  },
+  {
+    id: 's-3',
+    title: 'High-capacity Three-Phase Control for Industry',
+    subtitle: 'Scaling automation for heavy workloads',
+    description: 'Large facilities improved efficiency and cut maintenance response time by adopting the three phase fully automatic controller.',
+    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80',
+    youtubeUrl: '',
+    instagramUrl: ''
+  }
+];
+
+export const defaultReviews = [
+  {
+    id: 'rev-1',
+    customerName: 'Aravind Kumar',
+    productName: 'Auto Change Water Level Controller',
+    rating: 5,
+    comment: 'Superb product! Installed it last month and my water overflow issues are completely gone. Highly recommended.',
+    createdAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
+    featured: true
+  },
+  {
+    id: 'rev-2',
+    customerName: 'Meera Nair',
+    productName: 'Double Tank Fully Automated',
+    rating: 4,
+    comment: 'Works very well for my dual tank setup. The automation logic is smart. Installation was quick.',
+    createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
+    featured: false
+  },
+  {
+    id: 'rev-3',
+    customerName: 'Vijay Ram',
+    productName: 'GSM Based On-Off with Dry Run',
+    rating: 5,
+    comment: 'Amazing convenience to turn my pump on and off using SMS dry run alert. Solved my agricultural needs.',
+    createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
+    featured: true
+  }
+];

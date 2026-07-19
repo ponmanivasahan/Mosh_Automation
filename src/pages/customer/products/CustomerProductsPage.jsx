@@ -11,9 +11,21 @@ import ProductModal from '../../../components/products/ProductModal';
 import CheckoutModal from '../../../components/products/CheckoutModal';
 
 const CustomerProductsPage = () => {
-  const products = getProducts();
+  const [products, setProducts] = useState(() => getProducts());
   const [cartItems, setCartItems] = useState(getCart());
   const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const syncProducts = () => {
+      setProducts(getProducts());
+    };
+    const interval = setInterval(syncProducts, 1000);
+    window.addEventListener('storage', syncProducts);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', syncProducts);
+    };
+  }, []);
   const [filters, setFilters] = useState({ q: '', category: '', sort: 'newest' });
   const [viewProduct, setViewProduct] = useState(null);
   const [checkoutProduct, setCheckoutProduct] = useState(null);

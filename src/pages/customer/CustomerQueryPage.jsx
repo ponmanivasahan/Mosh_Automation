@@ -65,6 +65,7 @@ const CustomerQueryPage = () => {
   // Queries local state loaded from storage
   const [queries, setQueries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('All'); // All, Pending, Completed
 
   // Form State
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id || '');
@@ -126,6 +127,15 @@ const CustomerQueryPage = () => {
   const editSelectedProduct = useMemo(() => {
     return products.find((p) => p.id === editProductId);
   }, [products, editProductId]);
+
+  const filteredQueries = useMemo(() => {
+    return queries.filter((q) => {
+      const isReplied = !!q.adminResponse || q.stage?.toLowerCase() === 'replied' || q.stage?.toLowerCase() === 'completed';
+      if (activeTab === 'Pending') return !isReplied;
+      if (activeTab === 'Completed') return isReplied;
+      return true;
+    });
+  }, [queries, activeTab]);
 
   // Handle Query Submission
   const handleSubmitQuery = (e) => {
@@ -444,18 +454,44 @@ const CustomerQueryPage = () => {
             <h3 className="text-xl font-bold text-slate-800">My Submitted Queries</h3>
           </div>
 
+          {/* Tabs Filter Bar */}
+          <div className="flex gap-2 border-b border-slate-200 pb-3">
+            {['All', 'Pending', 'Completed'].map((tab) => {
+              const count = tab === 'All'
+                ? queries.length
+                : tab === 'Pending'
+                ? queries.filter(q => !q.adminResponse && q.stage !== 'replied' && q.stage !== 'completed').length
+                : queries.filter(q => !!q.adminResponse || q.stage === 'replied' || q.stage === 'completed').length;
+              
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setActiveTab(tab)}
+                  className={`text-xs font-bold px-4 py-2 rounded-xl transition ${
+                    activeTab === tab
+                      ? 'bg-teal-600 text-white shadow-md'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {tab} ({count})
+                </button>
+              );
+            })}
+          </div>
+
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[1, 2].map((i) => (
                 <div key={i} className="h-56 bg-slate-100 animate-pulse border border-slate-200 rounded-3xl" />
               ))}
             </div>
-          ) : queries.length ? (
+          ) : filteredQueries.length ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {queries.map((q) => {
-                const statusInfo = getStatusConfig(q.stage);
+              {filteredQueries.map((q) => {
+                const statusInfo = getStatusConfig(q.adminResponse ? 'replied' : q.stage);
                 const StatusIcon = statusInfo.icon;
-                const isPending = q.stage?.toLowerCase() === 'requested' || q.stage?.toLowerCase() === 'pending';
+                const isPending = (q.stage?.toLowerCase() === 'requested' || q.stage?.toLowerCase() === 'pending') && !q.seen && !q.adminResponse;
 
                 return (
                   <article key={q.id} className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm flex flex-col justify-between gap-6 hover:shadow-md hover:border-slate-300 transition duration-300">
@@ -485,6 +521,13 @@ const CustomerQueryPage = () => {
                         <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Your Question / Inquiry</span>
                         <p className="text-slate-700 text-sm font-medium leading-relaxed">{q.requirement}</p>
                       </div>
+
+                      {q.adminResponse && (
+                        <div className="rounded-2xl bg-teal-50/50 p-3 border border-teal-100/50 text-slate-800 text-xs">
+                          <strong className="block text-teal-800 font-bold uppercase tracking-wider text-[9px] mb-1">Admin Response</strong>
+                          <p className="leading-relaxed font-semibold">{q.adminResponse}</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Edit Option with Guard Message */}

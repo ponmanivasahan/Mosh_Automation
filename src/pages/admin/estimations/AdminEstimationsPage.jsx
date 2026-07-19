@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import AppShell from '../../../components/AppShell';
 import { getEstimations } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
@@ -12,7 +13,34 @@ const adminLinks = [
 ];
 
 const AdminEstimationsPage = () => {
-  const estimations = getEstimations();
+  const [estimations, setEstimations] = useState(() => getEstimations());
+
+  useEffect(() => {
+    const fetchLatest = () => {
+      const ests = getEstimations();
+      setEstimations(ests);
+
+      // Auto mark estimations as seen when viewed by admin
+      let updatedAny = false;
+      const updated = ests.map((e) => {
+        if (!e.seen) {
+          updatedAny = true;
+          return { ...e, seen: true };
+        }
+        return e;
+      });
+      if (updatedAny) {
+        localStorage.setItem('mosh_estimations', JSON.stringify(updated));
+      }
+    };
+    fetchLatest();
+    const interval = setInterval(fetchLatest, 1500);
+    window.addEventListener('storage', fetchLatest);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', fetchLatest);
+    };
+  }, []);
 
   return (
     <AppShell title="Customer Estimation Records" links={adminLinks}>

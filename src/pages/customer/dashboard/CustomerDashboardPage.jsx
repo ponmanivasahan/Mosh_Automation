@@ -8,17 +8,36 @@ import { customerLinks } from '../../../utils/customerLinks';
 import './CustomerDashboardPage.css';
 
 /* ── Simulated sales data per product (seeded from price to feel realistic) ── */
-const getSalesData = (products) =>
-  products.map((p, i) => ({
-    id: p.id,
-    name: p.name,
-    shortName: p.name.length > 18 ? p.name.slice(0, 16) + '…' : p.name,
-    image: p.image,
-    price: p.price,
-    description: p.description,
-    sales: Math.max(8, Math.round((p.price / 200) + (i % 5) * 7 + ((i * 17) % 13))),
-    rating: (4.2 + ((i * 3) % 8) * 0.1).toFixed(1),
-  }));
+const getSalesData = (products, orders) => {
+  const salesMap = {};
+  orders
+    .filter(o => o.status !== 'Cancelled')
+    .forEach(o => {
+      if (Array.isArray(o.items)) {
+        o.items.forEach(item => {
+          const pId = item.productId;
+          if (pId) {
+            salesMap[pId] = (salesMap[pId] || 0) + Number(item.quantity || 1);
+          }
+        });
+      }
+    });
+
+  return products.map((p, i) => {
+    const baseOverallSales = Math.max(8, Math.round((p.price / 200) + (i % 5) * 7 + ((i * 17) % 13)));
+    const liveSales = salesMap[p.id] || 0;
+    return {
+      id: p.id,
+      name: p.name,
+      shortName: p.name.length > 18 ? p.name.slice(0, 16) + '…' : p.name,
+      image: p.image,
+      price: p.price,
+      description: p.description,
+      sales: baseOverallSales + liveSales,
+      rating: (4.2 + ((i * 3) % 8) * 0.1).toFixed(1),
+    };
+  });
+};
 
 /* ── Colour palette for pie chart slices ── */
 const PIE_COLORS = [
@@ -30,11 +49,24 @@ const PIE_COLORS = [
 /* ── Pure SVG Pie Chart ── */
 const PieChartSVG = ({ data }) => {
   const total = data.reduce((s, d) => s + d.sales, 0);
-  let cumulative = 0;
   const size = 220;
   const cx = size / 2;
   const cy = size / 2;
   const r = 85;
+
+  if (total === 0) {
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="mx-auto">
+        <circle cx={cx} cy={cy} r={r} fill="#f1f5f9" stroke="#e2e8f0" strokeWidth="2" />
+        <circle cx={cx} cy={cy} r={r - 30} fill="#ffffff" />
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold fill-slate-400">
+          No Sales Yet
+        </text>
+      </svg>
+    );
+  }
+
+  let cumulative = 0;
 
   const slices = data.map((d, i) => {
     const fraction = d.sales / total;
@@ -161,14 +193,36 @@ const BarChartSVG = ({ data }) => {
 
 /* ──────── Main Dashboard Component ──────── */
 const CustomerDashboardPage = () => {
-  const products = getProducts();
-  const cartItems = getCart();
-  const orders = getOrders();
-  const reviews = getReviews();
+  const [products, setProducts] = useState(() => getProducts());
+  const [cartItems, setCartItems] = useState(() => getCart());
+  const [orders, setOrders] = useState(() => getOrders());
+  const [reviews, setReviews] = useState(() => getReviews());
   const scrollRef = useRef(null);
   const [hoveredProduct, setHoveredProduct] = useState(null);
 
-  const salesData = useMemo(() => getSalesData(products), [products]);
+  useEffect(() => {
+    const updateStats = () => {
+      setProducts(getProducts());
+      setCartItems(getCart());
+      setOrders(getOrders());
+      setReviews(getReviews());
+    };
+
+    // Live update interval
+    const interval = setInterval(updateStats, 1000);
+
+    // Storage event listeners for immediate updates
+    window.addEventListener('storage', updateStats);
+    window.addEventListener('mosh_cart_updated', updateStats);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', updateStats);
+      window.removeEventListener('mosh_cart_updated', updateStats);
+    };
+  }, []);
+
+  const salesData = useMemo(() => getSalesData(products, orders), [products, orders]);
 
   const cartCount = useMemo(
     () => cartItems.reduce((total, item) => total + Number(item.quantity || 1), 0),

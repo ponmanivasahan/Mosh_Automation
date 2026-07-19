@@ -1,271 +1,453 @@
+import { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Package,
+  TrendingUp,
+  ShoppingCart,
+  CheckCircle,
+  Users,
+  MessageSquare,
+  RefreshCw,
+  MapPin,
+  X,
+  Star,
+  FileText
+} from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import { getEstimations, getNotifications, getOrders, getProducts } from '../../../utils/storage';
+import {
+  getProducts,
+  getOrders,
+  getReviews,
+  updateOrder
+} from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import './AdminDashboardPage.css';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Add/Delete Products' },
-  { to: '/admin/billing', label: 'Estimation Billing' },
-  { to: '/admin/estimations', label: 'Customer Estimations' },
-  { to: '/admin/notifications', label: 'Notifications' }
+  { to: '/admin/products', label: 'Product Management' },
+  { to: '/admin/billing', label: 'Query Management' },
+  { to: '/admin/reviews', label: 'Reviews' },
+  { to: '/admin/stories', label: 'Success Stories' }
 ];
 
 const AdminDashboardPage = () => {
-  const products = getProducts();
-  const estimations = getEstimations();
-  const orders = getOrders();
-  const notifications = getNotifications();
+  const [products, setProducts] = useState(() => getProducts());
+  const [orders, setOrders] = useState(() => getOrders());
+  const [reviews, setReviews] = useState(() => getReviews());
+  const [activeModalType, setActiveModalType] = useState(null);
 
-  const unread = notifications.filter((note) => !note.read).length;
-  const totalRevenue = orders.reduce((acc, order) => acc + Number(order.total || 0), 0);
-  const orderCount = orders.length;
-  const estimationTotal = estimations.reduce((acc, item) => acc + Number(item.total || 0), 0);
-
-  const productSales = products
-    .map((product) => {
-      const productOrders = orders.reduce((count, order) => {
-        const matches = Array.isArray(order.items)
-          ? order.items.some((item) => item.productId === product.id)
-          : false;
-
-        return matches ? count + 1 : count;
-      }, 0);
-
-      return {
-        name: product.name,
-        sales: productOrders || Math.max(1, Math.round(product.price / 10000)),
-        revenue: product.price
-      };
-    })
-    .sort((left, right) => right.sales - left.sales)
-    .slice(0, 6);
-
-  const categoryBreakdown = products.reduce((items, product, index) => {
-    const category = product.name.split(' ')[0];
-    const existing = items.find((item) => item.label === category);
-
-    if (existing) {
-      existing.count += 1;
-      existing.value += Number(product.price || 0);
-      return items;
-    }
-
-    items.push({
-      label: category,
-      count: 1,
-      value: Number(product.price || 0),
-      hue: (index * 43) % 360
-    });
-
-    return items;
+  // Live Syncing feed
+  useEffect(() => {
+    const fetchLatest = () => {
+      setProducts(getProducts());
+      setOrders(getOrders());
+      setReviews(getReviews());
+    };
+    fetchLatest();
+    const interval = setInterval(fetchLatest, 1500);
+    window.addEventListener('storage', fetchLatest);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', fetchLatest);
+    };
   }, []);
 
-  const topCountries = [
-    { name: 'Poland', value: 19 },
-    { name: 'Austria', value: 15 },
-    { name: 'Spain', value: 13 },
-    { name: 'Romania', value: 12 },
-    { name: 'France', value: 11 },
-    { name: 'Italy', value: 11 },
-    { name: 'Germany', value: 10 },
-    { name: 'Ukraine', value: 9 }
-  ];
+  // Total Revenue (excl. cancelled orders)
+  const totalRevenue = useMemo(() => {
+    return orders
+      .filter(o => o.status !== 'Cancelled')
+      .reduce((acc, order) => acc + Number(order.total || 0), 0);
+  }, [orders]);
 
-  const chartDays = [
-    { label: '1 Jul', margin: 28, revenue: 38 },
-    { label: '2 Jul', margin: 31, revenue: 46 },
-    { label: '3 Jul', margin: 20, revenue: 57 },
-    { label: '4 Jul', margin: 33, revenue: 44 },
-    { label: '5 Jul', margin: 53, revenue: 58 },
-    { label: '6 Jul', margin: 54, revenue: 61 },
-    { label: '7 Jul', margin: 14, revenue: 40 },
-    { label: '8 Jul', margin: 34, revenue: 43 },
-    { label: '9 Jul', margin: 25, revenue: 32 },
-    { label: '10 Jul', margin: 45, revenue: 49 },
-    { label: '11 Jul', margin: 33, revenue: 46 },
-    { label: '12 Jul', margin: 58, revenue: 54 }
-  ];
+  const activeOrdersCount = useMemo(() => {
+    return orders.filter(o => o.status === 'Placed' || o.status === 'Processing').length;
+  }, [orders]);
+
+  const completedOrdersCount = useMemo(() => {
+    return orders.filter(o => o.status === 'Dispatched' || o.status === 'Completed').length;
+  }, [orders]);
+
+  const totalCustomers = useMemo(() => {
+    const uniquePhones = new Set(orders.map(o => o.customerPhone));
+    return uniquePhones.size;
+  }, [orders]);
+
+  // Order status modification handler
+  const handleStatusChange = (orderId, newStatus) => {
+    const targetOrder = orders.find(o => o.id === orderId);
+    if (!targetOrder) return;
+    const updated = { ...targetOrder, status: newStatus };
+    updateOrder(updated);
+    setOrders(getOrders());
+  };
+
+  // Extract unique customers list for modal
+  const customersList = useMemo(() => {
+    const map = new Map();
+    orders.forEach(o => {
+      if (o.customerPhone && !map.has(o.customerPhone)) {
+        map.set(o.customerPhone, {
+          name: o.customerName || 'Customer',
+          phone: o.customerPhone,
+          city: o.shippingAddress?.city || 'Coimbatore',
+          ordersCount: orders.filter(x => x.customerPhone === o.customerPhone).length
+        });
+      }
+    });
+    return Array.from(map.values());
+  }, [orders]);
 
   return (
-    <AppShell title="Admin Dashboard" links={adminLinks}>
-      <section className="admin-dashboard-page">
-        <header className="admin-topbar panel">
+    <AppShell title="Admin Portal Control Dashboard" links={adminLinks}>
+      <div className="admin-dashboard-page space-y-8">
+        
+        {/* Top Header Overview Panel */}
+        <header className="admin-topbar panel flex justify-between items-center bg-slate-100 p-6 rounded-lg border border-slate-200">
           <div>
-            <p className="dashboard-eyebrow">Operations Overview</p>
-            <h2>Dashboard</h2>
-            <p>Track orders, estimations, and product activity in one place.</p>
+            <p className="dashboard-eyebrow text-teal-700 uppercase tracking-wider text-[10px] font-bold">HQ Systems Control</p>
+            <h2 className="text-2xl font-bold text-slate-800">Admin Portal Overview</h2>
+            <p className="text-xs text-slate-500 mt-1">Real-time telemetry tracking client orders, products catalog status, and customer reviews.</p>
           </div>
-
-          <div className="admin-topbar-chip">
-            <span>Time period</span>
-            <strong>This month</strong>
+          <div className="admin-topbar-chip flex items-center gap-2 bg-white text-teal-700 px-4 py-2 rounded-xl border shadow-sm">
+            <RefreshCw size={14} className="animate-spin text-teal-600" />
+            <strong className="text-xs font-bold">Live Sync Active</strong>
           </div>
         </header>
 
-        <section className="admin-metrics-grid">
-          <article className="metric-card">
-            <p>Total Products</p>
-            <h3>{products.length}</h3>
-            <span>Catalog items available for customers</span>
-          </article>
-          <article className="metric-card">
-            <p>Total Revenue</p>
-            <h3>{formatCurrency(totalRevenue)}</h3>
-            <span>Customer orders completed</span>
-          </article>
-          <article className="metric-card">
-            <p>Total Orders</p>
-            <h3>{orderCount}</h3>
-            <span>Placed orders awaiting progress</span>
-          </article>
-          <article className="metric-card">
-            <p>Total Returns</p>
-            <h3>{Math.max(0, Math.round(orderCount * 0.12))}</h3>
-            <span>Estimated returns from recent activity</span>
-          </article>
-          <article className="metric-card add-card">
-            <p>Add Data</p>
-            <h3>+</h3>
-            <span>Manage products and content</span>
-          </article>
+        {/* Dynamic Metric Cards Grid */}
+        <section className="admin-metrics-grid grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6">
+          {/* Card 1: Total Products */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('products')}
+            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Products</p>
+              <Package size={16} className="text-blue-500" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-slate-800 mt-3">{products.length}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Click to view items</span>
+          </motion.article>
+
+          {/* Card 2: Active Orders */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('active-orders')}
+            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Active Orders</p>
+              <ShoppingCart size={16} className="text-amber-500" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-amber-600 mt-3">{activeOrdersCount}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Placed & Processing</span>
+          </motion.article>
+
+          {/* Card 3: Completed Orders */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('completed-orders')}
+            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Completed</p>
+              <CheckCircle size={16} className="text-emerald-500" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-emerald-600 mt-3">{completedOrdersCount}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Dispatched orders</span>
+          </motion.article>
+
+          {/* Card 4: Total Customers */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('customers')}
+            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Customers</p>
+              <Users size={16} className="text-indigo-500" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-indigo-600 mt-3">{totalCustomers}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Registered clients</span>
+          </motion.article>
+
+          {/* Card 5: Total Reviews */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('reviews')}
+            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Reviews</p>
+              <MessageSquare size={16} className="text-teal-500" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-teal-600 mt-3">{reviews.length}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Feedback counts</span>
+          </motion.article>
+
+          {/* Card 6: Total Revenue */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('revenue')}
+            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Revenue</p>
+              <TrendingUp size={16} className="text-pink-500" />
+            </div>
+            <h3 className="text-xl font-extrabold text-pink-600 mt-3 truncate">{formatCurrency(totalRevenue)}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Excl. cancelled</span>
+          </motion.article>
         </section>
 
-        <section className="admin-chart-card panel">
-          <div className="panel-head admin-panel-head">
+        {/* Recent Orders - Live management list */}
+        <section className="panel bg-slate-100 border p-6 rounded-lg">
+          <div className="panel-head flex justify-between items-center mb-6">
             <div>
-              <p className="dashboard-eyebrow">Product Sales</p>
-              <h2>Product sales</h2>
-            </div>
-            <div className="chart-legend">
-              <span><i className="legend-mark legend-margin" /> Gross margin</span>
-              <span><i className="legend-mark legend-revenue" /> Revenue</span>
+              <p className="dashboard-eyebrow text-teal-700 uppercase tracking-wider text-[10px] font-bold">Client operations</p>
+              <h2 className="text-lg font-bold text-slate-800">Manage Recent Orders</h2>
             </div>
           </div>
 
-          <div className="sales-chart">
-            {chartDays.map((day) => (
-              <div className="sales-day" key={day.label}>
-                <div className="sales-bars">
-                  <span className="sales-bar margin-bar" style={{ height: `${day.margin}%` }} />
-                  <span className="sales-bar revenue-bar" style={{ height: `${day.revenue}%` }} />
-                </div>
-                <small>{day.label}</small>
-              </div>
-            ))}
-          </div>
-        </section>
+          {!orders.length ? (
+            <p className="text-xs text-slate-400 py-6 italic text-center">No client orders placed yet.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {orders.slice(0, 6).map((order) => (
+                <article key={order.id} className="border border-slate-200 p-5 rounded-lg bg-white flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition duration-300">
+                  <div>
+                    <div className="flex justify-between items-start gap-2">
+                      <h3 className="text-sm font-bold text-slate-900 truncate">{order.customerName}</h3>
+                      <span className={`text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
+                        order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' :
+                        order.status === 'Dispatched' ? 'bg-teal-50 text-teal-600' :
+                        order.status === 'Processing' ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-bold mt-1">Phone: {order.customerPhone}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">ID: #{order.id} · {formatDateTime(order.createdAt)}</p>
+                    {order.paymentMethod && (
+                      <p className="text-[10px] text-teal-600 mt-1 font-bold">Paid via: {order.paymentMethod}</p>
+                    )}
 
-        <section className="admin-two-column-grid">
-          <article className="panel admin-category-panel">
-            <div className="panel-head admin-panel-head">
-              <div>
-                <p className="dashboard-eyebrow">Catalog Mix</p>
-                <h2>Sales by product category</h2>
-              </div>
-            </div>
+                    {order.shippingAddress && (
+                      <p className="text-[11px] text-slate-500 mt-2 bg-slate-50 p-2 rounded-lg border border-slate-100 flex items-center gap-1.5 font-bold">
+                        <MapPin size={12} className="text-teal-600" />
+                        <span className="truncate">Deliver: {order.shippingAddress.city}</span>
+                      </p>
+                    )}
 
-            <div className="category-body">
-              <div className="category-list">
-                {categoryBreakdown.map((item) => (
-                  <div className="category-item" key={item.label}>
-                    <span className="category-dot" style={{ backgroundColor: `hsl(${item.hue} 80% 58%)` }} />
-                    <span>{item.label}</span>
-                    <strong>{Math.round((item.value / Math.max(products.length, 1)) / 1000)}k</strong>
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {order.items?.map((it, idx) => (
+                        <span key={idx} className="text-[9px] bg-slate-50 border px-2 py-0.5 rounded-md text-slate-600 font-bold">
+                          {it.name} (x{it.quantity})
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
 
-              <div className="donut-wrap" aria-hidden="true">
-                <div
-                  className="donut-chart"
-                  style={{
-                    background: `conic-gradient(${categoryBreakdown
-                      .map((item, index) => {
-                        const start = categoryBreakdown
-                          .slice(0, index)
-                          .reduce((acc, entry) => acc + entry.count, 0);
-                        const total = products.length || 1;
-                        const from = (start / total) * 360;
-                        const to = ((start + item.count) / total) * 360;
-                        return `hsl(${item.hue} 80% 58%) ${from}deg ${to}deg`;
-                      })
-                      .join(', ')})`
-                  }}
-                >
-                  <div className="donut-hole" />
-                </div>
-              </div>
-            </div>
-          </article>
+                  <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] text-slate-400 font-bold uppercase">Total Amount</span>
+                      <strong className="text-base font-extrabold text-teal-600">{formatCurrency(order.total)}</strong>
+                    </div>
 
-          <article className="panel admin-country-panel">
-            <div className="panel-head admin-panel-head">
-              <div>
-                <p className="dashboard-eyebrow">Regional Sales</p>
-                <h2>Sales by countries</h2>
-              </div>
-            </div>
-
-            <div className="country-list">
-              {topCountries.map((country) => (
-                <div className="country-row" key={country.name}>
-                  <span>{country.name}</span>
-                  <div className="country-bar-track">
-                    <div className="country-bar-fill" style={{ width: `${country.value}%` }} />
+                    {order.status !== 'Cancelled' && (
+                      <div className="grid grid-cols-3 gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleStatusChange(order.id, 'Processing')}
+                          disabled={order.status === 'Processing'}
+                          className="text-[9px] bg-indigo-50 border border-indigo-200 text-indigo-700 py-1.5 rounded-lg font-bold hover:bg-indigo-100 disabled:opacity-50"
+                        >
+                          Process
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStatusChange(order.id, 'Dispatched')}
+                          disabled={order.status === 'Dispatched'}
+                          className="text-[9px] bg-teal-50 border border-teal-200 text-teal-700 py-1.5 rounded-lg font-bold hover:bg-teal-100 disabled:opacity-50"
+                        >
+                          Dispatch
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStatusChange(order.id, 'Cancelled')}
+                          className="text-[9px] bg-rose-50 border border-rose-200 text-rose-700 py-1.5 rounded-lg font-bold hover:bg-rose-100"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <strong>{country.value}%</strong>
-                </div>
+                </article>
               ))}
             </div>
-          </article>
+          )}
         </section>
-      </section>
 
-      <section className="panel admin-recent-panel">
-        <div className="panel-head admin-panel-head">
-          <div>
-            <p className="dashboard-eyebrow">Operational Feed</p>
-            <h2>Recent orders</h2>
-          </div>
-          <p>{unread} unread notifications</p>
-        </div>
+        {/* Clickable Details Modals Overlay */}
+        <AnimatePresence>
+          {activeModalType && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-lg max-w-3xl w-full p-6 shadow-2xl border flex flex-col space-y-4 max-h-[85vh] overflow-y-auto"
+              >
+                <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="badge-kicker text-teal-600 font-bold uppercase tracking-wider text-[10px]">HQ Control Portal</span>
+                    <h2 className="text-xl font-bold text-slate-800 capitalize">{activeModalType.replace('-', ' ')} Summary</h2>
+                  </div>
+                  <button onClick={() => setActiveModalType(null)} className="p-1.5 rounded-lg hover:bg-slate-100 transition">
+                    <X size={18} className="text-slate-400" />
+                  </button>
+                </div>
 
-        {!orders.length && <p>No orders yet.</p>}
+                {/* Modal Contents based on type */}
+                <div className="space-y-4 flex-1 overflow-y-auto pr-1">
+                  
+                  {/* Products Details Modal */}
+                  {activeModalType === 'products' && (
+                    <div className="space-y-3">
+                      {products.map(p => (
+                        <div key={p.id} className="flex items-center gap-3 p-3 border rounded-lg bg-slate-50">
+                          <img src={p.image} alt={p.name} className="w-10 h-10 object-contain bg-white rounded border p-1" />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-bold text-slate-800 truncate">{p.name}</h4>
+                            <p className="text-[10px] text-slate-400 font-bold">{p.category || 'Automation'}</p>
+                          </div>
+                          <strong className="text-xs text-teal-600">{formatCurrency(p.price)}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-        <div className="stack">
-          {orders.slice(0, 8).map((order) => (
-            <article className="row-card" key={order.id}>
-              <div>
-                <h3>{order.customerName}</h3>
-                <p>{order.customerPhone}</p>
-                <p>{formatDateTime(order.createdAt)}</p>
-              </div>
-              <strong>{formatCurrency(order.total)}</strong>
-            </article>
-          ))}
-        </div>
-      </section>
+                  {/* Active Orders Details Modal */}
+                  {activeModalType === 'active-orders' && (
+                    <div className="space-y-3">
+                      {orders.filter(o => o.status === 'Placed' || o.status === 'Processing').map(o => (
+                        <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
+                          <div>
+                            <h4 className="font-bold text-slate-800">{o.customerName} ({o.customerPhone})</h4>
+                            <p className="text-[10px] text-slate-400 mt-0.5">ID: #{o.id} · {formatDateTime(o.createdAt)}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold uppercase mb-1">{o.status}</span>
+                            <strong className="block text-teal-700">{formatCurrency(o.total)}</strong>
+                          </div>
+                        </div>
+                      ))}
+                      {orders.filter(o => o.status === 'Placed' || o.status === 'Processing').length === 0 && (
+                        <p className="text-xs text-slate-400 italic text-center py-6">No active orders.</p>
+                      )}
+                    </div>
+                  )}
 
-      <section className="panel admin-product-strip">
-        <div className="panel-head admin-panel-head">
-          <div>
-            <p className="dashboard-eyebrow">Catalog Snapshot</p>
-            <h2>Products in rotation</h2>
-          </div>
-          <p>{estimations.length} estimations · {formatCurrency(estimationTotal)}</p>
-        </div>
+                  {/* Completed Orders Details Modal */}
+                  {activeModalType === 'completed-orders' && (
+                    <div className="space-y-3">
+                      {orders.filter(o => o.status === 'Dispatched' || o.status === 'Completed').map(o => (
+                        <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
+                          <div>
+                            <h4 className="font-bold text-slate-800">{o.customerName} ({o.customerPhone})</h4>
+                            <p className="text-[10px] text-slate-400 mt-0.5">ID: #{o.id} · {formatDateTime(o.createdAt)}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold uppercase mb-1">{o.status}</span>
+                            <strong className="block text-teal-700">{formatCurrency(o.total)}</strong>
+                          </div>
+                        </div>
+                      ))}
+                      {orders.filter(o => o.status === 'Dispatched' || o.status === 'Completed').length === 0 && (
+                        <p className="text-xs text-slate-400 italic text-center py-6">No completed orders.</p>
+                      )}
+                    </div>
+                  )}
 
-        <div className="admin-product-grid">
-          {productSales.map((item) => (
-            <article className="admin-mini-product" key={item.name}>
-              <h3>{item.name}</h3>
-              <p>{item.sales} sales</p>
-              <strong>{formatCurrency(item.revenue)}</strong>
-            </article>
-          ))}
-        </div>
-      </section>
+                  {/* Customers Details Modal */}
+                  {activeModalType === 'customers' && (
+                    <div className="space-y-3">
+                      {customersList.map(c => (
+                        <div key={c.phone} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
+                          <div>
+                            <h4 className="font-bold text-slate-800">{c.name}</h4>
+                            <p className="text-[10px] text-slate-400 mt-0.5">Phone: {c.phone} · City: {c.city}</p>
+                          </div>
+                          <span className="bg-slate-200 px-2.5 py-1 rounded-lg text-slate-600 font-bold text-[10px]">
+                            {c.ordersCount} orders placed
+                          </span>
+                        </div>
+                      ))}
+                      {customersList.length === 0 && (
+                        <p className="text-xs text-slate-400 italic text-center py-6">No customers registered.</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Reviews Details Modal */}
+                  {activeModalType === 'reviews' && (
+                    <div className="space-y-3">
+                      {reviews.map(r => (
+                        <div key={r.id} className="p-3 border rounded-lg bg-slate-50 space-y-1.5 text-xs">
+                          <div className="flex justify-between items-center">
+                            <h4 className="font-bold text-slate-800">{r.customerName}</h4>
+                            <div className="flex items-center gap-0.5 text-amber-500">
+                              {Array.from({ length: r.rating || 5 }).map((_, i) => (
+                                <Star key={i} size={11} fill="currentColor" />
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-teal-600 font-bold">Product: {r.productName}</p>
+                          <p className="text-slate-600 italic font-semibold">"{r.comment || r.review}"</p>
+                        </div>
+                      ))}
+                      {reviews.length === 0 && (
+                        <p className="text-xs text-slate-400 italic text-center py-6">No customer reviews yet.</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Revenue / Transaction Details Modal */}
+                  {activeModalType === 'revenue' && (
+                    <div className="space-y-3">
+                      {orders.filter(o => o.status !== 'Cancelled').map(o => (
+                        <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
+                          <div>
+                            <h4 className="font-bold text-slate-800">Order ID: #{o.id}</h4>
+                            <p className="text-[10px] text-slate-400 mt-0.5">By: {o.customerName} · {formatDateTime(o.createdAt)}</p>
+                          </div>
+                          <strong className="text-emerald-600 font-bold">{formatCurrency(o.total)}</strong>
+                        </div>
+                      ))}
+                      {orders.filter(o => o.status !== 'Cancelled').length === 0 && (
+                        <p className="text-xs text-slate-400 italic text-center py-6">No revenues captured yet.</p>
+                      )}
+                    </div>
+                  )}
+
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex justify-end">
+                  <button
+                    onClick={() => setActiveModalType(null)}
+                    className="bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-lg hover:bg-slate-900 transition"
+                  >
+                    Close Panel
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+      </div>
     </AppShell>
   );
 };

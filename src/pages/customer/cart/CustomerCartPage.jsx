@@ -11,7 +11,9 @@ import {
   CreditCard,
   Package,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  X,
+  MapPin
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { useAuth } from '../../../utils/AuthContext';
@@ -21,7 +23,8 @@ import {
   clearCart,
   getCart,
   getOrders,
-  setCart
+  setCart,
+  updateOrder
 } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import { customerLinks } from '../../../utils/customerLinks';
@@ -31,6 +34,18 @@ const CustomerCartPage = () => {
   const { session } = useAuth();
   const [cartItems, setCartItems] = useState(getCart());
   const [message, setMessage] = useState('');
+  
+  // Checkout Modal states
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [shippingDetails, setShippingDetails] = useState({
+    name: session?.name || '',
+    address: '',
+    city: '',
+    pincode: '',
+    phone: session?.phone || '',
+    paymentMethod: 'Google Pay'
+  });
 
   // Auto-dismiss alert messages
   useEffect(() => {
@@ -40,7 +55,19 @@ const CustomerCartPage = () => {
     }
   }, [message]);
 
-  const orders = getOrders().filter((order) => order.customerPhone === session.phone);
+  const [orders, setOrders] = useState(() => getOrders().filter((order) => order.customerPhone === session?.phone));
+
+  useEffect(() => {
+    const syncOrders = () => {
+      setOrders(getOrders().filter((order) => order.customerPhone === session?.phone));
+    };
+    const interval = setInterval(syncOrders, 1000);
+    window.addEventListener('storage', syncOrders);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', syncOrders);
+    };
+  }, [session]);
 
   const priceDetails = useMemo(() => {
     const totalItems = cartItems.reduce((acc, item) => acc + Number(item.quantity || 1), 0);
@@ -90,22 +117,38 @@ const CustomerCartPage = () => {
       setMessage('Cart is empty. Add products before placing an order.');
       return;
     }
+    // Open the modal instead of placing order immediately
+    setShowCheckoutModal(true);
+  };
+
+  const confirmOrder = (e) => {
+    e.preventDefault();
+    if (!shippingDetails.name.trim() || !shippingDetails.address.trim() || !shippingDetails.city.trim() || !shippingDetails.pincode.trim()) {
+      alert('Please fill in all the required delivery details.');
+      return;
+    }
 
     const order = {
       id: `ord-${Date.now()}`,
-      customerName: session.name,
+      customerName: shippingDetails.name,
       customerPhone: session.phone,
       items: cartItems,
       total: priceDetails.finalAmount,
       createdAt: new Date().toISOString(),
-      status: 'Placed'
+      status: 'Placed',
+      shippingAddress: {
+        address: shippingDetails.address,
+        city: shippingDetails.city,
+        pincode: shippingDetails.pincode
+      },
+      paymentMethod: shippingDetails.paymentMethod
     };
 
     addOrder(order);
     addNotification({
       id: `not-${Date.now()}`,
       title: 'New Customer Order',
-      message: `${session.name} (${session.phone}) placed an order for ${formatCurrency(priceDetails.finalAmount)}.`,
+      message: `${shippingDetails.name} (${session.phone}) placed an order for ${formatCurrency(priceDetails.finalAmount)} to ${shippingDetails.city}.`,
       createdAt: new Date().toISOString(),
       read: false,
       orderId: order.id
@@ -113,7 +156,31 @@ const CustomerCartPage = () => {
 
     clearCart();
     setCartItems([]);
+    setShowCheckoutModal(false);
     setMessage('Order placed successfully! Support team has been notified.');
+  };
+
+  const handleCancelOrder = (order) => {
+    if (window.confirm("Are you sure you want to cancel this order?")) {
+      const updated = {
+        ...order,
+        status: 'Cancelled'
+      };
+      updateOrder(updated);
+      
+      // Notify admin
+      addNotification({
+        id: `not-${Date.now()}`,
+        title: 'Order Cancelled',
+        message: `${session.name} cancelled order #${order.id} totaling ${formatCurrency(order.total)}.`,
+        createdAt: new Date().toISOString(),
+        read: false,
+        orderId: order.id
+      });
+      
+      setSelectedOrder(null);
+      setMessage(`Order #${order.id} has been cancelled successfully.`);
+    }
   };
 
   return (
@@ -234,7 +301,11 @@ const CustomerCartPage = () => {
               ) : (
                 <div className="orders-timeline-list">
                   {orders.map((order) => (
-                    <article className="order-history-card" key={order.id}>
+                    <article
+                      className="order-history-card cursor-pointer hover:border-teal-300 hover:shadow-md transition-all duration-300"
+                      key={order.id}
+                      onClick={() => setSelectedOrder(order)}
+                    >
                       <div className="order-history-top">
                         <div className="order-meta-info">
                           <span className="order-id-label">Order ID: #{order.id}</span>
@@ -332,6 +403,276 @@ const CustomerCartPage = () => {
 
         </div>
       </div>
+
+      {/* Checkout Modal */}
+      <AnimatePresence>
+        {showCheckoutModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Modal Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCheckoutModal(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+
+            {/* Modal Box */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="relative z-10 w-full max-w-lg overflow-hidden rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 md:p-8"
+            >
+              <button
+                type="button"
+                onClick={() => setShowCheckoutModal(false)}
+                className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-600">
+                  <MapPin size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 leading-tight">Delivery Details</h3>
+                  <p className="text-xs text-slate-500">Provide shipping address to complete your order</p>
+                </div>
+              </div>
+
+              <form onSubmit={confirmOrder} className="space-y-4">
+                <div>
+                  <label htmlFor="checkout-name" className="mb-1 text-xs font-semibold text-slate-700">Full Name *</label>
+                  <input
+                    id="checkout-name"
+                    type="text"
+                    required
+                    placeholder="Enter your name"
+                    value={shippingDetails.name}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, name: e.target.value })}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="checkout-phone" className="mb-1 text-xs font-semibold text-slate-700">Phone Number (Read-only)</label>
+                    <input
+                      id="checkout-phone"
+                      type="text"
+                      disabled
+                      value={shippingDetails.phone}
+                      className="w-full cursor-not-allowed rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="checkout-city" className="mb-1 text-xs font-semibold text-slate-700">City *</label>
+                    <input
+                      id="checkout-city"
+                      type="text"
+                      required
+                      placeholder="e.g. Coimbatore"
+                      value={shippingDetails.city}
+                      onChange={(e) => setShippingDetails({ ...shippingDetails, city: e.target.value })}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="checkout-address" className="mb-1 text-xs font-semibold text-slate-700">Delivering Address *</label>
+                  <textarea
+                    id="checkout-address"
+                    required
+                    placeholder="Street address, Flat, Apartment number"
+                    value={shippingDetails.address}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, address: e.target.value })}
+                    rows={3}
+                    className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="checkout-pincode" className="mb-1 text-xs font-semibold text-slate-700">Pincode / ZIP Code *</label>
+                  <input
+                    id="checkout-pincode"
+                    type="text"
+                    required
+                    placeholder="6-digit pincode"
+                    pattern="[0-9]{6}"
+                    title="Please enter a valid 6-digit pincode"
+                    value={shippingDetails.pincode}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, pincode: e.target.value.replace(/\D/g, '') })}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 text-xs font-semibold text-slate-700">Payment Method *</label>
+                  <div className="grid grid-cols-2 gap-3 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => setShippingDetails({ ...shippingDetails, paymentMethod: 'Google Pay' })}
+                      className={`text-xs py-2.5 px-3 rounded-xl border font-bold transition-all ${
+                        shippingDetails.paymentMethod === 'Google Pay' ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm' : 'bg-white text-slate-500 border-slate-200'
+                      }`}
+                    >
+                      Google Pay
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShippingDetails({ ...shippingDetails, paymentMethod: 'PhonePe' })}
+                      className={`text-xs py-2.5 px-3 rounded-xl border font-bold transition-all ${
+                        shippingDetails.paymentMethod === 'PhonePe' ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm' : 'bg-white text-slate-500 border-slate-200'
+                      }`}
+                    >
+                      PhonePe
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Amount</p>
+                    <strong className="text-xl font-extrabold text-teal-600">{formatCurrency(priceDetails.finalAmount)}</strong>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowCheckoutModal(false)}
+                      className="rounded-2xl px-4 py-3 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="rounded-2xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-200/50 hover:bg-teal-700 hover:shadow-teal-300/50 transition-all"
+                    >
+                      Confirm Order
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Order Details Modal */}
+      <AnimatePresence>
+        {selectedOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Modal Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedOrder(null)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+
+            {/* Modal Box */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="relative z-10 w-full max-w-xl overflow-hidden rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 md:p-8"
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedOrder(null)}
+                className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition-colors"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="mb-6 flex items-start justify-between">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Order Details</span>
+                  <h3 className="text-xl font-bold text-slate-900 leading-tight">Order #{selectedOrder.id}</h3>
+                  <p className="mt-1 text-xs text-slate-500">Ordered on {formatDateTime(selectedOrder.createdAt)}</p>
+                </div>
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${
+                  selectedOrder.status === 'Cancelled'
+                    ? 'bg-rose-50 text-rose-600'
+                    : selectedOrder.status === 'Delivered' || selectedOrder.status === 'Completed'
+                    ? 'bg-emerald-50 text-emerald-600'
+                    : 'bg-blue-50 text-blue-600'
+                }`}>
+                  {selectedOrder.status}
+                </span>
+              </div>
+
+              {/* Scrollable details wrapper */}
+              <div className="max-h-[360px] overflow-y-auto pr-2 space-y-6">
+                {/* Shipping Details */}
+                <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                    <MapPin size={12} className="text-teal-600" /> Shipping Address
+                  </h4>
+                  <p className="text-sm font-semibold text-slate-800">{selectedOrder.customerName || session.name}</p>
+                  <p className="text-xs text-slate-500 mt-1">Phone: {selectedOrder.customerPhone || session.phone}</p>
+                  {selectedOrder.shippingAddress ? (
+                    <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+                      {selectedOrder.shippingAddress.address}, {selectedOrder.shippingAddress.city} - {selectedOrder.shippingAddress.pincode}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-400 mt-2 italic">Standard direct delivery address</p>
+                  )}
+                </div>
+
+                {/* Items list */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Items Ordered</h4>
+                  <div className="divide-y divide-slate-100">
+                    {selectedOrder.items?.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-4 py-3 first:pt-0 last:pb-0">
+                        <img src={item.image} alt={item.name} className="h-12 w-12 object-contain rounded-lg bg-slate-50 p-1 border border-slate-100" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-slate-800 truncate">{item.name}</p>
+                          <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                            {formatCurrency(item.unitPrice || item.total / (item.quantity || 1))} x {item.quantity || 1}
+                          </p>
+                        </div>
+                        <strong className="text-sm font-bold text-slate-800">{formatCurrency(item.total)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Total and Cancel Option */}
+              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Amount Paid</p>
+                  <strong className="text-xl font-extrabold text-teal-600">{formatCurrency(selectedOrder.total)}</strong>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOrder(null)}
+                    className="rounded-2xl px-4 py-3 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition-colors"
+                  >
+                    Close
+                  </button>
+                  {selectedOrder.status !== 'Cancelled' && (
+                    <button
+                      type="button"
+                      onClick={() => handleCancelOrder(selectedOrder)}
+                      className="rounded-2xl bg-rose-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-rose-200/50 hover:bg-rose-700 transition-all"
+                    >
+                      Cancel Order
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </AppShell>
   );
 };

@@ -2,9 +2,9 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminBillingPage from './pages/admin/billing/AdminBillingPage';
 import AdminDashboardPage from './pages/admin/dashboard/AdminDashboardPage';
-import AdminEstimationsPage from './pages/admin/estimations/AdminEstimationsPage';
-import AdminNotificationsPage from './pages/admin/notifications/AdminNotificationsPage';
 import AdminProductsPage from './pages/admin/products/AdminProductsPage';
+import AdminReviewsPage from './pages/admin/reviews/AdminReviewsPage';
+import AdminStoriesPage from './pages/admin/stories/AdminStoriesPage';
 import CustomerCartPage from './pages/customer/cart/CustomerCartPage';
 import CustomerDashboardPage from './pages/customer/dashboard/CustomerDashboardPage';
 import CustomerQueryPage from './pages/customer/CustomerQueryPage';
@@ -110,18 +110,18 @@ const App = () => (
       }
     />
     <Route
-      path="/admin/estimations"
+      path="/admin/reviews"
       element={
         <ProtectedRoute role="admin">
-          <AdminEstimationsPage />
+          <AdminReviewsPage />
         </ProtectedRoute>
       }
     />
     <Route
-      path="/admin/notifications"
+      path="/admin/stories"
       element={
         <ProtectedRoute role="admin">
-          <AdminNotificationsPage />
+          <AdminStoriesPage />
         </ProtectedRoute>
       }
     />

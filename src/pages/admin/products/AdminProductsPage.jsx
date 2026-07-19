@@ -1,168 +1,686 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Plus,
+  Trash2,
+  Edit2,
+  CheckCircle,
+  Package,
+  Search,
+  Upload,
+  X,
+  FileText
+} from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { getProducts, setProducts } from '../../../utils/storage';
-import { formatCurrency } from '../../../utils/format';
-import { productImageOptions } from '../../../data/defaults';
-import './AdminProductsPage.css'; 
+import { formatCurrency, formatDateTime } from '../../../utils/format';
+import './AdminProductsPage.css';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Add/Delete Products' },
-  { to: '/admin/billing', label: 'Estimation Billing' },
-  { to: '/admin/estimations', label: 'Customer Estimations' },
-  { to: '/admin/notifications', label: 'Notifications' }
+  { to: '/admin/products', label: 'Product Management' },
+  { to: '/admin/billing', label: 'Query Management' },
+  { to: '/admin/reviews', label: 'Reviews' },
+  { to: '/admin/stories', label: 'Success Stories' }
 ];
 
 const emptyForm = {
   name: '',
   description: '',
   price: '',
-  image: productImageOptions[0].value
+  image: '',
+  category: 'Automation',
+  features: '',
+  stock: '10',
+  warranty: '1 Year Warranty',
+  specifications: '',
+  availability: 'In Stock'
 };
 
 const AdminProductsPage = () => {
-  const [products, setProductsState] = useState(getProducts());
-  const [form, setForm] = useState(emptyForm);
+  const [products, setProductsState] = useState(() => getProducts());
+  const [searchQuery, setSearchQuery] = useState('');
   const [message, setMessage] = useState('');
+
+  // Register Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [registerForm, setRegisterForm] = useState(emptyForm);
+
+  // Edit Modal State
   const [editingId, setEditingId] = useState('');
+  const [editForm, setEditForm] = useState(emptyForm);
 
-  const update = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+  // Delete Confirmation state
+  const [deletingId, setDeletingId] = useState('');
+
+  // Live Syncing feed
+  useEffect(() => {
+    const fetchLatest = () => {
+      setProductsState(getProducts());
+    };
+    const interval = setInterval(fetchLatest, 1500);
+    window.addEventListener('storage', fetchLatest);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', fetchLatest);
+    };
+  }, []);
+
+  const updateRegister = (key, value) => {
+    setRegisterForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const resetForm = () => {
-    setForm(emptyForm);
+  const updateEdit = (key, value) => {
+    setEditForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const resetRegister = () => {
+    setRegisterForm(emptyForm);
+    setShowAddModal(false);
+  };
+
+  const resetEdit = () => {
     setEditingId('');
+    setEditForm(emptyForm);
   };
 
-  const submitProduct = (event) => {
-    event.preventDefault();
-    if (!form.name.trim() || !form.description.trim() || Number(form.price) <= 0 || !form.image) {
-      setMessage('Please fill all product fields with valid values.');
+  // FileReader helper for local image uploading
+  const handleImageUpload = (e, formType) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (formType === 'register') {
+        updateRegister('image', reader.result);
+      } else {
+        updateEdit('image', reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRegisterSubmit = (e) => {
+    e.preventDefault();
+    if (!registerForm.name.trim() || !registerForm.description.trim() || Number(registerForm.price) <= 0 || !registerForm.image) {
+      setMessage('Please fill all fields and upload a product image.');
       return;
     }
 
-    const productPayload = {
-      id: editingId || `p-${Date.now()}`,
-      name: form.name.trim(),
-      description: form.description.trim(),
-      price: Number(form.price),
-      image: form.image
+    const payload = {
+      id: `p-${Date.now()}`,
+      name: registerForm.name.trim(),
+      description: registerForm.description.trim(),
+      price: Number(registerForm.price),
+      image: registerForm.image,
+      category: registerForm.category,
+      features: registerForm.features,
+      stock: Number(registerForm.stock) || 0,
+      warranty: registerForm.warranty,
+      specifications: registerForm.specifications,
+      availability: registerForm.availability,
+      createdAt: new Date().toISOString()
     };
 
-    const updated = editingId
-      ? products.map((item) => (item.id === editingId ? productPayload : item))
-      : [productPayload, ...products];
-
-    setProducts(updated);
-    setProductsState(updated);
-    resetForm();
-    setMessage(editingId ? 'Product updated successfully.' : 'Product added successfully.');
+    const nextList = [payload, ...products];
+    setProducts(nextList);
+    setProductsState(nextList);
+    resetRegister();
+    setMessage('Product published to catalog successfully!');
+    setTimeout(() => setMessage(''), 3000);
   };
 
-  const deleteProduct = (id) => {
-    const updated = products.filter((item) => item.id !== id);
-    setProducts(updated);
-    setProductsState(updated);
-    if (editingId === id) {
-      resetForm();
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    if (!editForm.name.trim() || !editForm.description.trim() || Number(editForm.price) <= 0 || !editForm.image) {
+      setMessage('Please fill all fields and upload a product image.');
+      return;
     }
-    setMessage('Product deleted successfully.');
+
+    const payload = {
+      id: editingId,
+      name: editForm.name.trim(),
+      description: editForm.description.trim(),
+      price: Number(editForm.price),
+      image: editForm.image,
+      category: editForm.category,
+      features: editForm.features,
+      stock: Number(editForm.stock) || 0,
+      warranty: editForm.warranty,
+      specifications: editForm.specifications,
+      availability: editForm.availability,
+      createdAt: products.find(p => p.id === editingId)?.createdAt || new Date().toISOString()
+    };
+
+    const nextList = products.map(p => p.id === editingId ? payload : p);
+    setProducts(nextList);
+    setProductsState(nextList);
+    resetEdit();
+    setMessage('Product changes saved successfully!');
+    setTimeout(() => setMessage(''), 3000);
   };
 
-  const editProduct = (product) => {
+  const handleConfirmDelete = () => {
+    if (!deletingId) return;
+    const nextList = products.filter(p => p.id !== deletingId);
+    setProducts(nextList);
+    setProductsState(nextList);
+    setDeletingId('');
+    setMessage('Product removed from catalog.');
+    setTimeout(() => setMessage(''), 3000);
+  };
+
+  const triggerEdit = (product) => {
     setEditingId(product.id);
-    setForm({
+    setEditForm({
       name: product.name,
       description: product.description,
       price: String(product.price),
-      image: product.image || productImageOptions[0].value
+      image: product.image || '',
+      category: product.category || 'Automation',
+      features: product.features || '',
+      stock: String(product.stock || 10),
+      warranty: product.warranty || '1 Year Warranty',
+      specifications: product.specifications || '',
+      availability: product.availability || 'In Stock'
     });
-    setMessage(`Editing ${product.name}.`);
   };
 
+  const filteredProducts = useMemo(() => {
+    return products.filter(p =>
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [products, searchQuery]);
+
   return (
-    <AppShell title="Add And Delete Products" links={adminLinks}>
-      <section className="panel split admin-products-page">
-        <article className="admin-product-form-card">
-          <h2>{editingId ? 'Update Product' : 'Add Product'}</h2>
-          <form className="form-grid" onSubmit={submitProduct}>
-            <label>
-              Product Name
-              <input
-                value={form.name}
-                onChange={(e) => update('name', e.target.value)}
-                placeholder="Enter product name"
-              />
-            </label>
+    <AppShell title="Product Management Portal" links={adminLinks}>
+      <div className="max-w-7xl mx-auto space-y-8 pb-16">
+        
+        {/* Toast Alert Feedback */}
+        <AnimatePresence>
+          {message && (
+            <motion.div
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border backdrop-blur-xl bg-teal-600 text-white border-teal-500 font-bold text-xs"
+            >
+              <CheckCircle size={16} />
+              <span>{message}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            <label>
-              Description
-              <textarea
-                value={form.description}
-                onChange={(e) => update('description', e.target.value)}
-                placeholder="Enter product description"
-              />
-            </label>
+        {/* Catalog rotation banner container */}
+        <article className="panel bg-slate-100 p-6 rounded-lg border border-slate-200">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">Products in Rotation</h2>
+              <p className="text-xs text-slate-500 mt-1">Live active listings on the customer portal.</p>
+            </div>
 
-            <label>
-              Price
-              <input
-                type="number"
-                value={form.price}
-                onChange={(e) => update('price', e.target.value)}
-                placeholder="Enter price"
-              />
-            </label>
-
-            <label>
-              Product Image
-              <select value={form.image} onChange={(e) => update('image', e.target.value)}>
-                {productImageOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <button className="btn btn-primary" type="submit">
-              {editingId ? 'Update Product' : 'Add Product'}
-            </button>
-            {editingId && (
-              <button className="btn btn-outline" type="button" onClick={resetForm}>
-                Cancel Edit
-              </button>
-            )}
-          </form>
-
-          {message && <p className="success-text">{message}</p>}
-        </article>
-
-        <article className="admin-product-list-card">
-          <h2>Existing Products</h2>
-          <div className="stack admin-product-list">
-            {products.map((item) => (
-              <div className="row-card" key={item.id}>
-                <img className="admin-product-image" src={item.image} alt={item.name} />
-                <div className="admin-product-details">
-                  <h3>{item.name}</h3>
-                  <p>{item.description}</p>
-                  <p>{formatCurrency(item.price)}</p>
-                </div>
-                <div className="admin-product-actions">
-                  <button className="btn btn-outline" type="button" onClick={() => editProduct(item)}>
-                    Update
-                  </button>
-                  <button className="btn btn-ghost" type="button" onClick={() => deleteProduct(item.id)}>
-                    Delete
-                  </button>
-                </div>
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              <div className="flex items-center gap-2 border bg-white px-3 py-1.5 rounded-lg text-slate-500 shadow-sm flex-1 md:flex-none">
+                <Search size={14} className="text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Filter catalog..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-transparent border-0 text-xs outline-none focus:ring-0 w-full md:max-w-[150px]"
+                />
               </div>
+
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2 px-4 rounded-lg shadow transition flex items-center gap-1.5 shrink-0"
+              >
+                <Plus size={14} /> Add Product
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {filteredProducts.map((p) => (
+              <article key={p.id} className="border border-slate-200 p-4 rounded-lg bg-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm hover:shadow-md transition">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="w-20 h-20 bg-slate-50 border rounded-lg p-2 flex items-center justify-center shrink-0">
+                    <img src={p.image} alt={p.name} className="max-h-full max-w-full object-contain" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-bold uppercase">{p.category || 'Automation'}</span>
+                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                        p.availability === 'Out of Stock' ? 'bg-rose-50 text-rose-600' : 'bg-green-50 text-green-700'
+                      }`}>
+                        {p.availability || 'In Stock'}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-bold text-slate-800 mt-1.5 truncate">{p.name}</h3>
+                    <p className="text-xs text-slate-500 truncate mt-0.5 font-semibold">{p.description}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Created: {p.createdAt ? formatDateTime(p.createdAt) : 'Initial setup'}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 shrink-0 self-end md:self-center border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto justify-between md:justify-start">
+                  <strong className="text-sm text-teal-700 font-bold">{formatCurrency(p.price)}</strong>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => triggerEdit(p)}
+                      className="bg-slate-100 border text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-200 transition flex items-center gap-1"
+                      type="button"
+                    >
+                      <Edit2 size={12} /> Edit
+                    </button>
+                    <button
+                      onClick={() => setDeletingId(p.id)}
+                      className="bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-100 transition flex items-center gap-1"
+                      type="button"
+                    >
+                      <Trash2 size={12} /> Delete
+                    </button>
+                  </div>
+                </div>
+              </article>
             ))}
+
+            {filteredProducts.length === 0 && (
+              <p className="text-xs text-slate-400 py-12 italic text-center">No products match the query.</p>
+            )}
           </div>
         </article>
-      </section>
+
+        {/* Center Register/Add Modal Overlay */}
+        <AnimatePresence>
+          {showAddModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-lg max-w-lg w-full p-6 shadow-2xl border flex flex-col space-y-4 max-h-[90vh] overflow-y-auto"
+              >
+                <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="badge-kicker text-teal-600 font-bold uppercase tracking-wider text-[10px]">Catalog Manager</span>
+                    <h2 className="text-xl font-bold text-slate-800">Register New Product</h2>
+                  </div>
+                  <button onClick={resetRegister} className="p-1 rounded-lg hover:bg-slate-100 transition">
+                    <X size={18} className="text-slate-400" />
+                  </button>
+                </div>
+
+                <form className="space-y-4" onSubmit={handleRegisterSubmit}>
+                  <div className="form-field-group">
+                    <label className="text-xs font-bold text-slate-700">Product Title *</label>
+                    <input
+                      required
+                      type="text"
+                      value={registerForm.name}
+                      onChange={(e) => updateRegister('name', e.target.value)}
+                      placeholder="e.g. Dual Tank Automated Switch"
+                      className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Category *</label>
+                      <select
+                        value={registerForm.category}
+                        onChange={(e) => updateRegister('category', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      >
+                        <option value="Automation">Automation</option>
+                        <option value="Wireless">Wireless Systems</option>
+                        <option value="Sensors">Sensors & Plugs</option>
+                        <option value="Accessories">Accessories</option>
+                      </select>
+                    </div>
+
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Availability *</label>
+                      <select
+                        value={registerForm.availability}
+                        onChange={(e) => updateRegister('availability', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      >
+                        <option value="In Stock">In Stock</option>
+                        <option value="Out of Stock">Out of Stock</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Price (₹) *</label>
+                      <input
+                        required
+                        type="number"
+                        min="1"
+                        value={registerForm.price}
+                        onChange={(e) => updateRegister('price', e.target.value)}
+                        placeholder="2500"
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      />
+                    </div>
+
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Warranty Details *</label>
+                      <input
+                        required
+                        type="text"
+                        value={registerForm.warranty}
+                        onChange={(e) => updateRegister('warranty', e.target.value)}
+                        placeholder="e.g. 1 Year Warranty"
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Stock Count *</label>
+                      <input
+                        required
+                        type="number"
+                        value={registerForm.stock}
+                        onChange={(e) => updateRegister('stock', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-field-group">
+                    <label className="text-xs font-bold text-slate-700">Short Description *</label>
+                    <textarea
+                      required
+                      value={registerForm.description}
+                      onChange={(e) => updateRegister('description', e.target.value)}
+                      placeholder="Product specifications..."
+                      rows={2}
+                      className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none resize-none font-bold"
+                    />
+                  </div>
+
+                  <div className="form-field-group">
+                    <label className="text-xs font-bold text-slate-700">Product Features *</label>
+                    <textarea
+                      required
+                      value={registerForm.features}
+                      onChange={(e) => updateRegister('features', e.target.value)}
+                      placeholder="e.g. Smart water control, Dry-run protect..."
+                      rows={2}
+                      className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none resize-none font-bold"
+                    />
+                  </div>
+
+                  <div className="form-field-group">
+                    <label className="text-xs font-bold text-slate-700">Specifications / Technical Details</label>
+                    <textarea
+                      value={registerForm.specifications}
+                      onChange={(e) => updateRegister('specifications', e.target.value)}
+                      placeholder="e.g. Input: 220V AC, Relay output: 20A..."
+                      rows={2}
+                      className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none resize-none font-bold"
+                    />
+                  </div>
+
+                  {/* Drag-and-drop Image Upload preview */}
+                  <div className="form-field-group">
+                    <label className="text-xs font-bold text-slate-700">Product Image *</label>
+                    <div className="relative border-2 border-dashed border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col items-center justify-center cursor-pointer hover:border-teal-500 transition">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'register')}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      {registerForm.image ? (
+                        <img src={registerForm.image} alt="Preview" className="h-16 object-contain" />
+                      ) : (
+                        <>
+                          <Upload size={16} className="text-slate-400 mb-1" />
+                          <span className="text-[10px] text-slate-400 font-bold">Choose File or Drag Here</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-3 border-t border-slate-100">
+                    <button
+                      type="submit"
+                      className="flex-1 text-xs bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-lg transition"
+                    >
+                      Publish Product
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetRegister}
+                      className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-lg transition border"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Center Edit Modal Overlay */}
+        <AnimatePresence>
+          {editingId && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-lg max-w-lg w-full p-6 shadow-2xl border flex flex-col space-y-4 max-h-[90vh] overflow-y-auto"
+              >
+                <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="badge-kicker text-teal-600 font-bold uppercase tracking-wider text-[10px]">Catalog Editor</span>
+                    <h2 className="text-xl font-bold text-slate-800">Modify Product Details</h2>
+                  </div>
+                  <button onClick={resetEdit} className="p-1 rounded-lg hover:bg-slate-100 transition">
+                    <X size={18} className="text-slate-400" />
+                  </button>
+                </div>
+
+                <form className="space-y-4" onSubmit={handleEditSubmit}>
+                  <div className="form-field-group">
+                    <label className="text-xs font-bold text-slate-700">Product Title *</label>
+                    <input
+                      required
+                      type="text"
+                      value={editForm.name}
+                      onChange={(e) => updateEdit('name', e.target.value)}
+                      className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Category *</label>
+                      <select
+                        value={editForm.category}
+                        onChange={(e) => updateEdit('category', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      >
+                        <option value="Automation">Automation</option>
+                        <option value="Wireless">Wireless Systems</option>
+                        <option value="Sensors">Sensors & Plugs</option>
+                        <option value="Accessories">Accessories</option>
+                      </select>
+                    </div>
+
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Availability *</label>
+                      <select
+                        value={editForm.availability}
+                        onChange={(e) => updateEdit('availability', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      >
+                        <option value="In Stock">In Stock</option>
+                        <option value="Out of Stock">Out of Stock</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Price (₹) *</label>
+                      <input
+                        required
+                        type="number"
+                        min="1"
+                        value={editForm.price}
+                        onChange={(e) => updateEdit('price', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      />
+                    </div>
+
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Warranty Details *</label>
+                      <input
+                        required
+                        type="text"
+                        value={editForm.warranty}
+                        onChange={(e) => updateEdit('warranty', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Stock Count *</label>
+                      <input
+                        required
+                        type="number"
+                        value={editForm.stock}
+                        onChange={(e) => updateEdit('stock', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-field-group">
+                    <label className="text-xs font-bold text-slate-700">Short Description *</label>
+                    <textarea
+                      required
+                      value={editForm.description}
+                      onChange={(e) => updateEdit('description', e.target.value)}
+                      rows={2}
+                      className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none resize-none font-bold"
+                    />
+                  </div>
+
+                  <div className="form-field-group">
+                    <label className="text-xs font-bold text-slate-700">Product Features *</label>
+                    <textarea
+                      required
+                      value={editForm.features}
+                      onChange={(e) => updateEdit('features', e.target.value)}
+                      placeholder="e.g. Smart water control, Dry-run protect, Mobile app control..."
+                      rows={2}
+                      className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none resize-none font-bold"
+                    />
+                  </div>
+
+                  <div className="form-field-group">
+                    <label className="text-xs font-bold text-slate-700">Specifications / Technical Details</label>
+                    <textarea
+                      value={editForm.specifications}
+                      onChange={(e) => updateEdit('specifications', e.target.value)}
+                      placeholder="e.g. Input: 220V AC, Relay output: 20A, Cable: 30m..."
+                      rows={2}
+                      className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none resize-none font-bold"
+                    />
+                  </div>
+
+                  {/* Drag-and-drop Image Upload preview */}
+                  <div className="form-field-group">
+                    <label className="text-xs font-bold text-slate-700">Change Product Image Asset *</label>
+                    <div className="relative border-2 border-dashed border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col items-center justify-center cursor-pointer hover:border-teal-500 transition">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, 'edit')}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      {editForm.image ? (
+                        <img src={editForm.image} alt="Preview" className="h-16 object-contain" />
+                      ) : (
+                        <>
+                          <Upload size={16} className="text-slate-400 mb-1" />
+                          <span className="text-[10px] text-slate-400 font-bold">Choose File or Drag Here</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-3 border-t border-slate-100">
+                    <button
+                      type="submit"
+                      className="flex-1 text-xs bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-lg transition"
+                    >
+                      Save Changes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={resetEdit}
+                      className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-lg transition border"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Delete Confirmation Modal Overlay */}
+        <AnimatePresence>
+          {deletingId && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-lg max-w-sm w-full p-6 shadow-2xl border flex flex-col space-y-4"
+              >
+                <div className="flex items-start justify-between">
+                  <h3 className="text-base font-bold text-slate-800">Confirm Deletion</h3>
+                  <button onClick={() => setDeletingId('')} className="p-1 rounded hover:bg-slate-100">
+                    <X size={16} className="text-slate-400" />
+                  </button>
+                </div>
+                <p className="text-xs text-slate-600 font-semibold leading-relaxed">
+                  Are you sure you want to delete this product?
+                </p>
+                <div className="flex gap-3 justify-end pt-3">
+                  <button
+                    onClick={handleConfirmDelete}
+                    className="text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold py-2 px-4 rounded-lg transition"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => setDeletingId('')}
+                    className="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-lg transition border"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+      </div>
     </AppShell>
   );
 };

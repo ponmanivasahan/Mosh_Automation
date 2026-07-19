@@ -1,4 +1,4 @@
-import { defaultBillingSettings, defaultProducts, productImageOptions } from '../data/defaults';
+import { defaultBillingSettings, defaultProducts, productImageOptions, defaultStories, defaultReviews } from '../data/defaults';
 
 const KEYS = {
   products: 'mosh_products',
@@ -7,6 +7,7 @@ const KEYS = {
   orders: 'mosh_orders',
   notifications: 'mosh_notifications',
   reviews: 'mosh_reviews',
+  stories: 'mosh_stories',
   billingSettings: 'mosh_billing_settings',
   session: 'mosh_session'
 };
@@ -59,7 +60,11 @@ export const ensureInitialData = () => {
   }
 
   if (!localStorage.getItem(KEYS.reviews)) {
-    write(KEYS.reviews, []);
+    write(KEYS.reviews, defaultReviews);
+  }
+
+  if (!localStorage.getItem(KEYS.stories)) {
+    write(KEYS.stories, defaultStories);
   }
 
   if (!localStorage.getItem(KEYS.cart)) {
@@ -95,6 +100,12 @@ export const getOrders = () => read(KEYS.orders, []);
 export const addOrder = (order) => {
   const orders = getOrders();
   write(KEYS.orders, [order, ...orders]);
+};
+export const updateOrder = (order) => {
+  const orders = getOrders();
+  const next = orders.map((o) => (o.id === order.id ? { ...o, ...order } : o));
+  write(KEYS.orders, next);
+  return next;
 };
 
 export const getNotifications = () => read(KEYS.notifications, []);
@@ -166,3 +177,21 @@ export const clearCart = () => {
 export const getSession = () => read(KEYS.session, null);
 export const setSession = (session) => write(KEYS.session, session);
 export const clearSession = () => localStorage.removeItem(KEYS.session);
+
+export const getStories = () => read(KEYS.stories, defaultStories);
+export const addStory = (story) => {
+  const stories = getStories();
+  write(KEYS.stories, [story, ...stories]);
+};
+export const updateStory = (story) => {
+  const stories = getStories();
+  const next = stories.map((s) => (s.id === story.id ? { ...s, ...story } : s));
+  write(KEYS.stories, next);
+  return next;
+};
+export const deleteStory = (id) => {
+  const stories = getStories();
+  const next = stories.filter((s) => s.id !== id);
+  write(KEYS.stories, next);
+  return next;
+};
