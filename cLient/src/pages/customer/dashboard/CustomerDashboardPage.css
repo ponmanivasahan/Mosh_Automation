@@ -6,7 +6,7 @@
 .dash-stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
+  gap: 6px;
 }
 
 .dash-stat-card {
@@ -15,17 +15,16 @@
   align-items: flex-start;
   gap: 16px;
   padding: 22px 24px;
-  border-radius: 20px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.05);
   overflow: hidden;
-  transition: transform 0.28s ease, box-shadow 0.28s ease;
+  transition: transform 0.28s ease;
 }
 
 .dash-stat-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.1);
+  
 }
 
 .dash-stat-card::after {
@@ -103,7 +102,7 @@
 /* ── Section Shared ── */
 .dash-section {
   display: grid;
-  gap: 18px;
+  gap: 10px;
 }
 
 .dash-section-head {
@@ -138,7 +137,6 @@
   color: var(--ink);
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .scroll-btn:hover {
@@ -163,12 +161,12 @@
 
 .product-scroll-wrapper::-webkit-scrollbar-track {
   background: rgba(15, 23, 42, 0.04);
-  border-radius: 999px;
+  border-radius: 9px;
 }
 
 .product-scroll-wrapper::-webkit-scrollbar-thumb {
   background: rgba(15, 118, 110, 0.2);
-  border-radius: 999px;
+  border-radius: 9px;
 }
 
 .product-scroll-wrapper::-webkit-scrollbar-thumb:hover {
@@ -192,16 +190,13 @@
   border-radius: 22px;
   background: linear-gradient(180deg, #ffffff 0%, #f8fafb 100%);
   border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
   overflow: hidden;
-  transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-              box-shadow 0.32s ease;
+  transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .reliable-card:hover,
 .reliable-card.hovered {
   transform: translateY(-6px);
-  box-shadow: 0 18px 50px rgba(15, 118, 110, 0.12);
 }
 
 .reliable-rank {
@@ -219,7 +214,6 @@
   color: #fff;
   font-size: 12px;
   font-weight: 800;
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
 }
 
 .reliable-img-wrap {
@@ -339,12 +333,10 @@
   text-decoration: none;
   text-align: center;
   justify-content: center;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 16px rgba(13, 148, 136, 0.2);
+  transition: all 0.25s ease;   
 }
 
 .reliable-cta:hover {
-  box-shadow: 0 8px 24px rgba(13, 148, 136, 0.3);
   transform: translateY(-1px);
 }
 
@@ -357,19 +349,15 @@
 
 .dash-chart-card {
   padding: 24px;
-  border-radius: 22px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.05);
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  transition: box-shadow 0.3s ease;
+  gap: 10px;
 }
 
-.dash-chart-card:hover {
-  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
-}
+
 
 .dash-chart-head {
   display: flex;
