@@ -13,7 +13,12 @@ import {
   Calendar,
   ChevronRight,
   X,
-  MapPin
+  MapPin,
+  RefreshCw,
+  Download,
+  AlertCircle,
+  Clock,
+  Check
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { useAuth } from '../../../utils/AuthContext';
@@ -24,7 +29,8 @@ import {
   getCart,
   getOrders,
   setCart,
-  updateOrder
+  updateOrder,
+  verifyPayment
 } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import { customerLinks } from '../../../utils/customerLinks';
@@ -35,9 +41,16 @@ const CustomerCartPage = () => {
   const [cartItems, setCartItems] = useState(getCart());
   const [message, setMessage] = useState('');
   
-  // Checkout Modal states
+  // Checkout & Payment Modal states
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [activePaymentOrder, setActivePaymentOrder] = useState(null);
+  
+  // Payment states
+  const [paymentTimer, setPaymentTimer] = useState(600); // 10 minutes in seconds
+  const [transactionIdInput, setTransactionIdInput] = useState('');
+  const [paymentStatusState, setPaymentStatusState] = useState('paying'); // paying, verifying, success, error
+  const [errorMessage, setErrorMessage] = useState('');
+
   const [shippingDetails, setShippingDetails] = useState({
     name: session?.name || '',
     address: '',
@@ -46,6 +59,8 @@ const CustomerCartPage = () => {
     phone: session?.phone || '',
     paymentMethod: 'Google Pay'
   });
+
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   // Auto-dismiss alert messages
   useEffect(() => {
@@ -61,7 +76,7 @@ const CustomerCartPage = () => {
     const syncOrders = () => {
       setOrders(getOrders().filter((order) => order.customerPhone === session?.phone));
     };
-    const interval = setInterval(syncOrders, 1000);
+    const interval = setInterval(syncOrders, 1500);
     window.addEventListener('storage', syncOrders);
     return () => {
       clearInterval(interval);
@@ -69,13 +84,39 @@ const CustomerCartPage = () => {
     };
   }, [session]);
 
+  // Countdown timer effect
+  useEffect(() => {
+    let intervalId;
+    if (activePaymentOrder && paymentStatusState === 'paying') {
+      intervalId = setInterval(() => {
+        setPaymentTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(intervalId);
+            setPaymentStatusState('error');
+            setErrorMessage('Payment window expired. Please try again.');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [activePaymentOrder, paymentStatusState]);
+
+  const formatTimer = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   const priceDetails = useMemo(() => {
     const totalItems = cartItems.reduce((acc, item) => acc + Number(item.quantity || 1), 0);
     const subtotal = cartItems.reduce((acc, item) => acc + Number(item.total || 0), 0);
     
-    // Flipkart & Amazon style breakdown
-    const discount = subtotal > 5000 ? Math.round(subtotal * 0.1) : 0; // 10% discount for orders above 5000
-    const deliveryCharges = subtotal > 3000 || subtotal === 0 ? 0 : 99; // Free delivery above 3000
+    const discount = subtotal > 5000 ? Math.round(subtotal * 0.1) : 0;
+    const deliveryCharges = subtotal > 3000 || subtotal === 0 ? 0 : 99;
     const packagingFee = subtotal > 0 ? 49 : 0;
     const finalAmount = subtotal - discount + deliveryCharges + packagingFee;
 
@@ -117,19 +158,19 @@ const CustomerCartPage = () => {
       setMessage('Cart is empty. Add products before placing an order.');
       return;
     }
-    // Open the modal instead of placing order immediately
     setShowCheckoutModal(true);
   };
 
-  const confirmOrder = (e) => {
+  const confirmOrder = async (e) => {
     e.preventDefault();
     if (!shippingDetails.name.trim() || !shippingDetails.address.trim() || !shippingDetails.city.trim() || !shippingDetails.pincode.trim()) {
       alert('Please fill in all the required delivery details.');
       return;
     }
 
+    const orderId = `ord-${Date.now()}`;
     const order = {
-      id: `ord-${Date.now()}`,
+      id: orderId,
       customerName: shippingDetails.name,
       customerPhone: session.phone,
       items: cartItems,
@@ -144,20 +185,81 @@ const CustomerCartPage = () => {
       paymentMethod: shippingDetails.paymentMethod
     };
 
-    addOrder(order);
-    addNotification({
-      id: `not-${Date.now()}`,
-      title: 'New Customer Order',
-      message: `${shippingDetails.name} (${session.phone}) placed an order for ${formatCurrency(priceDetails.finalAmount)} to ${shippingDetails.city}.`,
-      createdAt: new Date().toISOString(),
-      read: false,
-      orderId: order.id
-    });
+    // Save order status as processing (pending payment)
+    await addOrder(order);
 
-    clearCart();
-    setCartItems([]);
+    setActivePaymentOrder(order);
+    setPaymentTimer(600);
+    setTransactionIdInput('');
+    setPaymentStatusState('paying');
     setShowCheckoutModal(false);
-    setMessage('Order placed successfully! Support team has been notified.');
+  };
+
+  // UPI configuration URL
+  const upiUrl = useMemo(() => {
+    if (!activePaymentOrder) return '';
+    return `upi://pay?pa=moshautomation@okaxis&pn=MOSH%20Automation&am=${activePaymentOrder.total}&cu=INR&tn=Order%20${activePaymentOrder.id}`;
+  }, [activePaymentOrder]);
+
+  const qrImageUrl = useMemo(() => {
+    if (!upiUrl) return '';
+    return `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUrl)}`;
+  }, [upiUrl]);
+
+  const handleDownloadQR = () => {
+    if (!qrImageUrl) return;
+    const link = document.createElement('a');
+    link.href = qrImageUrl;
+    link.target = '_blank';
+    link.download = `MOSH_Payment_QR_${activePaymentOrder?.id}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleRefreshQR = () => {
+    setPaymentTimer(600);
+    setMessage('QR Code refreshed and timer reset to 10:00.');
+  };
+
+  const handleCancelPayment = () => {
+    if (window.confirm('Are you sure you want to cancel the payment process? The order will remain as unpaid.')) {
+      setActivePaymentOrder(null);
+      setMessage('Payment process cancelled by user.');
+    }
+  };
+
+  const handleVerifyPayment = async (e) => {
+    e.preventDefault();
+    if (!transactionIdInput.trim()) {
+      alert('Please enter your 12-digit transaction ID or reference number.');
+      return;
+    }
+    setPaymentStatusState('verifying');
+    
+    // Call server API to verify payment status
+    const result = await verifyPayment(activePaymentOrder.id, transactionIdInput.trim(), shippingDetails.paymentMethod);
+    if (result.success) {
+      setPaymentStatusState('success');
+      
+      // Notify Admin
+      addNotification({
+        id: `not-${Date.now()}`,
+        title: 'New Paid Order',
+        message: `${shippingDetails.name} paid ${formatCurrency(activePaymentOrder.total)} via ${shippingDetails.paymentMethod} (Txn: ${transactionIdInput.trim()}).`,
+        createdAt: new Date().toISOString(),
+        read: false,
+        orderId: activePaymentOrder.id
+      });
+
+      // Clear Cart locally
+      clearCart();
+      setCartItems([]);
+      setOrders(getOrders().filter((order) => order.customerPhone === session?.phone));
+    } else {
+      setPaymentStatusState('error');
+      setErrorMessage(result.message || 'Payment verification failed. Please try again.');
+    }
   };
 
   const handleCancelOrder = (order) => {
@@ -168,7 +270,6 @@ const CustomerCartPage = () => {
       };
       updateOrder(updated);
       
-      // Notify admin
       addNotification({
         id: `not-${Date.now()}`,
         title: 'Order Cancelled',
@@ -248,72 +349,55 @@ const CustomerCartPage = () => {
               ) : (
                 <div className="cart-items-divider-list">
                   {cartItems.map((item) => (
-                    <article className="cart-item-row" key={item.id}>
-                      {/* Product Thumbnail */}
-                      <div className="item-thumbnail-container">
-                        <img className="item-image" src={item.image} alt={item.name} />
+                    <article className="cart-item-card" key={item.id}>
+                      <div className="item-img-container">
+                        <img src={item.image} alt={item.name} />
                       </div>
-
-                      {/* Detail Column */}
-                      <div className="item-details-col">
+                      
+                      <div className="item-details">
                         <h3 className="item-name">{item.name}</h3>
-                        {item.complexity && (
-                          <span className="complexity-badge uppercase tracking-wider text-[10px]">
-                            Complexity: {item.complexity}
-                          </span>
-                        )}
-                        <span className="stock-hint">In Stock</span>
+                        <p className="item-desc">{item.description}</p>
                         
-                        {/* Price Details */}
-                        <div className="item-price-section">
-                          <strong className="current-price">{formatCurrency(item.unitPrice || item.total)}</strong>
-                          <span className="mrp-price">{formatCurrency((item.unitPrice || item.total) * 1.35)}</span>
-                          <span className="discount-pct">35% OFF</span>
+                        <div className="item-price-quantity-row">
+                          <span className="price-tag">{formatCurrency(item.unitPrice)}</span>
+                          
+                          <div className="quantity-control-group">
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="qty-btn"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="qty-value">{item.quantity || 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, 1)}
+                              className="qty-btn"
+                            >
+                              <Plus size={12} />
+                            </button>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Controls and Actions Column */}
-                      <div className="item-actions-col">
-                        {/* Flipkart Style Qty Controller */}
-                        <div className="qty-control-btn-group">
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.id, -1)}
-                            disabled={item.quantity <= 1}
-                            className="qty-btn"
-                          >
-                            <Minus size={12} />
-                          </button>
-                          <span className="qty-value-label">{item.quantity || 1}</span>
-                          <button
-                            type="button"
-                            onClick={() => updateQuantity(item.id, 1)}
-                            className="qty-btn"
-                          >
-                            <Plus size={12} />
-                          </button>
-                        </div>
-
-                        {/* Remove CTA */}
-                        <button
-                          className="btn-remove-item"
-                          type="button"
-                          onClick={() => removeItem(item.id, item.name)}
-                        >
-                          <Trash2 size={13} /> Remove
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id, item.name)}
+                        className="btn-item-remove"
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </article>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Previous Orders Section */}
-            <div className="section-card-panel history-panel">
-              <h2 className="panel-title flex items-center gap-2">
-                <Package size={18} className="text-teal-600" />
-                Previous Order History ({orders.length})
+            {/* Previous Order History Section */}
+            <div className="section-card-panel">
+              <h2 className="panel-title mb-6 flex items-center gap-2">
+                <Package size={20} className="text-teal-600" /> Order History
               </h2>
 
               {!orders.length ? (
@@ -333,12 +417,15 @@ const CustomerCartPage = () => {
                             <Calendar size={11} /> {formatDateTime(order.createdAt)}
                           </span>
                         </div>
-                        <span className="order-status-badge">
+                        <span className={`order-status-badge text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                          order.status === 'Paid' ? 'bg-teal-50 text-teal-600' :
+                          order.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' :
+                          order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
+                        }`}>
                           {order.status}
                         </span>
                       </div>
 
-                      {/* Ordered Items Preview: Horizontal Grid with badges */}
                       <div className="flex items-center gap-4 py-3 overflow-x-auto pr-2">
                         {order.items?.map((oItem, oIdx) => (
                           <div key={oIdx} className="relative shrink-0 border border-slate-100 rounded-lg p-1.5 bg-slate-50 flex items-center justify-center">
@@ -352,7 +439,7 @@ const CustomerCartPage = () => {
 
                       <div className="order-history-footer flex justify-between items-center mt-3 pt-3 border-t">
                         <div>
-                          <span className="grand-total-label">Total Amount Paid</span>
+                          <span className="grand-total-label">Total Amount</span>
                           <strong className="grand-total-val">{formatCurrency(order.total)}</strong>
                         </div>
                         <div className="flex gap-2">
@@ -368,7 +455,7 @@ const CustomerCartPage = () => {
                               Delivered
                             </button>
                           ) : (
-                            (order.status === 'Placed' || order.status === 'Processing') && (
+                            order.status !== 'Cancelled' && order.status !== 'Completed' && order.status !== 'Paid' && (
                               <button
                                 type="button"
                                 onClick={(e) => {
@@ -390,7 +477,7 @@ const CustomerCartPage = () => {
             </div>
           </div>
 
-          {/* Right Side: Price Details Card (Flipkart / Amazon Style) */}
+          {/* Right Side: Price Details Card */}
           {cartItems.length > 0 && (
             <aside className="cart-right-sidebar">
               <div className="price-details-card">
@@ -425,7 +512,6 @@ const CustomerCartPage = () => {
                   </p>
                 )}
                 
-                {/* Place Order CTA */}
                 <button
                   className="btn-checkout-primary"
                   type="button"
@@ -435,7 +521,6 @@ const CustomerCartPage = () => {
                 </button>
               </div>
 
-              {/* Security assurances */}
               <div className="security-assurances-card">
                 <div className="assurance-item">
                   <Shield size={16} className="text-teal-600" />
@@ -456,7 +541,6 @@ const CustomerCartPage = () => {
       <AnimatePresence>
         {showCheckoutModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Modal Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -465,7 +549,6 @@ const CustomerCartPage = () => {
               className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
 
-            {/* Modal Box */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -501,7 +584,7 @@ const CustomerCartPage = () => {
                     placeholder="Enter your name"
                     value={shippingDetails.name}
                     onChange={(e) => setShippingDetails({ ...shippingDetails, name: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
                   />
                 </div>
 
@@ -513,7 +596,7 @@ const CustomerCartPage = () => {
                       type="text"
                       disabled
                       value={shippingDetails.phone}
-                      className="w-full cursor-not-allowed rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500 focus:outline-none"
+                      className="w-full cursor-not-allowed rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500 focus:outline-none font-semibold"
                     />
                   </div>
                   <div>
@@ -525,36 +608,38 @@ const CustomerCartPage = () => {
                       placeholder="e.g. Coimbatore"
                       value={shippingDetails.city}
                       onChange={(e) => setShippingDetails({ ...shippingDetails, city: e.target.value })}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="checkout-address" className="mb-1 text-xs font-semibold text-slate-700">Delivering Address *</label>
-                  <textarea
-                    id="checkout-address"
-                    required
-                    placeholder="Street address, Flat, Apartment number"
-                    value={shippingDetails.address}
-                    onChange={(e) => setShippingDetails({ ...shippingDetails, address: e.target.value })}
-                    rows={3}
-                    className="w-full resize-none rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="checkout-pincode" className="mb-1 text-xs font-semibold text-slate-700">Pincode / ZIP Code *</label>
-                  <input
-                    id="checkout-pincode"
-                    type="text"
-                    required
-                    placeholder="6-digit pincode"
-                    pattern="[0-9]{6}"
-                    title="Please enter a valid 6-digit pincode"
-                    value={shippingDetails.pincode}
-                    onChange={(e) => setShippingDetails({ ...shippingDetails, pincode: e.target.value.replace(/\D/g, '') })}
-                  />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label htmlFor="checkout-address" className="mb-1 text-xs font-semibold text-slate-700">Delivering Address *</label>
+                    <input
+                      id="checkout-address"
+                      type="text"
+                      required
+                      placeholder="Street, Room/Door No"
+                      value={shippingDetails.address}
+                      onChange={(e) => setShippingDetails({ ...shippingDetails, address: e.target.value })}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="checkout-pincode" className="mb-1 text-xs font-semibold text-slate-700">Pincode *</label>
+                    <input
+                      id="checkout-pincode"
+                      type="text"
+                      required
+                      placeholder="6-digit pincode"
+                      pattern="[0-9]{6}"
+                      maxLength="6"
+                      value={shippingDetails.pincode}
+                      onChange={(e) => setShippingDetails({ ...shippingDetails, pincode: e.target.value.replace(/\D/g, '') })}
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -563,20 +648,20 @@ const CustomerCartPage = () => {
                     <button
                       type="button"
                       onClick={() => setShippingDetails({ ...shippingDetails, paymentMethod: 'Google Pay' })}
-                      className={`text-xs py-2.5 px-3 rounded-xl border font-bold transition-all ${
+                      className={`text-xs py-2.5 px-3 rounded-xl border font-bold transition-all flex items-center justify-center gap-2 ${
                         shippingDetails.paymentMethod === 'Google Pay' ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm' : 'bg-white text-slate-500 border-slate-200'
                       }`}
                     >
-                      Google Pay
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" /> Google Pay
                     </button>
                     <button
                       type="button"
                       onClick={() => setShippingDetails({ ...shippingDetails, paymentMethod: 'PhonePe' })}
-                      className={`text-xs py-2.5 px-3 rounded-xl border font-bold transition-all ${
+                      className={`text-xs py-2.5 px-3 rounded-xl border font-bold transition-all flex items-center justify-center gap-2 ${
                         shippingDetails.paymentMethod === 'PhonePe' ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm' : 'bg-white text-slate-500 border-slate-200'
                       }`}
                     >
-                      PhonePe
+                      <span className="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block" /> PhonePe
                     </button>
                   </div>
                 </div>
@@ -598,7 +683,7 @@ const CustomerCartPage = () => {
                       type="submit"
                       className="rounded-2xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-200/50 hover:bg-teal-700 hover:shadow-teal-300/50 transition-all"
                     >
-                      Confirm Order
+                      Proceed to Payment
                     </button>
                   </div>
                 </div>
@@ -608,11 +693,163 @@ const CustomerCartPage = () => {
         )}
       </AnimatePresence>
 
+      {/* UPI QR Payment Modal Screen */}
+      <AnimatePresence>
+        {activePaymentOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 flex flex-col items-center"
+            >
+              {/* Premium Header */}
+              <div className="w-full flex items-center justify-between border-b pb-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-slate-800 text-base">MOSH Automation</span>
+                </div>
+                <div className="bg-rose-50 text-rose-600 text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1">
+                  <Clock size={12} />
+                  <span>{formatTimer(paymentTimer)}</span>
+                </div>
+              </div>
+
+              {paymentStatusState === 'paying' && (
+                <div className="w-full flex flex-col items-center text-center space-y-4">
+                  <div className="bg-teal-50 border border-teal-100 rounded-2xl p-4 w-full text-xs text-teal-900 font-semibold space-y-1">
+                    <p className="text-[10px] text-teal-600 font-bold uppercase">Order Information</p>
+                    <p>Order No: #{activePaymentOrder.id}</p>
+                    <p>Customer Name: {activePaymentOrder.customerName}</p>
+                    <p className="text-sm font-extrabold mt-1">Amount Due: {formatCurrency(activePaymentOrder.total)}</p>
+                  </div>
+
+                  {/* QR Card Frame */}
+                  <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl flex flex-col items-center shadow-inner relative max-w-[240px] w-full">
+                    <img 
+                      src={qrImageUrl} 
+                      alt="UPI QR Code" 
+                      className="w-full aspect-square object-contain bg-white p-2 rounded-lg border shadow-sm" 
+                    />
+                    <span className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-2">Scan with Google Pay / PhonePe</span>
+                  </div>
+
+                  {/* App badges */}
+                  <div className="flex justify-center items-center gap-4 text-xs font-bold text-slate-500 py-1">
+                    <span className="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full text-[10px]">
+                      <span className="w-2 h-2 rounded-full bg-blue-500" /> Google Pay
+                    </span>
+                    <span className="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full text-[10px]">
+                      <span className="w-2 h-2 rounded-full bg-purple-500" /> PhonePe
+                    </span>
+                  </div>
+
+                  <form onSubmit={handleVerifyPayment} className="w-full space-y-3 pt-2">
+                    <div>
+                      <label className="block text-left text-xs font-bold text-slate-700 mb-1">Enter UPI Transaction Ref ID *</label>
+                      <input
+                        required
+                        type="text"
+                        placeholder="e.g. 12-digit transaction ID"
+                        value={transactionIdInput}
+                        onChange={(e) => setTransactionIdInput(e.target.value.replace(/[^0-9]/g, ''))}
+                        className="w-full text-center tracking-wide font-extrabold text-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-teal-500 focus:bg-white transition-colors"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-2xl shadow-lg transition"
+                    >
+                      I have completed the payment
+                    </button>
+                  </form>
+
+                  {/* QR actions footer */}
+                  <div className="flex w-full justify-between items-center text-[10px] text-slate-400 font-bold border-t pt-3">
+                    <button type="button" onClick={handleDownloadQR} className="hover:text-teal-600 flex items-center gap-1">
+                      <Download size={12} /> Download QR
+                    </button>
+                    <button type="button" onClick={handleRefreshQR} className="hover:text-teal-600 flex items-center gap-1">
+                      <RefreshCw size={12} /> Refresh QR
+                    </button>
+                    <button type="button" onClick={handleCancelPayment} className="hover:text-rose-600 flex items-center gap-1 text-rose-500">
+                      Cancel Payment
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {paymentStatusState === 'verifying' && (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <RefreshCw className="animate-spin text-teal-600 h-10 w-10" />
+                  <h4 className="font-bold text-slate-800">Verifying Payment...</h4>
+                  <p className="text-xs text-slate-500 text-center max-w-[240px]">Connecting with payment gateways to verify transaction ID: {transactionIdInput}</p>
+                </div>
+              )}
+
+              {paymentStatusState === 'success' && (
+                <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
+                  <div className="h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 animate-bounce">
+                    <Check size={36} strokeWidth={3} />
+                  </div>
+                  <h4 className="font-extrabold text-emerald-600 text-lg">Payment Successful</h4>
+                  <div className="text-xs text-slate-600 leading-relaxed font-semibold space-y-1">
+                    <p>Order #{activePaymentOrder.id} is now paid.</p>
+                    <p>Transaction ID: {transactionIdInput}</p>
+                    <p>We are processing your order immediately!</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActivePaymentOrder(null)}
+                    className="mt-6 px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition"
+                  >
+                    View Order Details
+                  </button>
+                </div>
+              )}
+
+              {paymentStatusState === 'error' && (
+                <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
+                  <div className="h-16 w-16 bg-rose-100 rounded-full flex items-center justify-center text-rose-600">
+                    <AlertCircle size={36} strokeWidth={2.5} />
+                  </div>
+                  <h4 className="font-extrabold text-rose-600 text-lg">Payment Verification Failed</h4>
+                  <p className="text-xs text-slate-500 max-w-[260px] leading-relaxed font-semibold">{errorMessage}</p>
+                  <div className="flex gap-2 w-full pt-4">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentStatusState('paying')}
+                      className="flex-1 py-3 bg-teal-600 text-white font-bold rounded-xl text-xs hover:bg-teal-700 transition"
+                    >
+                      Retry Payment
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActivePaymentOrder(null)}
+                      className="py-3 px-4 bg-slate-100 text-slate-600 font-bold rounded-xl text-xs hover:bg-slate-200 transition border"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
+
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Order Details Modal */}
       <AnimatePresence>
         {selectedOrder && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Modal Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -621,7 +858,6 @@ const CustomerCartPage = () => {
               className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
 
-            {/* Modal Box */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -643,26 +879,23 @@ const CustomerCartPage = () => {
                   <h3 className="text-xl font-bold text-slate-900 leading-tight">Order #{selectedOrder.id}</h3>
                   <p className="mt-1 text-xs text-slate-500">Ordered on {formatDateTime(selectedOrder.createdAt)}</p>
                 </div>
-                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold ${
-                  selectedOrder.status === 'Cancelled'
-                    ? 'bg-rose-50 text-rose-600'
-                    : selectedOrder.status === 'Delivered' || selectedOrder.status === 'Completed'
-                    ? 'bg-emerald-50 text-emerald-600'
-                    : 'bg-blue-50 text-blue-600'
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase ${
+                  selectedOrder.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' : 
+                  selectedOrder.status === 'Paid' ? 'bg-teal-50 text-teal-600' :
+                  selectedOrder.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
                 }`}>
                   {selectedOrder.status}
                 </span>
               </div>
 
-              {/* Scrollable details wrapper */}
               <div className="max-h-[360px] overflow-y-auto pr-2 space-y-6">
                 {/* Shipping Details */}
                 <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
                     <MapPin size={12} className="text-teal-600" /> Shipping Address
                   </h4>
-                  <p className="text-sm font-semibold text-slate-800">{selectedOrder.customerName || session.name}</p>
-                  <p className="text-xs text-slate-500 mt-1">Phone: {selectedOrder.customerPhone || session.phone}</p>
+                  <p className="text-sm font-semibold text-slate-800">{selectedOrder.customerName || session?.name}</p>
+                  <p className="text-xs text-slate-500 mt-1">Phone: {selectedOrder.customerPhone || session?.phone}</p>
                   {selectedOrder.shippingAddress ? (
                     <p className="text-xs text-slate-600 mt-2 leading-relaxed">
                       {selectedOrder.shippingAddress.address}, {selectedOrder.shippingAddress.city} - {selectedOrder.shippingAddress.pincode}
@@ -671,6 +904,16 @@ const CustomerCartPage = () => {
                     <p className="text-xs text-slate-400 mt-2 italic">Standard direct delivery address</p>
                   )}
                 </div>
+
+                {/* Transaction details if order is Paid */}
+                {selectedOrder.paymentStatus === 'Paid' && (
+                  <div className="rounded-2xl bg-teal-50/50 p-4 border border-teal-100/50 text-xs font-semibold text-teal-900 space-y-1">
+                    <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider mb-1">Transaction Details</h4>
+                    <p>Payment Method: {selectedOrder.paymentMethod}</p>
+                    <p>Transaction Reference: {selectedOrder.transactionId}</p>
+                    {selectedOrder.paymentTime && <p>Paid On: {formatDateTime(selectedOrder.paymentTime)}</p>}
+                  </div>
+                )}
 
                 {/* Items list */}
                 <div className="space-y-3">
@@ -715,7 +958,7 @@ const CustomerCartPage = () => {
                       Delivered
                     </button>
                   ) : (
-                    selectedOrder.status !== 'Cancelled' && selectedOrder.status !== 'Completed' && (
+                    selectedOrder.status !== 'Cancelled' && selectedOrder.status !== 'Completed' && selectedOrder.status !== 'Paid' && (
                       <button
                         type="button"
                         onClick={() => handleCancelOrder(selectedOrder)}

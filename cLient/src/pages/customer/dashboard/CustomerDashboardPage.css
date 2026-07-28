@@ -254,7 +254,6 @@
   line-height: 1.3;
   color: var(--ink);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -265,7 +264,6 @@
   color: var(--muted);
   line-height: 1.45;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

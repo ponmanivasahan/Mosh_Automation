@@ -22,6 +22,7 @@ const adminLinks = [
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
   { to: '/admin/stories', label: 'Success Stories' },
+  { to: '/admin/estimations', label: 'Estimation Calculator' },
   { to: '/admin/settings', label: 'Settings' }
 ];
 
@@ -35,7 +36,11 @@ const emptyForm = {
   stock: '10',
   warranty: '1 Year Warranty',
   specifications: '',
-  availability: 'In Stock'
+  availability: 'In Stock',
+  floatFee: '0',
+  wireBaseFee: '0',
+  wireBaseMeters: '30',
+  wireExtraPerMeter: '0'
 };
 
 const AdminProductsPage = () => {
@@ -119,6 +124,12 @@ const AdminProductsPage = () => {
       warranty: registerForm.warranty,
       specifications: registerForm.specifications,
       availability: registerForm.availability,
+      floatFee: Number(registerForm.floatFee || 0),
+      wire: {
+        baseFee: Number(registerForm.wireBaseFee || 0),
+        baseMeters: Number(registerForm.wireBaseMeters || 30),
+        extraPerMeter: Number(registerForm.wireExtraPerMeter || 0)
+      },
       createdAt: new Date().toISOString()
     };
 
@@ -149,6 +160,12 @@ const AdminProductsPage = () => {
       warranty: editForm.warranty,
       specifications: editForm.specifications,
       availability: editForm.availability,
+      floatFee: Number(editForm.floatFee || 0),
+      wire: {
+        baseFee: Number(editForm.wireBaseFee || 0),
+        baseMeters: Number(editForm.wireBaseMeters || 30),
+        extraPerMeter: Number(editForm.wireExtraPerMeter || 0)
+      },
       createdAt: products.find(p => p.id === editingId)?.createdAt || new Date().toISOString()
     };
 
@@ -182,7 +199,11 @@ const AdminProductsPage = () => {
       stock: String(product.stock || 10),
       warranty: product.warranty || '1 Year Warranty',
       specifications: product.specifications || '',
-      availability: product.availability || 'In Stock'
+      availability: product.availability || 'In Stock',
+      floatFee: String(product.floatFee || 0),
+      wireBaseFee: String(product.wire?.baseFee || 0),
+      wireBaseMeters: String(product.wire?.baseMeters || 30),
+      wireExtraPerMeter: String(product.wire?.extraPerMeter || 0)
     });
   };
 
@@ -392,6 +413,48 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
+                    <div className="form-field-group col-span-2">
+                      <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider">Estimation Billing Parameters</h4>
+                    </div>
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Float Switch Fee (₹)</label>
+                      <input
+                        type="number"
+                        value={registerForm.floatFee}
+                        onChange={(e) => updateRegister('floatFee', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-1.5 outline-none font-bold"
+                      />
+                    </div>
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Wire Base Fee (₹)</label>
+                      <input
+                        type="number"
+                        value={registerForm.wireBaseFee}
+                        onChange={(e) => updateRegister('wireBaseFee', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-1.5 outline-none font-bold"
+                      />
+                    </div>
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Wire Base Length (m)</label>
+                      <input
+                        type="number"
+                        value={registerForm.wireBaseMeters}
+                        onChange={(e) => updateRegister('wireBaseMeters', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-1.5 outline-none font-bold"
+                      />
+                    </div>
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Extra Wire cost/meter (₹)</label>
+                      <input
+                        type="number"
+                        value={registerForm.wireExtraPerMeter}
+                        onChange={(e) => updateRegister('wireExtraPerMeter', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-1.5 outline-none font-bold"
+                      />
+                    </div>
+                  </div>
+
                   <div className="form-field-group">
                     <label className="text-xs font-bold text-slate-700">Short Description *</label>
                     <textarea
@@ -563,6 +626,48 @@ const AdminProductsPage = () => {
                         value={editForm.stock}
                         onChange={(e) => updateEdit('stock', e.target.value)}
                         className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
+                    <div className="form-field-group col-span-2">
+                      <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider">Estimation Billing Parameters</h4>
+                    </div>
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Float Switch Fee (₹)</label>
+                      <input
+                        type="number"
+                        value={editForm.floatFee}
+                        onChange={(e) => updateEdit('floatFee', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-1.5 outline-none font-bold"
+                      />
+                    </div>
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Wire Base Fee (₹)</label>
+                      <input
+                        type="number"
+                        value={editForm.wireBaseFee}
+                        onChange={(e) => updateEdit('wireBaseFee', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-1.5 outline-none font-bold"
+                      />
+                    </div>
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Wire Base Length (m)</label>
+                      <input
+                        type="number"
+                        value={editForm.wireBaseMeters}
+                        onChange={(e) => updateEdit('wireBaseMeters', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-1.5 outline-none font-bold"
+                      />
+                    </div>
+                    <div className="form-field-group">
+                      <label className="text-xs font-bold text-slate-700">Extra Wire cost/meter (₹)</label>
+                      <input
+                        type="number"
+                        value={editForm.wireExtraPerMeter}
+                        onChange={(e) => updateEdit('wireExtraPerMeter', e.target.value)}
+                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-1.5 outline-none font-bold"
                       />
                     </div>
                   </div>

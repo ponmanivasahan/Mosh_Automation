@@ -48,38 +48,79 @@ const normalizeProduct = (product, index) => {
   };
 };
 
-export const ensureInitialData = () => {
+export const ensureInitialData = async () => {
+  // Set offline/local defaults first
   const existingProducts = read(KEYS.products, []);
   if (!Array.isArray(existingProducts) || !existingProducts.length) {
     write(KEYS.products, defaultProducts);
   }
-
   if (!localStorage.getItem(KEYS.billingSettings)) {
     write(KEYS.billingSettings, defaultBillingSettings);
   }
-
   if (!localStorage.getItem(KEYS.estimations)) {
     write(KEYS.estimations, []);
   }
-
   if (!localStorage.getItem(KEYS.orders)) {
     write(KEYS.orders, []);
   }
-
   if (!localStorage.getItem(KEYS.notifications)) {
     write(KEYS.notifications, []);
   }
-
   if (!localStorage.getItem(KEYS.reviews)) {
     write(KEYS.reviews, defaultReviews);
   }
-
   if (!localStorage.getItem(KEYS.stories)) {
     write(KEYS.stories, defaultStories);
   }
-
   if (!localStorage.getItem(KEYS.cart)) {
     write(KEYS.cart, []);
+  }
+
+  // Attempt to sync from backend database
+  try {
+    const prodRes = await fetch('http://localhost:5000/api/products');
+    const prodData = await prodRes.json();
+    if (prodData.success && prodData.products?.length) {
+      write(KEYS.products, prodData.products);
+    }
+
+    const billRes = await fetch('http://localhost:5000/api/billing');
+    const billData = await billRes.json();
+    if (billData.success && billData.settings) {
+      write(KEYS.billingSettings, billData.settings);
+    }
+
+    const storyRes = await fetch('http://localhost:5000/api/stories');
+    const storyData = await storyRes.json();
+    if (storyData.success && storyData.stories) {
+      write(KEYS.stories, storyData.stories);
+    }
+
+    const revRes = await fetch('http://localhost:5000/api/reviews');
+    const revData = await revRes.json();
+    if (revData.success && revData.reviews) {
+      write(KEYS.reviews, revData.reviews);
+    }
+
+    const orderRes = await fetch('http://localhost:5000/api/orders', { credentials: 'include' });
+    const orderData = await orderRes.json();
+    if (orderData.success && orderData.orders) {
+      write(KEYS.orders, orderData.orders);
+    }
+
+    const estRes = await fetch('http://localhost:5000/api/estimations', { credentials: 'include' });
+    const estData = await estRes.json();
+    if (estData.success && estData.estimations) {
+      write(KEYS.estimations, estData.estimations);
+    }
+
+    const notifRes = await fetch('http://localhost:5000/api/notifications', { credentials: 'include' });
+    const notifData = await notifRes.json();
+    if (notifData.success && notifData.notifications) {
+      write(KEYS.notifications, notifData.notifications);
+    }
+  } catch (e) {
+    console.warn('Backend database unreachable. Running in offline fallback cache mode.', e);
   }
 };
 
@@ -90,62 +131,244 @@ export const getProducts = () => {
   const products = Array.isArray(storedProducts) && storedProducts.length ? storedProducts : defaultProducts;
   return products.map(normalizeProduct);
 };
-export const setProducts = (products) => write(KEYS.products, products.map(normalizeProduct));
+
+export const setProducts = async (products) => {
+  const normalizedNew = products.map(normalizeProduct);
+  const oldProducts = getProducts();
+  
+  write(KEYS.products, normalizedNew);
+
+  try {
+    // 1. Delete removed products
+    for (const oldP of oldProducts) {
+      if (!normalizedNew.some(newP => newP.id === oldP.id)) {
+        await fetch(`http://localhost:5000/api/products/${oldP.id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+      }
+    }
+
+    // 2. Create or Update products
+    for (const newP of normalizedNew) {
+      const oldP = oldProducts.find(p => p.id === newP.id);
+      if (!oldP) {
+        await fetch('http://localhost:5000/api/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newP),
+          credentials: 'include'
+        });
+      } else if (JSON.stringify(newP) !== JSON.stringify(oldP)) {
+        await fetch(`http://localhost:5000/api/products/${newP.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newP),
+          credentials: 'include'
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Failed to sync products with backend database:', error);
+  }
+};
 
 export const getBillingSettings = () => read(KEYS.billingSettings, defaultBillingSettings);
-export const setBillingSettings = (settings) => write(KEYS.billingSettings, settings);
+
+export const setBillingSettings = async (settings) => {
+  write(KEYS.billingSettings, settings);
+  try {
+    await fetch('http://localhost:5000/api/billing', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to sync billing settings:', error);
+  }
+};
 
 export const getEstimations = () => read(KEYS.estimations, []);
-export const addEstimation = (estimation) => {
+
+export const addEstimation = async (estimation) => {
   const estimations = getEstimations();
   write(KEYS.estimations, [estimation, ...estimations]);
+  try {
+    await fetch('http://localhost:5000/api/estimations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(estimation),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to sync estimation inquiry:', error);
+  }
 };
-export const updateEstimation = (estimation) => {
+
+export const updateEstimation = async (estimation) => {
   const estimations = getEstimations();
   const next = estimations.map((e) => (e.id === estimation.id ? { ...e, ...estimation } : e));
   write(KEYS.estimations, next);
+  try {
+    await fetch(`http://localhost:5000/api/estimations/${estimation.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(estimation),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to sync estimation updates:', error);
+  }
   return next;
 };
 
 export const getOrders = () => read(KEYS.orders, []);
-export const addOrder = (order) => {
+
+export const addOrder = async (order) => {
   const orders = getOrders();
   write(KEYS.orders, [order, ...orders]);
+  try {
+    await fetch('http://localhost:5000/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to sync new order:', error);
+  }
 };
-export const updateOrder = (order) => {
+
+export const updateOrder = async (order) => {
   const orders = getOrders();
   const next = orders.map((o) => (o.id === order.id ? { ...o, ...order } : o));
   write(KEYS.orders, next);
+  try {
+    await fetch(`http://localhost:5000/api/orders/${order.id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: order.status }),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to sync order status:', error);
+  }
   return next;
+};
+
+export const verifyPayment = async (orderId, transactionId, paymentMethod) => {
+  try {
+    const res = await fetch(`http://localhost:5000/api/orders/${orderId}/verify-payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transactionId, paymentMethod }),
+      credentials: 'include'
+    });
+    const data = await res.json();
+    if (data.success) {
+      const orders = getOrders();
+      const next = orders.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              status: 'Paid',
+              paymentStatus: 'Paid',
+              paymentMethod,
+              transactionId,
+              paymentTime: data.order.paymentTime
+            }
+          : o
+      );
+      write(KEYS.orders, next);
+      return { success: true, order: data.order };
+    }
+    return { success: false, message: data.message || 'Payment verification failed.' };
+  } catch (error) {
+    console.error('Failed to verify payment:', error);
+    return { success: false, message: 'Server communication error during payment verification.' };
+  }
 };
 
 export const getNotifications = () => read(KEYS.notifications, []);
-export const addNotification = (notification) => {
+
+export const addNotification = async (notification) => {
   const notifications = getNotifications();
   write(KEYS.notifications, [notification, ...notifications]);
 };
-export const markAllNotificationsRead = () => {
+
+export const markAllNotificationsRead = async () => {
   const notifications = getNotifications().map((item) => ({ ...item, read: true }));
   write(KEYS.notifications, notifications);
+  try {
+    const list = read(KEYS.notifications, []);
+    for (const item of list) {
+      await fetch(`http://localhost:5000/api/notifications/${item.id}/read`, {
+        method: 'PATCH',
+        credentials: 'include'
+      });
+    }
+  } catch (error) {
+    console.error('Failed to mark notifications read:', error);
+  }
 };
 
 export const getReviews = () => read(KEYS.reviews, []);
-export const addReview = (review) => {
+
+export const addReview = async (review) => {
   const reviews = getReviews();
   write(KEYS.reviews, [review, ...reviews]);
+  try {
+    await fetch('http://localhost:5000/api/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(review),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to sync product review:', error);
+  }
 };
 
-export const updateReview = (review) => {
+export const updateReview = async (review) => {
   const reviews = getReviews();
   const next = reviews.map((r) => (r.id === review.id ? { ...r, ...review } : r));
   write(KEYS.reviews, next);
+  try {
+    if (review.adminReply !== undefined) {
+      await fetch(`http://localhost:5000/api/reviews/${review.id}/reply`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminReply: review.adminReply }),
+        credentials: 'include'
+      });
+    }
+    if (review.featured !== undefined) {
+      await fetch(`http://localhost:5000/api/reviews/${review.id}/featured`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ featured: review.featured }),
+        credentials: 'include'
+      });
+    }
+  } catch (error) {
+    console.error('Failed to update review status:', error);
+  }
   return next;
 };
 
-export const deleteReview = (id) => {
+export const deleteReview = async (id) => {
   const reviews = getReviews();
   const next = reviews.filter((r) => r.id !== id);
   write(KEYS.reviews, next);
+  try {
+    await fetch(`http://localhost:5000/api/reviews/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to delete product review:', error);
+  }
   return next;
 };
 
@@ -155,11 +378,11 @@ export const getCart = () => {
   const allCarts = read(KEYS.cart, []);
   return allCarts.filter((item) => item.customerPhone === session.phone);
 };
+
 export const setCart = (cartItems) => {
   const session = getSession();
   if (!session || !session.phone) return;
   const allCarts = read(KEYS.cart, []);
-  // Remove existing cart items of this customer, then add new ones
   const filtered = allCarts.filter((item) => item.customerPhone !== session.phone);
   const updatedItems = cartItems.map((item) => ({ ...item, customerPhone: session.phone }));
   const nextCarts = [...updatedItems, ...filtered];
@@ -168,9 +391,10 @@ export const setCart = (cartItems) => {
     const event = new CustomEvent('mosh_cart_updated', { detail: updatedItems });
     window.dispatchEvent(event);
   } catch (e) {
-    // ignore when not in browser
+    // ignore
   }
 };
+
 export const clearCart = () => {
   const session = getSession();
   if (!session || !session.phone) return;
@@ -181,7 +405,7 @@ export const clearCart = () => {
     const event = new CustomEvent('mosh_cart_updated', { detail: [] });
     window.dispatchEvent(event);
   } catch (e) {
-    // ignore when not in browser
+    // ignore
   }
 };
 
@@ -190,19 +414,50 @@ export const setSession = (session) => write(KEYS.session, session);
 export const clearSession = () => localStorage.removeItem(KEYS.session);
 
 export const getStories = () => read(KEYS.stories, defaultStories);
-export const addStory = (story) => {
+
+export const addStory = async (story) => {
   const stories = getStories();
   write(KEYS.stories, [story, ...stories]);
+  try {
+    await fetch('http://localhost:5000/api/stories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(story),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to create success story:', error);
+  }
 };
-export const updateStory = (story) => {
+
+export const updateStory = async (story) => {
   const stories = getStories();
   const next = stories.map((s) => (s.id === story.id ? { ...s, ...story } : s));
   write(KEYS.stories, next);
+  try {
+    await fetch(`http://localhost:5000/api/stories/${story.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(story),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to update success story:', error);
+  }
   return next;
 };
-export const deleteStory = (id) => {
+
+export const deleteStory = async (id) => {
   const stories = getStories();
   const next = stories.filter((s) => s.id !== id);
   write(KEYS.stories, next);
+  try {
+    await fetch(`http://localhost:5000/api/stories/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to delete success story:', error);
+  }
   return next;
 };

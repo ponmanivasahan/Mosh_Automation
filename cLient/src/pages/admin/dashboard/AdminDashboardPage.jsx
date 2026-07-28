@@ -1,27 +1,27 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  LayoutDashboard,
   Package,
-  TrendingUp,
   ShoppingCart,
   CheckCircle,
+  Trash2,
   Users,
-  MessageSquare,
+  TrendingUp,
   RefreshCw,
   MapPin,
+  Clock,
+  Truck,
+  MessageSquare,
+  Sparkles,
+  Eye,
   X,
-  Star,
-  FileText,
-  Trash2,
-  Truck
+  CreditCard,
+  Calendar,
+  Check
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import {
-  getProducts,
-  getOrders,
-  getReviews,
-  updateOrder
-} from '../../../utils/storage';
+import { getProducts, getOrders, getReviews, updateOrder, addNotification } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import './AdminDashboardPage.css';
 
@@ -31,6 +31,7 @@ const adminLinks = [
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
   { to: '/admin/stories', label: 'Success Stories' },
+  { to: '/admin/estimations', label: 'Estimation Calculator' },
   { to: '/admin/settings', label: 'Settings' }
 ];
 
@@ -39,6 +40,7 @@ const AdminDashboardPage = () => {
   const [orders, setOrders] = useState(() => getOrders());
   const [reviews, setReviews] = useState(() => getReviews());
   const [activeModalType, setActiveModalType] = useState(null);
+  const [selectedAdminOrder, setSelectedAdminOrder] = useState(null);
 
   // Live Syncing feed
   useEffect(() => {
@@ -64,7 +66,7 @@ const AdminDashboardPage = () => {
   }, [orders]);
 
   const activeOrdersCount = useMemo(() => {
-    return orders.filter(o => o.status === 'Processing' || o.status === 'Placed').length;
+    return orders.filter(o => o.status === 'Processing' || o.status === 'Placed' || o.status === 'Paid').length;
   }, [orders]);
 
   const dispatchedOrdersCount = useMemo(() => {
@@ -90,7 +92,23 @@ const AdminDashboardPage = () => {
     if (!targetOrder) return;
     const updated = { ...targetOrder, status: newStatus };
     updateOrder(updated);
+
+    // Notify user of dispatch
+    if (newStatus === 'Dispatched') {
+      addNotification({
+        id: `not-${Date.now()}`,
+        title: 'Order Dispatched',
+        message: `Your order #${orderId} has been dispatched for delivery.`,
+        createdAt: new Date().toISOString(),
+        read: false,
+        orderId: orderId
+      });
+    }
+
     setOrders(getOrders());
+    if (selectedAdminOrder && selectedAdminOrder.id === orderId) {
+      setSelectedAdminOrder(updated);
+    }
   };
 
   // Extract unique customers list for modal
@@ -248,6 +266,7 @@ const AdminDashboardPage = () => {
                       <span className={`text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
                         order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' :
                         order.status === 'Dispatched' ? 'bg-teal-50 text-teal-600' :
+                        order.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 font-extrabold' :
                         order.status === 'Processing' ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600'
                       }`}>
                         {order.status}
@@ -255,8 +274,17 @@ const AdminDashboardPage = () => {
                     </div>
                     <p className="text-[11px] text-slate-500 font-bold mt-1">Phone: {order.customerPhone}</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">ID: #{order.id} · {formatDateTime(order.createdAt)}</p>
+                    
+                    {/* Payment Badge */}
                     {order.paymentMethod && (
-                      <p className="text-[10px] text-teal-600 mt-1 font-bold">Paid via: {order.paymentMethod}</p>
+                      <div className="mt-2 p-2 bg-teal-50/50 rounded-lg border border-teal-100 text-[10px] text-teal-800 font-semibold space-y-0.5">
+                        <p className="font-bold flex items-center gap-1">
+                          <CreditCard size={11} className="text-teal-600" />
+                          Payment: <span className="uppercase text-teal-700 font-extrabold">{order.paymentStatus || 'Paid'}</span> ({order.paymentMethod})
+                        </p>
+                        {order.transactionId && <p>Txn ID: <span className="font-mono font-bold text-slate-700">{order.transactionId}</span></p>}
+                        {order.paymentTime && <p>Time: {formatDateTime(order.paymentTime)}</p>}
+                      </div>
                     )}
 
                     {order.shippingAddress && (
@@ -281,25 +309,43 @@ const AdminDashboardPage = () => {
                       <strong className="text-base font-extrabold text-teal-600">{formatCurrency(order.total)}</strong>
                     </div>
 
-                    {order.status !== 'Cancelled' && (
-                      <div className="grid grid-cols-2 gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleStatusChange(order.id, 'Dispatched')}
-                          disabled={order.status === 'Dispatched'}
-                          className="text-[9px] bg-teal-50 border border-teal-200 text-teal-700 py-1.5 rounded-lg font-bold hover:bg-teal-100 disabled:opacity-50"
-                        >
-                          Dispatch
-                        </button>
+                    <div className="flex flex-col gap-2">
+                      <div className="grid grid-cols-2 gap-1.5">
+                        {order.status === 'Paid' ? (
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(order.id, 'Processing')}
+                            className="text-[9px] bg-emerald-600 text-white py-1.5 rounded-lg font-bold hover:bg-emerald-700 shadow-sm"
+                          >
+                            Approve Order
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleStatusChange(order.id, 'Dispatched')}
+                            disabled={order.status === 'Dispatched' || order.status === 'Completed'}
+                            className="text-[9px] bg-teal-50 border border-teal-200 text-teal-700 py-1.5 rounded-lg font-bold hover:bg-teal-100 disabled:opacity-50"
+                          >
+                            Dispatch
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleStatusChange(order.id, 'Cancelled')}
                           className="text-[9px] bg-rose-50 border border-rose-200 text-rose-700 py-1.5 rounded-lg font-bold hover:bg-rose-100"
                         >
-                          Cancel
+                          Reject / Cancel
                         </button>
                       </div>
-                    )}
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedAdminOrder(order)}
+                        className="text-[9px] bg-slate-100 border border-slate-200 text-slate-700 py-1 rounded-lg font-bold hover:bg-slate-200 flex items-center justify-center gap-1"
+                      >
+                        <Eye size={10} /> View Payment & Order Details
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -307,7 +353,7 @@ const AdminDashboardPage = () => {
           )}
         </section>
 
-        {/* Clickable Details Modals Overlay */}
+        {/* Modal overlays */}
         <AnimatePresence>
           {activeModalType && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
@@ -327,10 +373,8 @@ const AdminDashboardPage = () => {
                   </button>
                 </div>
 
-                {/* Modal Contents based on type */}
                 <div className="space-y-4 flex-1 overflow-y-auto pr-1">
                   
-                  {/* Products Details Modal */}
                   {activeModalType === 'products' && (
                     <div className="space-y-3">
                       {products.map(p => (
@@ -346,10 +390,9 @@ const AdminDashboardPage = () => {
                     </div>
                   )}
 
-                  {/* Active Orders Details Modal */}
                   {activeModalType === 'active-orders' && (
                     <div className="space-y-3">
-                      {orders.filter(o => o.status === 'Placed' || o.status === 'Processing').map(o => (
+                      {orders.filter(o => o.status === 'Placed' || o.status === 'Processing' || o.status === 'Paid').map(o => (
                         <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
                           <div>
                             <h4 className="font-bold text-slate-800">{o.customerName} ({o.customerPhone})</h4>
@@ -361,13 +404,12 @@ const AdminDashboardPage = () => {
                           </div>
                         </div>
                       ))}
-                      {orders.filter(o => o.status === 'Placed' || o.status === 'Processing').length === 0 && (
+                      {orders.filter(o => o.status === 'Placed' || o.status === 'Processing' || o.status === 'Paid').length === 0 && (
                         <p className="text-xs text-slate-400 italic text-center py-6">No active orders.</p>
                       )}
                     </div>
                   )}
 
-                  {/* Dispatched Orders Details Modal */}
                   {activeModalType === 'dispatched-orders' && (
                     <div className="space-y-3">
                       {orders.filter(o => o.status === 'Dispatched').map(o => (
@@ -388,7 +430,6 @@ const AdminDashboardPage = () => {
                     </div>
                   )}
 
-                  {/* Completed Orders Details Modal */}
                   {activeModalType === 'completed-orders' && (
                     <div className="space-y-3">
                       {orders.filter(o => o.status === 'Completed').map(o => (
@@ -409,7 +450,6 @@ const AdminDashboardPage = () => {
                     </div>
                   )}
 
-                  {/* Customers Details Modal */}
                   {activeModalType === 'customers' && (
                     <div className="space-y-3">
                       {customersList.map(c => (
@@ -429,7 +469,6 @@ const AdminDashboardPage = () => {
                     </div>
                   )}
 
-                  {/* Cancelled Orders Details Modal */}
                   {activeModalType === 'cancelled-orders' && (
                     <div className="space-y-3">
                       {orders.filter(o => o.status === 'Cancelled').map(o => (
@@ -450,39 +489,144 @@ const AdminDashboardPage = () => {
                     </div>
                   )}
 
-                  {/* Revenue / Transaction Details Modal */}
-                  {activeModalType === 'revenue' && (
-                    <div className="space-y-3">
-                      {orders.filter(o => o.status !== 'Cancelled').map(o => (
-                        <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
-                          <div>
-                            <h4 className="font-bold text-slate-800">Order ID: #{o.id}</h4>
-                            <p className="text-[10px] text-slate-400 mt-0.5">By: {o.customerName} · {formatDateTime(o.createdAt)}</p>
-                          </div>
-                          <strong className="text-emerald-600 font-bold">{formatCurrency(o.total)}</strong>
-                        </div>
-                      ))}
-                      {orders.filter(o => o.status !== 'Cancelled').length === 0 && (
-                        <p className="text-xs text-slate-400 italic text-center py-6">No revenues captured yet.</p>
-                      )}
-                    </div>
-                  )}
-
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 flex justify-end">
-                  <button
-                    onClick={() => setActiveModalType(null)}
-                    className="bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-lg hover:bg-slate-900 transition"
-                  >
-                    Close Panel
-                  </button>
                 </div>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
 
+        {/* Selected Admin Order Details Modal */}
+        <AnimatePresence>
+          {selectedAdminOrder && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border flex flex-col space-y-4 max-h-[85vh] overflow-y-auto"
+              >
+                <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="badge-kicker text-teal-600 font-bold uppercase tracking-wider text-[10px]">Order & Payment Details</span>
+                    <h2 className="text-lg font-bold text-slate-800">Order #{selectedAdminOrder.id}</h2>
+                  </div>
+                  <button onClick={() => setSelectedAdminOrder(null)} className="p-1.5 rounded-lg hover:bg-slate-100 transition">
+                    <X size={18} className="text-slate-400" />
+                  </button>
+                </div>
+
+                <div className="space-y-4 text-xs font-semibold text-slate-600">
+                  {/* Customer info */}
+                  <div className="grid grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-bold">Customer</p>
+                      <p className="text-slate-800 font-bold text-sm mt-0.5">{selectedAdminOrder.customerName}</p>
+                      <p className="text-[11px] mt-0.5">Phone: {selectedAdminOrder.customerPhone}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-slate-400 uppercase font-bold">Shipping Address</p>
+                      {selectedAdminOrder.shippingAddress ? (
+                        <p className="text-slate-800 mt-0.5 leading-relaxed">
+                          {selectedAdminOrder.shippingAddress.address}, {selectedAdminOrder.shippingAddress.city} - {selectedAdminOrder.shippingAddress.pincode}
+                        </p>
+                      ) : (
+                        <p className="text-slate-400 mt-0.5 italic">Standard Delivery</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Payment Details */}
+                  <div className="p-4 bg-teal-50 border border-teal-100 rounded-xl space-y-2">
+                    <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider flex items-center gap-1.5 mb-1">
+                      <CreditCard size={12} /> Payment Telemetry Details
+                    </h4>
+                    <div className="grid grid-cols-2 gap-y-2 text-teal-950">
+                      <div>
+                        <span>Payment Status:</span>
+                        <strong className="block text-sm uppercase text-teal-700 mt-0.5">{selectedAdminOrder.paymentStatus || 'Paid'}</strong>
+                      </div>
+                      <div>
+                        <span>Payment Method:</span>
+                        <strong className="block text-slate-800 mt-0.5">{selectedAdminOrder.paymentMethod || 'UPI QR Code'}</strong>
+                      </div>
+                      {selectedAdminOrder.transactionId && (
+                        <div>
+                          <span>Transaction Reference ID:</span>
+                          <strong className="block font-mono text-slate-800 mt-0.5">{selectedAdminOrder.transactionId}</strong>
+                        </div>
+                      )}
+                      {selectedAdminOrder.paymentTime && (
+                        <div>
+                          <span>Payment Timestamp:</span>
+                          <strong className="block text-slate-800 mt-0.5">{formatDateTime(selectedAdminOrder.paymentTime)}</strong>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Items list */}
+                  <div className="space-y-2.5">
+                    <h4 className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Items List</h4>
+                    <div className="divide-y border rounded-xl overflow-hidden bg-slate-50/50">
+                      {selectedAdminOrder.items?.map((it, idx) => (
+                        <div key={idx} className="flex items-center gap-3 p-3 bg-white">
+                          <img src={it.image} alt={it.name} className="w-8 h-8 object-contain bg-slate-50 border p-1 rounded" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-bold text-slate-800 truncate">{it.name}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">₹{it.unitPrice || it.total} x {it.quantity}</p>
+                          </div>
+                          <strong className="text-teal-700">{formatCurrency(it.total)}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center border-t pt-4">
+                    <div>
+                      <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold text-left">Total Paid</p>
+                      <strong className="text-lg text-teal-600 font-extrabold">{formatCurrency(selectedAdminOrder.total)}</strong>
+                    </div>
+
+                    <div className="flex gap-2">
+                      {selectedAdminOrder.status === 'Paid' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleStatusChange(selectedAdminOrder.id, 'Processing');
+                            setSelectedAdminOrder(null);
+                          }}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition"
+                        >
+                          Approve Order
+                        </button>
+                      )}
+                      {selectedAdminOrder.status !== 'Cancelled' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleStatusChange(selectedAdminOrder.id, 'Cancelled');
+                            setSelectedAdminOrder(null);
+                          }}
+                          className="px-4 py-2 bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold rounded-xl hover:bg-rose-100 transition"
+                        >
+                          Reject Order
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedAdminOrder(null)}
+                        className="px-4 py-2 bg-slate-100 border text-slate-600 text-xs font-bold rounded-xl hover:bg-slate-200 transition"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
     </AppShell>
   );

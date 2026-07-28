@@ -6,9 +6,10 @@ import AdminProductsPage from './pages/admin/products/AdminProductsPage';
 import AdminReviewsPage from './pages/admin/reviews/AdminReviewsPage';
 import AdminStoriesPage from './pages/admin/stories/AdminStoriesPage';
 import AdminSettingsPage from './pages/admin/settings/AdminSettingsPage';
+import AdminEstimationsPage from './pages/admin/estimations/AdminEstimationsPage';
 import CustomerCartPage from './pages/customer/cart/CustomerCartPage';
 import CustomerDashboardPage from './pages/customer/dashboard/CustomerDashboardPage';
-import CustomerQueryPage from './pages/customer/CustomerQueryPage';
+import CustomerQueryPage from './pages/customer/query/CustomerQueryPage';
 import CustomerHelpCenterPage from './pages/customer/help-center/CustomerHelpCenterPage';
 import CustomerProductsPage from './pages/customer/products/CustomerProductsPage';
 import CustomerReviewsPage from './pages/customer/reviews/CustomerReviewsPage';
@@ -123,6 +124,14 @@ const App = () => (
       element={
         <ProtectedRoute role="admin">
           <AdminStoriesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/estimations"
+      element={
+        <ProtectedRoute role="admin">
+          <AdminEstimationsPage />
         </ProtectedRoute>
       }
     />

@@ -9,6 +9,7 @@ const adminLinks = [
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
   { to: '/admin/stories', label: 'Success Stories' },
+  { to: '/admin/estimations', label: 'Estimation Calculator' },
   { to: '/admin/settings', label: 'Settings' }
 ];
 
@@ -16,43 +17,55 @@ const AdminSettingsPage = () => {
   const [users, setUsers] = useState([]);
   const [toastMessage, setToastMessage] = useState('');
 
-  const loadUsers = () => {
-    const raw = localStorage.getItem('mosh_users');
-    if (raw) {
-      setUsers(JSON.parse(raw));
-    } else {
-      // Seed with current default admin if mosh_users is empty
-      const defaultAdmin = {
-        name: 'Admin Staff',
-        phone: '0987654321',
-        role: 'admin',
-        loggedInAt: new Date().toISOString()
-      };
-      localStorage.setItem('mosh_users', JSON.stringify([defaultAdmin]));
-      setUsers([defaultAdmin]);
+  const loadUsers = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/users', { credentials: 'include' });
+      const data = await response.json();
+      if (data.success && data.users) {
+        setUsers(data.users);
+        localStorage.setItem('mosh_users', JSON.stringify(data.users));
+      }
+    } catch (e) {
+      // Offline fallback
+      const raw = localStorage.getItem('mosh_users');
+      if (raw) setUsers(JSON.parse(raw));
     }
   };
 
   useEffect(() => {
     loadUsers();
-    const interval = setInterval(loadUsers, 1500);
+    const interval = setInterval(loadUsers, 5000); // 5s interval is perfect
     return () => clearInterval(interval);
   }, []);
 
-  const toggleUserRole = (phone) => {
-    const updatedUsers = users.map(u => {
-      if (u.phone === phone) {
-        const nextRole = u.role === 'admin' ? 'customer' : 'admin';
-        return { ...u, role: nextRole };
-      }
-      return u;
-    });
+  const toggleUserRole = async (phone) => {
+    const targetUser = users.find(u => u.phone === phone);
+    if (!targetUser) return;
 
-    localStorage.setItem('mosh_users', JSON.stringify(updatedUsers));
-    setUsers(updatedUsers);
-    
-    const targetUser = updatedUsers.find(u => u.phone === phone);
-    setToastMessage(`Role for ${targetUser.name} changed to ${targetUser.role.toUpperCase()} successfully.`);
+    const nextRole = targetUser.role === 'admin' ? 'customer' : 'admin';
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/auth/users/${phone}/role`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: nextRole }),
+        credentials: 'include'
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        setToastMessage(`Role for ${targetUser.name} changed to ${nextRole.toUpperCase()} successfully.`);
+        loadUsers();
+      } else {
+        setToastMessage(`Error: ${data.message}`);
+      }
+    } catch (e) {
+      setToastMessage('Failed to update role on database.');
+      // Offline fallback
+      const updatedUsers = users.map(u => u.phone === phone ? { ...u, role: nextRole } : u);
+      localStorage.setItem('mosh_users', JSON.stringify(updatedUsers));
+      setUsers(updatedUsers);
+    }
     setTimeout(() => setToastMessage(''), 3000);
   };
 

@@ -1,0 +1,13 @@
+const express = require('express');
+const router = express.Router();
+const { register, login, logout, getMe, getUsers, toggleUserRole } = require('../controllers/AuthController');
+const { authenticate, authorizeAdmin } = require('../middleware/auth');
+
+router.post('/register', register);
+router.post('/login', login);
+router.post('/logout', logout);
+router.get('/me', authenticate, getMe);
+router.get('/users', authenticate, authorizeAdmin, getUsers);
+router.patch('/users/:phone/role', authenticate, authorizeAdmin, toggleUserRole);
+
+module.exports = router;

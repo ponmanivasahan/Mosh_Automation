@@ -187,8 +187,8 @@ export const defaultProducts = [
 ];
 
 export const defaultBillingSettings = {
-  InstallationRate: 0.12,
-  taxRate: 0.18,
+  InstallationRate: 1500,
+  taxRate: 18,
   miscellaneousFee: 1000,
   notes: 'Standard billing defaults for estimation calculations.'
 };

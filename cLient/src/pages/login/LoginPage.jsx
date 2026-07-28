@@ -91,11 +91,10 @@ const LoginPage = () => {
   };
 
   // Submit login payload.
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
     const cleanedName = name.trim();
     const cleanedPhone = phone.trim();
-    const role = getRoleFromPhone(cleanedPhone);
 
     if (!cleanedName) {
       setError('Please enter your user name.');
@@ -107,26 +106,52 @@ const LoginPage = () => {
       return;
     }
 
-    // Save/update user inside database list
-    const rawUsers = localStorage.getItem('mosh_users');
-    const users = rawUsers ? JSON.parse(rawUsers) : [];
-    const existingIndex = users.findIndex(u => u.phone === cleanedPhone);
-    if (existingIndex > -1) {
-      users[existingIndex].name = cleanedName; // update name if changed
-    } else {
-      users.push({ name: cleanedName, phone: cleanedPhone, role });
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: cleanedName, phone: cleanedPhone }),
+        credentials: 'include'
+      });
+      const data = await response.json();
+
+      if (data.success && data.user) {
+        const payload = {
+          role: data.user.role,
+          name: data.user.name,
+          phone: data.user.phone,
+          loggedInAt: new Date().toISOString()
+        };
+
+        // Cache users list locally
+        const rawUsers = localStorage.getItem('mosh_users');
+        const usersList = rawUsers ? JSON.parse(rawUsers) : [];
+        const existingIdx = usersList.findIndex(u => u.phone === payload.phone);
+        if (existingIdx > -1) {
+          usersList[existingIdx] = payload;
+        } else {
+          usersList.push(payload);
+        }
+        localStorage.setItem('mosh_users', JSON.stringify(usersList));
+
+        login(payload);
+        navigate(data.user.role === 'admin' ? '/admin/dashboard' : '/customer/dashboard');
+      } else {
+        setError(data.message || 'Login failed.');
+      }
+    } catch (e) {
+      setError('Cannot connect to authentication server. Starting in offline mode.');
+      // Offline fallback
+      const role = getRoleFromPhone(cleanedPhone);
+      const payload = {
+        role,
+        name: cleanedName,
+        phone: cleanedPhone,
+        loggedInAt: new Date().toISOString()
+      };
+      login(payload);
+      navigate(role === 'admin' ? '/admin/dashboard' : '/customer/dashboard');
     }
-    localStorage.setItem('mosh_users', JSON.stringify(users));
-
-    const payload = {
-      role,
-      name: cleanedName,
-      phone: cleanedPhone,
-      loggedInAt: new Date().toISOString()
-    };
-
-    login(payload);
-    navigate(role === 'admin' ? '/admin/dashboard' : '/customer/dashboard');
   };
 
   return (

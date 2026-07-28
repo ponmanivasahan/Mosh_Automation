@@ -11,6 +11,7 @@ const adminLinks = [
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
   { to: '/admin/stories', label: 'Success Stories' },
+  { to: '/admin/estimations', label: 'Estimation Calculator' },
   { to: '/admin/settings', label: 'Settings' }
 ];
 
