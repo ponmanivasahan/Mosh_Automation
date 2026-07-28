@@ -31,12 +31,11 @@
 
 .login-page {
   position: relative;
-  width: 1600px;
-  height: 890px;
+  width: 100%;
+  min-height: 100vh;
   overflow: hidden;
   background-image: url('/background.png');
   background-size: cover;
-  background-position: center;
   background-position: center;
   background-repeat: no-repeat;
 }
@@ -123,7 +122,7 @@
   min-height: 560px;
   padding: 34px 34px 28px;
   border-radius: 24px;
-  background: transparent;
+  background: var(--card-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.12);
@@ -282,67 +281,75 @@
 }
 
 @media (max-width: 1024px) {
+  .login-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 16px;
+    box-sizing: border-box;
+    min-height: 100vh;
+    background: #f8fafc;
+    background-image: none !important;
+  }
+
+  .login-page::before {
+    display: none;
+  }
+
   .login-story {
-    left: 24px;
-    right: 24px;
-    bottom: 18px;
-    width: auto;
-    max-width: none;
+    display: none;
   }
 
   .login-shell {
+    position: static;
+    height: auto;
+    width: 100%;
+    display: flex;
     justify-content: center;
-    padding: 24px;
+    align-items: center;
+    padding: 0;
+    margin: 0;
   }
 
   .login-panel {
-    width: min(420px, 92vw);
+    width: 100%;
+    max-width: 420px;
+    min-height: auto;
+    padding: 34px 24px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+    border: 1px solid rgba(15, 23, 42, 0.08);
   }
 }
 
 @media (max-width: 640px) {
-  .login-story {
-    left: 14px;
-    right: 14px;
-    bottom: 14px;
+  .login-page {
+    padding: 20px 12px;
+  }
+
+  .login-panel-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: -10px;
+  }
+
+  .login-panel-title {
+    font-size: 20px;
   }
 
   .login-story-kicker {
     font-size: 11px;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
   }
 
   .login-story-typing {
     font-size: 14px;
   }
 
-  .login-shell {
-    padding: 14px;
-  }
-
-  .login-panel {
-    width: 92vw;
-    min-height: auto;
-    padding: 28px 20px 22px;
-    border-radius: 22px;
-  }
-
-  .login-panel-logo {
-    width: 62px;
-    height: 62px;
-  }
-
-  .login-panel-title {
-    font-size: 24px;
-  }
-
-  .login-panel-subtitle {
-    font-size: 15px;
-  }
-
   .field-label input,
   .create-account-button {
-    height: 50px;
-    font-size: 15px;
+    height: 48px;
+    font-size: 14px;
   }
 }
