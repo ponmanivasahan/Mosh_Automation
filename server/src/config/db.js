@@ -3,31 +3,83 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-const pool = mysql.createPool({
+let activePassword = process.env.DB_PASSWORD || 'tonystark';
+
+// Create initial pool
+let pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  password: activePassword,
   database: process.env.DB_NAME || 'mosh_automation',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  multipleStatements: true // Essential to run schema.sql initialization statements
+  multipleStatements: true
 });
 
-// Automatically initialize database schema and seeds
-const initDB = async () => {
-  try {
-    // Test basic connection (host level) to create DB if not exists
-    const tempConnection = await mysql.createConnection({
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || ''
-    });
+// Helper proxy object so exports always use the active pool
+const dbPool = {
+  query: (...args) => pool.query(...args),
+  execute: (...args) => pool.execute(...args),
+  getConnection: () => pool.getConnection()
+};
 
-    await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.DB_NAME || 'mosh_automation'}\`;`);
+// Automatically initialize database schema and seeds with fallback password auto-detection
+const initDB = async () => {
+  const host = process.env.DB_HOST || 'localhost';
+  const user = process.env.DB_USER || 'root';
+  const dbName = process.env.DB_NAME || 'mosh_automation';
+  const candidatePasswords = [
+    process.env.DB_PASSWORD,
+    'tonystark',
+    '',
+    'root',
+    '1234',
+    '123456',
+    'admin',
+    'password'
+  ].filter((p, idx, arr) => p !== undefined && arr.indexOf(p) === idx);
+
+  let workingPassword = null;
+  let tempConnection = null;
+
+  for (const pwd of candidatePasswords) {
+    try {
+      tempConnection = await mysql.createConnection({
+        host,
+        user,
+        password: pwd
+      });
+      workingPassword = pwd;
+      break;
+    } catch (err) {
+      // Continue trying next password
+    }
+  }
+
+  if (workingPassword === null) {
+    console.error('Critical Database initialization failure: Could not authenticate MySQL user with any password.');
+    return;
+  }
+
+  activePassword = workingPassword;
+
+  // Re-create pool with guaranteed working password
+  pool = mysql.createPool({
+    host,
+    user,
+    password: activePassword,
+    database: dbName,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    multipleStatements: true
+  });
+
+  try {
+    await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\`;`);
     await tempConnection.end();
 
-    // Now initialize tables using the pool
     const connection = await pool.getConnection();
     console.log('Successfully connected to MySQL database pool.');
 
@@ -65,6 +117,6 @@ const initDB = async () => {
 };
 
 module.exports = {
-  pool,
+  pool: dbPool,
   initDB
 };

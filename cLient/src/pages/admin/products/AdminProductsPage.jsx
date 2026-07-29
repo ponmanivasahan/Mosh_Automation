@@ -264,39 +264,39 @@ const AdminProductsPage = () => {
 
           <div className="space-y-4">
             {filteredProducts.map((p) => (
-              <article key={p.id} className="border border-slate-200 p-4 rounded-lg bg-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm hover:shadow-md transition">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="w-20 h-20 bg-slate-50 border rounded-lg p-2 flex items-center justify-center shrink-0">
+              <article key={p.id} className="border border-slate-200 p-4 rounded-lg bg-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm hover:shadow-md transition max-w-full overflow-hidden">
+                <div className="flex items-start sm:items-center gap-3 sm:gap-4 flex-1 min-w-0 w-full overflow-hidden">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-50 border rounded-lg p-2 flex items-center justify-center shrink-0">
                     <img src={p.image} alt={p.name} className="max-h-full max-w-full object-contain" />
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[9px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-bold uppercase">{p.category || 'Automation'}</span>
-                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="text-[9px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-bold uppercase shrink-0">{p.category || 'Automation'}</span>
+                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase shrink-0 ${
                         p.availability === 'Out of Stock' ? 'bg-rose-50 text-rose-600' : 'bg-green-50 text-green-700'
                       }`}>
                         {p.availability || 'In Stock'}
                       </span>
                     </div>
-                    <h3 className="text-sm font-bold text-slate-800 mt-1.5 truncate">{p.name}</h3>
-                    <p className="text-xs text-slate-500 truncate mt-0.5 font-semibold">{p.description}</p>
-                    <p className="text-[10px] text-slate-400 mt-1">Created: {p.createdAt ? formatDateTime(p.createdAt) : 'Initial setup'}</p>
+                    <h3 className="text-sm font-bold text-slate-800 mt-1 truncate max-w-full">{p.name}</h3>
+                    <p className="text-xs text-slate-500 truncate mt-0.5 font-semibold max-w-full">{p.description}</p>
+                    <p className="text-[10px] text-slate-400 mt-1 truncate max-w-full">Created: {p.createdAt ? formatDateTime(p.createdAt) : 'Initial setup'}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 shrink-0 self-end md:self-center border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto justify-between md:justify-start">
-                  <strong className="text-sm text-teal-700 font-bold">{formatCurrency(p.price)}</strong>
-                  <div className="flex gap-2">
+                <div className="flex items-center gap-3 sm:gap-4 shrink-0 self-stretch md:self-center border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto justify-between md:justify-start mt-1 md:mt-0">
+                  <strong className="text-sm text-teal-700 font-bold shrink-0">{formatCurrency(p.price)}</strong>
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => triggerEdit(p)}
-                      className="bg-slate-100 border text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-200 transition flex items-center gap-1"
+                      className="bg-slate-100 border text-slate-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-200 transition flex items-center gap-1 shrink-0"
                       type="button"
                     >
                       <Edit2 size={12} /> Edit
                     </button>
                     <button
                       onClick={() => setDeletingId(p.id)}
-                      className="bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-100 transition flex items-center gap-1"
+                      className="bg-rose-50 border border-rose-200 text-rose-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-rose-100 transition flex items-center gap-1 shrink-0"
                       type="button"
                     >
                       <Trash2 size={12} /> Delete

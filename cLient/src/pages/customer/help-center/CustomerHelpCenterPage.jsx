@@ -119,7 +119,7 @@ const CustomerHelpCenterPage = () => {
           <div className="hero-content">
             
             <h2>How can we help you today?</h2>
-            <p style={{ color: 'gray',marginLeft:'250px' }}>Search our knowledge base or troubleshoot issues using our interactive wizard.</p>
+            <p className="text-slate-500 text-sm max-w-xl mx-auto mt-2">Search our knowledge base or troubleshoot issues using our interactive wizard.</p>
             
             {/* Search Input bar */}
             <div className="search-bar-wrap">
