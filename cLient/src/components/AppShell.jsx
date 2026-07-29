@@ -173,7 +173,7 @@ const AppShell = ({ title, links, children }) => {
             <button
               type="button"
               onClick={logout}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-500 bg-rose-50 px-4 py-3 text-rose-600 font-bold text-sm hover:bg-rose-100 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-600 font-bold text-sm hover:border-rose-200 hover:bg-rose-50/50 hover:text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-100 transition-colors"
               aria-label="Logout"
             >
               <LogOut className="h-4 w-4" />
