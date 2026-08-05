@@ -8,10 +8,11 @@ require('dotenv').config();
 const dbUrl = process.env.DATABASE_URL || process.env.JAWSDB_URL || process.env.CLEARDB_DATABASE_URL || process.env.MYSQL_URL;
 
 let connectionConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '1234',
-  database: process.env.DB_NAME || 'mosh_automation',
+  host: process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
+  user: process.env.DB_USER || process.env.MYSQLUSER || 'root',
+  password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || 'tonystark',
+  database: process.env.DB_NAME || process.env.MYSQLDATABASE || 'mosh_automation',
+  port: process.env.DB_PORT || process.env.MYSQLPORT || 3306,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -42,9 +43,6 @@ if (dbUrl) {
 // Create initial pool
 let pool = mysql.createPool(connectionConfig);
 
-// tempConnection used during initialization (declared here to avoid reference errors)
-let tempConnection = null;
-
 // Helper proxy object so exports always use the active pool instance
 const dbPool = {
   query: (...args) => pool.query(...args),
@@ -57,10 +55,11 @@ const initDB = async () => {
   const dbUrl = process.env.DATABASE_URL || process.env.JAWSDB_URL || process.env.CLEARDB_DATABASE_URL || process.env.MYSQL_URL;
   
   let config = {
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '1234',
-    database: process.env.DB_NAME || 'mosh_automation',
+    host: process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
+    user: process.env.DB_USER || process.env.MYSQLUSER || 'root',
+    password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || 'tonystark',
+    database: process.env.DB_NAME || process.env.MYSQLDATABASE || 'mosh_automation',
+    port: process.env.DB_PORT || process.env.MYSQLPORT || 3306,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
@@ -85,16 +84,17 @@ const initDB = async () => {
         multipleStatements: true
       };
       isUrlUsed = true;
-      console.log(`initDB using DATABASE_URL configuration: host=${config.host}, database=${config.database}`);
     } catch (err) {
       console.error('Failed to parse database connection URL in initDB:', err.message);
     }
   }
 
-  // workingPassword will be set when a successful authentication attempt is found
+  const isRemote = config.host !== 'localhost' && config.host !== '127.0.0.1';
   let workingPassword = null;
+  let tempConnection = null;
 
-  if (isUrlUsed) {
+  if (isUrlUsed || isRemote) {
+    // Connect directly to remote server - do not guess local developer passwords
     try {
       tempConnection = await mysql.createConnection({
         host: config.host,
@@ -102,14 +102,14 @@ const initDB = async () => {
         user: config.user,
         password: config.password
       });
-      console.log('Successfully opened connection using database connection URL.');
+      console.log(`Successfully opened connection to remote database host ${config.host}.`);
     } catch (err) {
-      console.error(`Critical Database connection failure for URL host ${config.host}:`, err.message);
-      console.error('Please configure your database credentials or check DATABASE_URL on Render.');
+      console.error(`Critical Database connection failure for remote host ${config.host}:`, err.message);
+      console.error('Please configure your database environment variables on Render.');
       return;
     }
   } else {
-    // Local fallback password loop detection
+    // Local fallback password loop detection for localhost development
     const candidatePasswords = [
       process.env.DB_PASSWORD,
       'tonystark',
