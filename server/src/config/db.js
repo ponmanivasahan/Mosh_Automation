@@ -10,7 +10,7 @@ const dbUrl = process.env.DATABASE_URL || process.env.JAWSDB_URL || process.env.
 let connectionConfig = {
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'tonystark',
+  password: process.env.DB_PASSWORD || '1234',
   database: process.env.DB_NAME || 'mosh_automation',
   waitForConnections: true,
   connectionLimit: 10,
@@ -56,7 +56,7 @@ const initDB = async () => {
   let config = {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'tonystark',
+    password: process.env.DB_PASSWORD || '1234',
     database: process.env.DB_NAME || 'mosh_automation',
     waitForConnections: true,
     connectionLimit: 10,
@@ -88,8 +88,7 @@ const initDB = async () => {
     }
   }
 
-  let workingPassword = null;
-  let tempConnection = null;
+  let workingPassword = 1234;
 
   if (isUrlUsed) {
     try {
