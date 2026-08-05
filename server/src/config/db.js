@@ -88,7 +88,7 @@ const initDB = async () => {
     }
   }
 
-  let workingPassword = config.password;
+  let workingPassword = null;
   let tempConnection = null;
 
   if (isUrlUsed) {
