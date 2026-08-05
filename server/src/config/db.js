@@ -42,6 +42,9 @@ if (dbUrl) {
 // Create initial pool
 let pool = mysql.createPool(connectionConfig);
 
+// tempConnection used during initialization (declared here to avoid reference errors)
+let tempConnection = null;
+
 // Helper proxy object so exports always use the active pool instance
 const dbPool = {
   query: (...args) => pool.query(...args),
@@ -88,7 +91,8 @@ const initDB = async () => {
     }
   }
 
-  let workingPassword = 1234;
+  // workingPassword will be set when a successful authentication attempt is found
+  let workingPassword = null;
 
   if (isUrlUsed) {
     try {
