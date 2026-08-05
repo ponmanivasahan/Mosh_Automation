@@ -1,4 +1,5 @@
 import { defaultBillingSettings, defaultProducts, productImageOptions, defaultStories, defaultReviews } from '../data/defaults';
+import { API_URL } from './api';
 
 const KEYS = {
   products: 'mosh_products',
@@ -78,43 +79,43 @@ export const ensureInitialData = async () => {
 
   // Attempt to sync from backend database
   try {
-    const prodRes = await fetch('http://localhost:5000/api/products');
+    const prodRes = await fetch(`${API_URL}/api/products`);
     const prodData = await prodRes.json();
     if (prodData.success && prodData.products?.length) {
       write(KEYS.products, prodData.products);
     }
 
-    const billRes = await fetch('http://localhost:5000/api/billing');
+    const billRes = await fetch(`${API_URL}/api/billing`);
     const billData = await billRes.json();
     if (billData.success && billData.settings) {
       write(KEYS.billingSettings, billData.settings);
     }
 
-    const storyRes = await fetch('http://localhost:5000/api/stories');
+    const storyRes = await fetch(`${API_URL}/api/stories`);
     const storyData = await storyRes.json();
     if (storyData.success && storyData.stories) {
       write(KEYS.stories, storyData.stories);
     }
 
-    const revRes = await fetch('http://localhost:5000/api/reviews');
+    const revRes = await fetch(`${API_URL}/api/reviews`);
     const revData = await revRes.json();
     if (revData.success && revData.reviews) {
       write(KEYS.reviews, revData.reviews);
     }
 
-    const orderRes = await fetch('http://localhost:5000/api/orders', { credentials: 'include' });
+    const orderRes = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
     const orderData = await orderRes.json();
     if (orderData.success && orderData.orders) {
       write(KEYS.orders, orderData.orders);
     }
 
-    const estRes = await fetch('http://localhost:5000/api/estimations', { credentials: 'include' });
+    const estRes = await fetch(`${API_URL}/api/estimations`, { credentials: 'include' });
     const estData = await estRes.json();
     if (estData.success && estData.estimations) {
       write(KEYS.estimations, estData.estimations);
     }
 
-    const notifRes = await fetch('http://localhost:5000/api/notifications', { credentials: 'include' });
+    const notifRes = await fetch(`${API_URL}/api/notifications`, { credentials: 'include' });
     const notifData = await notifRes.json();
     if (notifData.success && notifData.notifications) {
       write(KEYS.notifications, notifData.notifications);
@@ -142,7 +143,7 @@ export const setProducts = async (products) => {
     // 1. Delete removed products
     for (const oldP of oldProducts) {
       if (!normalizedNew.some(newP => newP.id === oldP.id)) {
-        await fetch(`http://localhost:5000/api/products/${oldP.id}`, {
+        await fetch(`${API_URL}/api/products/${oldP.id}`, {
           method: 'DELETE',
           credentials: 'include'
         });
@@ -153,14 +154,14 @@ export const setProducts = async (products) => {
     for (const newP of normalizedNew) {
       const oldP = oldProducts.find(p => p.id === newP.id);
       if (!oldP) {
-        await fetch('http://localhost:5000/api/products', {
+        await fetch(`${API_URL}/api/products`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newP),
           credentials: 'include'
         });
       } else if (JSON.stringify(newP) !== JSON.stringify(oldP)) {
-        await fetch(`http://localhost:5000/api/products/${newP.id}`, {
+        await fetch(`${API_URL}/api/products/${newP.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newP),
@@ -178,7 +179,7 @@ export const getBillingSettings = () => read(KEYS.billingSettings, defaultBillin
 export const setBillingSettings = async (settings) => {
   write(KEYS.billingSettings, settings);
   try {
-    await fetch('http://localhost:5000/api/billing', {
+    await fetch(`${API_URL}/api/billing`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings),
@@ -195,7 +196,7 @@ export const addEstimation = async (estimation) => {
   const estimations = getEstimations();
   write(KEYS.estimations, [estimation, ...estimations]);
   try {
-    await fetch('http://localhost:5000/api/estimations', {
+    await fetch(`${API_URL}/api/estimations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(estimation),
@@ -211,7 +212,7 @@ export const updateEstimation = async (estimation) => {
   const next = estimations.map((e) => (e.id === estimation.id ? { ...e, ...estimation } : e));
   write(KEYS.estimations, next);
   try {
-    await fetch(`http://localhost:5000/api/estimations/${estimation.id}`, {
+    await fetch(`${API_URL}/api/estimations/${estimation.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(estimation),
@@ -229,7 +230,7 @@ export const addOrder = async (order) => {
   const orders = getOrders();
   write(KEYS.orders, [order, ...orders]);
   try {
-    await fetch('http://localhost:5000/api/orders', {
+    await fetch(`${API_URL}/api/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order),
@@ -245,7 +246,7 @@ export const updateOrder = async (order) => {
   const next = orders.map((o) => (o.id === order.id ? { ...o, ...order } : o));
   write(KEYS.orders, next);
   try {
-    await fetch(`http://localhost:5000/api/orders/${order.id}/status`, {
+    await fetch(`${API_URL}/api/orders/${order.id}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: order.status }),
@@ -259,7 +260,7 @@ export const updateOrder = async (order) => {
 
 export const verifyPayment = async (orderId, transactionId, paymentMethod) => {
   try {
-    const res = await fetch(`http://localhost:5000/api/orders/${orderId}/verify-payment`, {
+    const res = await fetch(`${API_URL}/api/orders/${orderId}/verify-payment`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ transactionId, paymentMethod }),
@@ -303,7 +304,7 @@ export const markAllNotificationsRead = async () => {
   try {
     const list = read(KEYS.notifications, []);
     for (const item of list) {
-      await fetch(`http://localhost:5000/api/notifications/${item.id}/read`, {
+      await fetch(`${API_URL}/api/notifications/${item.id}/read`, {
         method: 'PATCH',
         credentials: 'include'
       });
@@ -319,7 +320,7 @@ export const addReview = async (review) => {
   const reviews = getReviews();
   write(KEYS.reviews, [review, ...reviews]);
   try {
-    await fetch('http://localhost:5000/api/reviews', {
+    await fetch(`${API_URL}/api/reviews`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(review),
@@ -336,7 +337,7 @@ export const updateReview = async (review) => {
   write(KEYS.reviews, next);
   try {
     if (review.adminReply !== undefined) {
-      await fetch(`http://localhost:5000/api/reviews/${review.id}/reply`, {
+      await fetch(`${API_URL}/api/reviews/${review.id}/reply`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ adminReply: review.adminReply }),
@@ -344,7 +345,7 @@ export const updateReview = async (review) => {
       });
     }
     if (review.featured !== undefined) {
-      await fetch(`http://localhost:5000/api/reviews/${review.id}/featured`, {
+      await fetch(`${API_URL}/api/reviews/${review.id}/featured`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ featured: review.featured }),
@@ -362,7 +363,7 @@ export const deleteReview = async (id) => {
   const next = reviews.filter((r) => r.id !== id);
   write(KEYS.reviews, next);
   try {
-    await fetch(`http://localhost:5000/api/reviews/${id}`, {
+    await fetch(`${API_URL}/api/reviews/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     });
@@ -419,7 +420,7 @@ export const addStory = async (story) => {
   const stories = getStories();
   write(KEYS.stories, [story, ...stories]);
   try {
-    await fetch('http://localhost:5000/api/stories', {
+    await fetch(`${API_URL}/api/stories`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(story),
@@ -435,7 +436,7 @@ export const updateStory = async (story) => {
   const next = stories.map((s) => (s.id === story.id ? { ...s, ...story } : s));
   write(KEYS.stories, next);
   try {
-    await fetch(`http://localhost:5000/api/stories/${story.id}`, {
+    await fetch(`${API_URL}/api/stories/${story.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(story),
@@ -452,7 +453,7 @@ export const deleteStory = async (id) => {
   const next = stories.filter((s) => s.id !== id);
   write(KEYS.stories, next);
   try {
-    await fetch(`http://localhost:5000/api/stories/${id}`, {
+    await fetch(`${API_URL}/api/stories/${id}`, {
       method: 'DELETE',
       credentials: 'include'
     });

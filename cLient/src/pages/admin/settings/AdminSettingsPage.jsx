@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Shield, User, ToggleLeft, ToggleRight, Check, Users, Clock } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { formatDateTime } from '../../../utils/format';
+import { API_URL } from '../../../utils/api';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
@@ -19,7 +20,7 @@ const AdminSettingsPage = () => {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/users', { credentials: 'include' });
+      const response = await fetch(`${API_URL}/api/auth/users`, { credentials: 'include' });
       const data = await response.json();
       if (data.success && data.users) {
         setUsers(data.users);
@@ -45,7 +46,7 @@ const AdminSettingsPage = () => {
     const nextRole = targetUser.role === 'admin' ? 'customer' : 'admin';
 
     try {
-      const response = await fetch(`http://localhost:5000/api/auth/users/${phone}/role`, {
+      const response = await fetch(`${API_URL}/api/auth/users/${phone}/role`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ role: nextRole }),
