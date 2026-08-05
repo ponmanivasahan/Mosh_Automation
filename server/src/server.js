@@ -14,6 +14,7 @@ const estimationsRoutes = require('./routes/estimationsRoutes');
 const billingRoutes = require('./routes/billingRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5000;
 const allowedOrigins = new Set([
@@ -52,6 +53,18 @@ app.use('/api/stories', storiesRoutes);
 app.use('/api/estimations', estimationsRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/notifications', notificationRoutes);
+
+// Serve client static assets if present (built into ../public)
+const staticDir = path.join(__dirname, '..', 'public');
+if (require('fs').existsSync(staticDir)) {
+  app.use(express.static(staticDir));
+
+  // Fallback to index.html for SPA routes (allow API routes to function)
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(staticDir, 'index.html'));
+  });
+}
 
 // Global Error Handler boundary
 app.use((err, req, res, next) => {

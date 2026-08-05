@@ -1,0 +1,9 @@
+{
+  "name": "mosh-automation-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd cLient && npm ci && npm run build && rm -rf ../server/public && mkdir -p ../server/public && cp -r dist/* ../server/public/",
+    "start": "cd server && npm install --production && node src/server.js"
+  }
+}
