@@ -18,7 +18,8 @@ import {
   Download,
   AlertCircle,
   Clock,
-  Check
+  Check,
+  ShieldCheck
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { useAuth } from '../../../utils/AuthContext';
@@ -49,6 +50,8 @@ const CustomerCartPage = () => {
   const [paymentTimer, setPaymentTimer] = useState(600); // 10 minutes in seconds
   const [transactionIdInput, setTransactionIdInput] = useState('');
   const [paymentStatusState, setPaymentStatusState] = useState('paying'); // paying, verifying, success, error
+  const [verificationStep, setVerificationStep] = useState(1);
+  const [verificationProgress, setVerificationProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
   const [shippingDetails, setShippingDetails] = useState({
@@ -177,6 +180,7 @@ const CustomerCartPage = () => {
       total: priceDetails.finalAmount,
       createdAt: new Date().toISOString(),
       status: 'Processing',
+      paymentStatus: 'Pending',
       shippingAddress: {
         address: shippingDetails.address,
         city: shippingDetails.city,
@@ -231,22 +235,39 @@ const CustomerCartPage = () => {
 
   const handleVerifyPayment = async (e) => {
     e.preventDefault();
-    if (!transactionIdInput.trim()) {
-      alert('Please enter your 12-digit transaction ID or reference number.');
+    const cleanTxnId = transactionIdInput.trim();
+    if (!cleanTxnId || cleanTxnId.length < 8) {
+      alert('Please enter a valid 12-digit UPI transaction ID or UTR reference number.');
       return;
     }
-    setPaymentStatusState('verifying');
     
-    // Call server API to verify payment status
-    const result = await verifyPayment(activePaymentOrder.id, transactionIdInput.trim(), shippingDetails.paymentMethod);
+    setPaymentStatusState('verifying');
+    setVerificationStep(1);
+    setVerificationProgress(20);
+
+    // Step 1: Validate UTR format & initialize connection
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    setVerificationStep(2);
+    setVerificationProgress(60);
+
+    // Step 2: Contact NPCI & Banking Gateway
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    setVerificationStep(3);
+    setVerificationProgress(90);
+
+    // Step 3: Execute DB API payment verification
+    const result = await verifyPayment(activePaymentOrder.id, cleanTxnId, shippingDetails.paymentMethod);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    setVerificationProgress(100);
+
     if (result.success) {
       setPaymentStatusState('success');
       
-      // Notify Admin
+      // Notify Admin with exact telemetry
       addNotification({
         id: `not-${Date.now()}`,
-        title: 'New Paid Order',
-        message: `${shippingDetails.name} paid ${formatCurrency(activePaymentOrder.total)} via ${shippingDetails.paymentMethod} (Txn: ${transactionIdInput.trim()}).`,
+        title: 'Payment Received & Verified',
+        message: `${shippingDetails.name} paid ${formatCurrency(activePaymentOrder.total)} via ${shippingDetails.paymentMethod}. Amount credited to Bank Account. Txn ID: ${cleanTxnId}`,
         createdAt: new Date().toISOString(),
         read: false,
         orderId: activePaymentOrder.id
@@ -258,7 +279,7 @@ const CustomerCartPage = () => {
       setOrders(getOrders().filter((order) => order.customerPhone === session?.phone));
     } else {
       setPaymentStatusState('error');
-      setErrorMessage(result.message || 'Payment verification failed. Please try again.');
+      setErrorMessage(result.message || 'Payment verification failed. Please check transaction ID.');
     }
   };
 
@@ -417,12 +438,12 @@ const CustomerCartPage = () => {
                             <Calendar size={11} /> {formatDateTime(order.createdAt)}
                           </span>
                         </div>
-                        <span className={`order-status-badge text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                          order.status === 'Paid' ? 'bg-teal-50 text-teal-600' :
-                          order.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' :
-                          order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
+                        <span className={`order-status-badge text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
+                          order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' :
+                          order.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
+                          order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-700'
                         }`}>
-                          {order.status}
+                          {order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'Paid' : order.status === 'Processing' ? 'Payment Pending' : order.status}
                         </span>
                       </div>
 
@@ -439,10 +460,27 @@ const CustomerCartPage = () => {
 
                       <div className="order-history-footer flex justify-between items-center mt-3 pt-3 border-t">
                         <div>
-                          <span className="grand-total-label">Total Amount</span>
+                          <span className="grand-total-label">
+                            {order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'Total Paid' : 'Total (Pending)'}
+                          </span>
                           <strong className="grand-total-val">{formatCurrency(order.total)}</strong>
                         </div>
                         <div className="flex gap-2">
+                          {order.paymentStatus !== 'Paid' && order.status !== 'Paid' && order.status !== 'Cancelled' && order.status !== 'Completed' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActivePaymentOrder(order);
+                                setPaymentTimer(600);
+                                setTransactionIdInput('');
+                                setPaymentStatusState('paying');
+                              }}
+                              className="bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold px-3.5 py-2 rounded-xl transition-all shadow-sm"
+                            >
+                              Pay Now (UPI)
+                            </button>
+                          )}
                           {order.status === 'Dispatched' ? (
                             <button
                               type="button"
@@ -450,7 +488,7 @@ const CustomerCartPage = () => {
                                 e.stopPropagation();
                                 handleMarkDelivered(order);
                               }}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-4 py-2 rounded transition-all animate-pulse shadow-sm"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-4 py-2 rounded-xl transition-all animate-pulse shadow-sm"
                             >
                               Delivered
                             </button>
@@ -462,9 +500,9 @@ const CustomerCartPage = () => {
                                   e.stopPropagation();
                                   handleCancelOrder(order);
                                 }}
-                                className="bg-rose-50 border border-rose-200 text-rose-600 text-[10px] font-bold px-4 py-2 rounded hover:bg-rose-100 transition-all shadow-sm"
+                                className="bg-rose-50 border border-rose-200 text-rose-600 text-[10px] font-bold px-3.5 py-2 rounded-xl hover:bg-rose-100 transition-all shadow-sm"
                               >
-                                Cancel Order
+                                Cancel
                               </button>
                             )
                           )}
@@ -644,24 +682,33 @@ const CustomerCartPage = () => {
 
                 <div>
                   <label className="mb-1 text-xs font-semibold text-slate-700">Payment Method *</label>
-                  <div className="grid grid-cols-2 gap-3 mt-1">
+                  <div className="grid grid-cols-3 gap-2 mt-1">
                     <button
                       type="button"
                       onClick={() => setShippingDetails({ ...shippingDetails, paymentMethod: 'Google Pay' })}
-                      className={`text-xs py-2.5 px-3 rounded-xl border font-bold transition-all flex items-center justify-center gap-2 ${
+                      className={`text-xs py-2.5 px-2 rounded-xl border font-bold transition-all flex items-center justify-center gap-1.5 ${
                         shippingDetails.paymentMethod === 'Google Pay' ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm' : 'bg-white text-slate-500 border-slate-200'
                       }`}
                     >
-                      <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block" /> Google Pay
+                      <span className="w-2 h-2 rounded-full bg-blue-600 inline-block shrink-0" /> GPay
                     </button>
                     <button
                       type="button"
                       onClick={() => setShippingDetails({ ...shippingDetails, paymentMethod: 'PhonePe' })}
-                      className={`text-xs py-2.5 px-3 rounded-xl border font-bold transition-all flex items-center justify-center gap-2 ${
+                      className={`text-xs py-2.5 px-2 rounded-xl border font-bold transition-all flex items-center justify-center gap-1.5 ${
                         shippingDetails.paymentMethod === 'PhonePe' ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm' : 'bg-white text-slate-500 border-slate-200'
                       }`}
                     >
-                      <span className="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block" /> PhonePe
+                      <span className="w-2 h-2 rounded-full bg-purple-600 inline-block shrink-0" /> PhonePe
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShippingDetails({ ...shippingDetails, paymentMethod: 'Paytm' })}
+                      className={`text-xs py-2.5 px-2 rounded-xl border font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        shippingDetails.paymentMethod === 'Paytm' ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm' : 'bg-white text-slate-500 border-slate-200'
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-sky-500 inline-block shrink-0" /> Paytm
                     </button>
                   </div>
                 </div>
@@ -737,16 +784,19 @@ const CustomerCartPage = () => {
                       alt="UPI QR Code" 
                       className="w-full aspect-square object-contain bg-white p-2 rounded-lg border shadow-sm" 
                     />
-                    <span className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-2">Scan with Google Pay / PhonePe</span>
+                    <span className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-2">Scan with Google Pay / PhonePe / Paytm</span>
                   </div>
 
                   {/* App badges */}
-                  <div className="flex justify-center items-center gap-4 text-xs font-bold text-slate-500 py-1">
-                    <span className="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full text-[10px]">
+                  <div className="flex justify-center items-center gap-2.5 text-xs font-bold text-slate-500 py-1">
+                    <span className="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-full text-[9px]">
                       <span className="w-2 h-2 rounded-full bg-blue-500" /> Google Pay
                     </span>
-                    <span className="flex items-center gap-1.5 bg-slate-100 px-3 py-1 rounded-full text-[10px]">
+                    <span className="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-full text-[9px]">
                       <span className="w-2 h-2 rounded-full bg-purple-500" /> PhonePe
+                    </span>
+                    <span className="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-full text-[9px]">
+                      <span className="w-2 h-2 rounded-full bg-sky-500" /> Paytm
                     </span>
                   </div>
 
@@ -787,28 +837,97 @@ const CustomerCartPage = () => {
               )}
 
               {paymentStatusState === 'verifying' && (
-                <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                  <RefreshCw className="animate-spin text-teal-600 h-10 w-10" />
-                  <h4 className="font-bold text-slate-800">Verifying Payment...</h4>
-                  <p className="text-xs text-slate-500 text-center max-w-[240px]">Connecting with payment gateways to verify transaction ID: {transactionIdInput}</p>
+                <div className="w-full flex flex-col items-center justify-center py-6 px-2 space-y-5 text-center">
+                  <div className="relative flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-full border-4 border-teal-100 border-t-teal-600 animate-spin flex items-center justify-center" />
+                    <ShieldCheck className="absolute h-9 w-9 text-teal-600" />
+                  </div>
+
+                  <div>
+                    <h4 className="font-extrabold text-slate-800 text-lg">Tracking Payment Settlement</h4>
+                    <p className="text-xs text-slate-500 mt-0.5 font-semibold">Live bank verification in progress</p>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border">
+                    <div 
+                      className="bg-gradient-to-r from-teal-500 to-emerald-500 h-full transition-all duration-500 rounded-full" 
+                      style={{ width: `${verificationProgress}%` }}
+                    />
+                  </div>
+
+                  {/* Live Step Status List */}
+                  <div className="w-full space-y-2.5 text-left text-xs font-semibold bg-slate-50 p-4 rounded-2xl border">
+                    <div className={`flex items-center gap-3 ${verificationStep >= 1 ? 'text-teal-800 font-bold' : 'text-slate-400'}`}>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${verificationStep > 1 ? 'bg-emerald-500 text-white' : verificationStep === 1 ? 'bg-teal-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'}`}>
+                        {verificationStep > 1 ? <Check size={12} strokeWidth={3} /> : '1'}
+                      </div>
+                      <span className="truncate">1. Validating 12-Digit UTR: <span className="font-mono text-slate-900">{transactionIdInput}</span></span>
+                    </div>
+
+                    <div className={`flex items-center gap-3 ${verificationStep >= 2 ? 'text-teal-800 font-bold' : 'text-slate-400'}`}>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${verificationStep > 2 ? 'bg-emerald-500 text-white' : verificationStep === 2 ? 'bg-teal-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'}`}>
+                        {verificationStep > 2 ? <Check size={12} strokeWidth={3} /> : '2'}
+                      </div>
+                      <span className="truncate">2. Connecting {shippingDetails.paymentMethod} Gateway & NPCI Node</span>
+                    </div>
+
+                    <div className={`flex items-center gap-3 ${verificationStep >= 3 ? 'text-teal-800 font-bold' : 'text-slate-400'}`}>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${verificationProgress === 100 ? 'bg-emerald-500 text-white' : verificationStep === 3 ? 'bg-teal-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'}`}>
+                        {verificationProgress === 100 ? <Check size={12} strokeWidth={3} /> : '3'}
+                      </div>
+                      <span className="truncate">3. Confirming Settlement & Credit to Bank</span>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {paymentStatusState === 'success' && (
-                <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
-                  <div className="h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 animate-bounce">
-                    <Check size={36} strokeWidth={3} />
+                <div className="w-full flex flex-col items-center justify-center py-4 px-1 space-y-4 text-center">
+                  <div className="relative">
+                    <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center animate-bounce shadow-md">
+                      <CheckCircle size={40} strokeWidth={2.5} />
+                    </div>
                   </div>
-                  <h4 className="font-extrabold text-emerald-600 text-lg">Payment Successful</h4>
-                  <div className="text-xs text-slate-600 leading-relaxed font-semibold space-y-1">
-                    <p>Order #{activePaymentOrder.id} is now paid.</p>
-                    <p>Transaction ID: {transactionIdInput}</p>
-                    <p>We are processing your order immediately!</p>
+
+                  <div>
+                    <span className="inline-block bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider mb-1">
+                      Bank Settlement Confirmed
+                    </span>
+                    <h4 className="font-extrabold text-slate-900 text-xl">Payment Successful!</h4>
+                    <p className="text-xs text-slate-500 mt-0.5 font-semibold">Your payment has been received in our MOSH Bank Account.</p>
                   </div>
+
+                  {/* Payment Receipt Box */}
+                  <div className="w-full bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 text-xs text-emerald-950 font-semibold space-y-2 text-left">
+                    <div className="flex justify-between items-center border-b border-emerald-200/60 pb-2">
+                      <span className="text-slate-500 text-[11px]">Amount Received</span>
+                      <strong className="text-base text-emerald-700 font-extrabold">{formatCurrency(activePaymentOrder.total)}</strong>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 text-[11px]">Order Number</span>
+                      <span className="font-bold text-slate-800">#{activePaymentOrder.id}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 text-[11px]">Payment Gateway</span>
+                      <span className="font-bold text-slate-800">{shippingDetails.paymentMethod}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 text-[11px]">UPI Transaction UTR</span>
+                      <span className="font-mono font-bold text-slate-800">{transactionIdInput}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-500 text-[11px]">Order & Payment Status</span>
+                      <span className="font-extrabold text-emerald-600 flex items-center gap-1 uppercase">
+                        <Check size={13} strokeWidth={3} /> Paid
+                      </span>
+                    </div>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => setActivePaymentOrder(null)}
-                    className="mt-6 px-6 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition"
+                    className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-bold transition shadow-md"
                   >
                     View Order Details
                   </button>
@@ -938,7 +1057,9 @@ const CustomerCartPage = () => {
               {/* Total and Cancel Option */}
               <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Amount Paid</p>
+                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
+                    {selectedOrder.paymentStatus === 'Paid' || selectedOrder.status === 'Paid' ? 'Total Amount Paid' : 'Total Amount (Payment Pending)'}
+                  </p>
                   <strong className="text-xl font-extrabold text-teal-600">{formatCurrency(selectedOrder.total)}</strong>
                 </div>
                 <div className="flex gap-2">

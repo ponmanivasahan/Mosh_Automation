@@ -41,6 +41,19 @@ const AdminDashboardPage = () => {
   const [reviews, setReviews] = useState(() => getReviews());
   const [activeModalType, setActiveModalType] = useState(null);
   const [selectedAdminOrder, setSelectedAdminOrder] = useState(null);
+  const [orderFilter, setOrderFilter] = useState('All');
+
+  // Lock body background scroll when any modal is open
+  useEffect(() => {
+    if (selectedAdminOrder || activeModalType) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [selectedAdminOrder, activeModalType]);
 
   // Live Syncing feed
   useEffect(() => {
@@ -126,6 +139,18 @@ const AdminDashboardPage = () => {
     });
     return Array.from(map.values());
   }, [orders]);
+
+  // Filtered orders feed
+  const filteredOrders = useMemo(() => {
+    if (orderFilter === 'All') return orders;
+    if (orderFilter === 'Paid') {
+      return orders.filter(o => o.paymentStatus === 'Paid' || o.status === 'Paid' || Boolean(o.transactionId));
+    }
+    if (orderFilter === 'Pending') {
+      return orders.filter(o => o.paymentStatus !== 'Paid' && o.status !== 'Paid' && !o.transactionId);
+    }
+    return orders.filter(o => o.status === orderFilter);
+  }, [orders, orderFilter]);
 
   return (
     <AppShell title="Admin Portal Control Dashboard" links={adminLinks}>
@@ -244,111 +269,258 @@ const AdminDashboardPage = () => {
             <span className="text-[10px] text-slate-400 font-semibold block mt-1">Excl. cancelled</span>
           </motion.article>
         </section>
+        
+        {/* Top Header Overview Panel */}
+        <header className="admin-topbar panel flex justify-between items-center bg-slate-100 p-6 rounded-lg border border-slate-200">
+          <div>
+            <p className="dashboard-eyebrow text-teal-700 uppercase tracking-wider text-[10px] font-bold">HQ Systems Control</p>
+            <h2 className="text-2xl font-bold text-slate-800">Admin Portal Overview</h2>
+            <p className="text-xs text-slate-500 mt-1">Real-time telemetry tracking client orders, products catalog status, and customer reviews.</p>
+          </div>
+          <div className="admin-topbar-chip flex items-center gap-2 bg-white text-teal-700 px-4 py-2 rounded-xl border shadow-sm">
+            <RefreshCw size={14} className="animate-spin text-teal-600" />
+            <strong className="text-xs font-bold">Live Sync Active</strong>
+          </div>
+        </header>
+
+        {/* Dynamic Metric Cards Grid */}
+        <section className="admin-metrics-grid grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+          {/* Card 1: Total Products */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('products')}
+            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Products</p>
+              <Package size={16} className="text-blue-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-800 mt-3">{products.length}</h3>
+            <span className="text-[10px] text-slate-400 font-bold block mt-1">Click to view items</span>
+          </motion.article>
+
+          {/* Card 2: Active Orders */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('active-orders')}
+            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Active Orders</p>
+              <ShoppingCart size={16} className="text-amber-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-amber-600 mt-3">{activeOrdersCount}</h3>
+            <span className="text-[10px] text-slate-400 font-bold block mt-1">Placed & Processing</span>
+          </motion.article>
+
+          {/* Card 3: Dispatched Orders */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('dispatched-orders')}
+            className="metric-card bg-slate-100 border border-teal-200 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Dispatched</p>
+              <Truck size={16} className="text-teal-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-teal-600 mt-3">{dispatchedOrdersCount}</h3>
+            <span className="text-[10px] text-slate-400 font-bold block mt-1">On the way</span>
+          </motion.article>
+
+          {/* Card 4: Completed Orders */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('completed-orders')}
+            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Completed</p>
+              <CheckCircle size={16} className="text-emerald-500" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-emerald-600 mt-3">{completedOrdersCount}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Delivered orders</span>
+          </motion.article>
+
+          {/* Card 5: Cancelled Orders */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('cancelled-orders')}
+            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Cancelled Orders</p>
+              <Trash2 size={16} className="text-rose-500" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-rose-600 mt-3">{cancelledOrdersCount}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Cancelled items list</span>
+          </motion.article>
+
+          {/* Card 6: Total Customers */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('customers')}
+            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Customers</p>
+              <Users size={16} className="text-indigo-500" />
+            </div>
+            <h3 className="text-2xl font-extrabold text-indigo-600 mt-3">{totalCustomers}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Registered clients</span>
+          </motion.article>
+
+          {/* Card 7: Total Revenue */}
+          <motion.article
+            whileHover={{ y: -4, scale: 1.02 }}
+            onClick={() => setActiveModalType('revenue')}
+            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+          >
+            <div className="flex justify-between items-start">
+              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Revenue</p>
+              <TrendingUp size={16} className="text-pink-500" />
+            </div>
+            <h3 className="text-xl font-extrabold text-pink-600 mt-3 truncate">{formatCurrency(totalRevenue)}</h3>
+            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Excl. cancelled</span>
+          </motion.article>
+        </section>
 
         {/* Recent Orders - Live management list */}
-        <section className="panel bg-slate-100 border-2 rounded-lg max-h-[78vh] overflow-y-hidden overflow-x-hidden">
-          <div className="panel-head flex justify-between items-center ">
+        <section className="panel bg-slate-100 border-2 rounded-2xl p-5 md:p-6 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
             <div>
               <p className="dashboard-eyebrow text-teal-700 uppercase tracking-wider text-[10px] font-bold">Client operations</p>
-              <h2 className="text-lg font-bold text-slate-800">Manage Recent Orders</h2>
+              <h2 className="text-xl font-bold text-slate-800">Manage Orders ({filteredOrders.length})</h2>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
+              {['All', 'Paid', 'Pending', 'Dispatched', 'Completed', 'Cancelled'].map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setOrderFilter(tab)}
+                  className={`text-[11px] px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap ${
+                    orderFilter === tab ? 'bg-teal-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
             </div>
           </div>
 
-          {!orders.length ? (
-            <p className="text-xs text-slate-400 py-6 italic text-center">No client orders placed yet.</p>
+          {!filteredOrders.length ? (
+            <p className="text-xs text-slate-400 py-10 italic text-center bg-white rounded-2xl border">No orders found for filter "{orderFilter}".</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {orders.filter(o => o.status !== 'Cancelled').slice(0, 6).map((order) => (
-                <article key={order.id} className="border border-slate-200 p-5 rounded-lg bg-white flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition duration-300">
-                  <div>
-                    <div className="flex justify-between items-start gap-2">
-                      <h3 className="text-sm font-bold text-slate-900 truncate">{order.customerName}</h3>
-                      <span className={`text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
-                        order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' :
-                        order.status === 'Dispatched' ? 'bg-teal-50 text-teal-600' :
-                        order.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 font-extrabold' :
-                        order.status === 'Processing' ? 'bg-indigo-50 text-indigo-600' : 'bg-blue-50 text-blue-600'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 font-bold mt-1">Phone: {order.customerPhone}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">ID: #{order.id} · {formatDateTime(order.createdAt)}</p>
-                    
-                    {/* Payment Badge */}
-                    {order.paymentMethod && (
-                      <div className="mt-2 p-2 bg-teal-50/50 rounded-lg border border-teal-100 text-[10px] text-teal-800 font-semibold space-y-0.5">
-                        <p className="font-bold flex items-center gap-1">
-                          <CreditCard size={11} className="text-teal-600" />
-                          Payment: <span className="uppercase text-teal-700 font-extrabold">{order.paymentStatus || 'Paid'}</span> ({order.paymentMethod})
-                        </p>
-                        {order.transactionId && <p>Txn ID: <span className="font-mono font-bold text-slate-700">{order.transactionId}</span></p>}
-                        {order.paymentTime && <p>Time: {formatDateTime(order.paymentTime)}</p>}
-                      </div>
-                    )}
+            <div className="max-h-[580px] overflow-y-auto pr-1 space-y-4 scrollbar-thin">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredOrders.map((order) => {
+                  const isOrderPaid = order.paymentStatus === 'Paid' || order.status === 'Paid' || Boolean(order.transactionId);
+                  return (
+                    <article key={order.id} className="border border-slate-200 p-5 rounded-2xl bg-white flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition duration-300 h-full">
+                      <div>
+                        <div className="flex justify-between items-start gap-2">
+                          <h3 className="text-sm font-bold text-slate-900 truncate">{order.customerName}</h3>
+                          <span className={`text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase shrink-0 ${
+                            order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' :
+                            order.status === 'Dispatched' ? 'bg-teal-50 text-teal-600' :
+                            order.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 font-extrabold' :
+                            order.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-50 text-indigo-600'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 font-bold mt-1">Phone: {order.customerPhone}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">ID: #{order.id} · {formatDateTime(order.createdAt)}</p>
+                        
+                        {/* Payment Telemetry Box - Paid vs Pending */}
+                        <div className={`mt-3 p-3 rounded-xl border text-[10px] font-semibold space-y-1 ${
+                          isOrderPaid ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950' : 'bg-amber-50/80 border-amber-200 text-amber-950'
+                        }`}>
+                          <div className="flex justify-between items-center font-bold">
+                            <span className="flex items-center gap-1">
+                              <CreditCard size={12} className={isOrderPaid ? 'text-emerald-600' : 'text-amber-600'} />
+                              Payment:
+                            </span>
+                            <span className={`uppercase font-extrabold px-2 py-0.5 rounded-full text-[9px] ${
+                              isOrderPaid ? 'bg-emerald-100 text-emerald-700 flex items-center gap-1' : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {isOrderPaid ? <><Check size={10} strokeWidth={3} /> Paid</> : 'Pending (Unpaid)'}
+                            </span>
+                          </div>
+                          <p className="text-slate-600">Gateway: <strong className="text-slate-800 font-bold">{order.paymentMethod || 'Google Pay'}</strong></p>
+                          {isOrderPaid && order.transactionId && (
+                            <p className="text-slate-600">UTR: <span className="font-mono font-bold text-slate-900">{order.transactionId}</span></p>
+                          )}
+                          {!isOrderPaid && (
+                            <p className="text-amber-700/90 italic text-[9.5px]">Awaiting customer payment verification</p>
+                          )}
+                        </div>
 
-                    {order.shippingAddress && (
-                      <p className="text-[11px] text-slate-500 mt-2 bg-slate-50 p-2 rounded-lg border border-slate-100 flex items-center gap-1.5 font-bold">
-                        <MapPin size={12} className="text-teal-600" />
-                        <span className="truncate">Deliver: {order.shippingAddress.city}</span>
-                      </p>
-                    )}
-
-                    <div className="flex flex-wrap gap-1.5 mt-3">
-                      {order.items?.map((it, idx) => (
-                        <span key={idx} className="text-[9px] bg-slate-50 border px-2 py-0.5 rounded-md text-slate-600 font-bold">
-                          {it.name} (x{it.quantity})
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase">Total Amount</span>
-                      <strong className="text-base font-extrabold text-teal-600">{formatCurrency(order.total)}</strong>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {order.status === 'Paid' ? (
-                          <button
-                            type="button"
-                            onClick={() => handleStatusChange(order.id, 'Processing')}
-                            className="text-[9px] bg-emerald-600 text-white py-1.5 rounded-lg font-bold hover:bg-emerald-700 shadow-sm"
-                          >
-                            Approve Order
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleStatusChange(order.id, 'Dispatched')}
-                            disabled={order.status === 'Dispatched' || order.status === 'Completed'}
-                            className="text-[9px] bg-teal-50 border border-teal-200 text-teal-700 py-1.5 rounded-lg font-bold hover:bg-teal-100 disabled:opacity-50"
-                          >
-                            Dispatch
-                          </button>
+                        {order.shippingAddress && (
+                          <p className="text-[11px] text-slate-500 mt-2 bg-slate-50 p-2 rounded-xl border border-slate-100 flex items-center gap-1.5 font-bold">
+                            <MapPin size={12} className="text-teal-600 shrink-0" />
+                            <span className="truncate">Deliver: {order.shippingAddress.address || order.shippingAddress.city}, {order.shippingAddress.city}</span>
+                          </p>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => handleStatusChange(order.id, 'Cancelled')}
-                          className="text-[9px] bg-rose-50 border border-rose-200 text-rose-700 py-1.5 rounded-lg font-bold hover:bg-rose-100"
-                        >
-                          Reject / Cancel
-                        </button>
+
+                        <div className="flex flex-wrap gap-1.5 mt-3">
+                          {order.items?.map((it, idx) => (
+                            <span key={idx} className="text-[9px] bg-slate-50 border px-2 py-0.5 rounded-md text-slate-600 font-bold">
+                              {it.name} (x{it.quantity})
+                            </span>
+                          ))}
+                        </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setSelectedAdminOrder(order)}
-                        className="text-[9px] bg-slate-100 border border-slate-200 text-slate-700 py-1 rounded-lg font-bold hover:bg-slate-200 flex items-center justify-center gap-1"
-                      >
-                        <Eye size={10} /> View Payment & Order Details
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
+                      <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] text-slate-400 font-bold uppercase">Total Amount</span>
+                          <strong className="text-base font-extrabold text-teal-600">{formatCurrency(order.total)}</strong>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {order.status === 'Paid' ? (
+                              <button
+                                type="button"
+                                onClick={() => handleStatusChange(order.id, 'Processing')}
+                                className="text-[9px] bg-emerald-600 text-white py-1.5 rounded-xl font-bold hover:bg-emerald-700 shadow-sm"
+                              >
+                                Approve Order
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleStatusChange(order.id, 'Dispatched')}
+                                disabled={order.status === 'Dispatched' || order.status === 'Completed'}
+                                className="text-[9px] bg-teal-50 border border-teal-200 text-teal-700 py-1.5 rounded-xl font-bold hover:bg-teal-100 disabled:opacity-50"
+                              >
+                                Dispatch
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleStatusChange(order.id, 'Cancelled')}
+                              className="text-[9px] bg-rose-50 border border-rose-200 text-rose-700 py-1.5 rounded-xl font-bold hover:bg-rose-100"
+                            >
+                              Reject / Cancel
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setSelectedAdminOrder(order)}
+                            className="text-[10px] bg-slate-100 border border-slate-200 text-slate-700 py-2 rounded-xl font-bold hover:bg-slate-200 flex items-center justify-center gap-1.5 transition"
+                          >
+                            <Eye size={12} /> View Payment & Order Details
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             </div>
           )}
         </section>
@@ -498,12 +670,12 @@ const AdminDashboardPage = () => {
         {/* Selected Admin Order Details Modal */}
         <AnimatePresence>
           {selectedAdminOrder && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overscroll-contain">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border flex flex-col space-y-4 max-h-[85vh] overflow-y-auto"
+                className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border flex flex-col space-y-4 max-h-[85vh] overflow-y-auto overscroll-contain"
               >
                 <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                   <div>
@@ -536,33 +708,47 @@ const AdminDashboardPage = () => {
                   </div>
 
                   {/* Payment Details */}
-                  <div className="p-4 bg-teal-50 border border-teal-100 rounded-xl space-y-2">
-                    <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider flex items-center gap-1.5 mb-1">
-                      <CreditCard size={12} /> Payment Telemetry Details
-                    </h4>
-                    <div className="grid grid-cols-2 gap-y-2 text-teal-950">
-                      <div>
-                        <span>Payment Status:</span>
-                        <strong className="block text-sm uppercase text-teal-700 mt-0.5">{selectedAdminOrder.paymentStatus || 'Paid'}</strong>
-                      </div>
-                      <div>
-                        <span>Payment Method:</span>
-                        <strong className="block text-slate-800 mt-0.5">{selectedAdminOrder.paymentMethod || 'UPI QR Code'}</strong>
-                      </div>
-                      {selectedAdminOrder.transactionId && (
-                        <div>
-                          <span>Transaction Reference ID:</span>
-                          <strong className="block font-mono text-slate-800 mt-0.5">{selectedAdminOrder.transactionId}</strong>
+                  {(() => {
+                    const isModalPaid = selectedAdminOrder.paymentStatus === 'Paid' || selectedAdminOrder.status === 'Paid' || Boolean(selectedAdminOrder.transactionId);
+                    return (
+                      <div className={`p-4 rounded-xl border space-y-2 ${
+                        isModalPaid ? 'bg-emerald-50/80 border-emerald-200' : 'bg-amber-50/80 border-amber-200'
+                      }`}>
+                        <h4 className={`text-[10px] uppercase font-extrabold tracking-wider flex items-center gap-1.5 mb-1 ${
+                          isModalPaid ? 'text-emerald-800' : 'text-amber-800'
+                        }`}>
+                          <CreditCard size={12} className={isModalPaid ? 'text-emerald-600' : 'text-amber-600'} />
+                          {isModalPaid ? 'Bank Settlement & Payment Telemetry (Paid)' : 'Payment Telemetry Status (Pending / Unpaid)'}
+                        </h4>
+                        <div className="grid grid-cols-2 gap-y-2 text-xs">
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase">Payment Status:</span>
+                            <strong className={`block text-xs uppercase font-extrabold mt-0.5 flex items-center gap-1 ${
+                              isModalPaid ? 'text-emerald-700' : 'text-amber-700'
+                            }`}>
+                              {isModalPaid ? <><Check size={12} strokeWidth={3} /> PAID (BANK RECEIVED)</> : <><Clock size={12} /> PENDING (UNPAID)</>}
+                            </strong>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase">Selected Method:</span>
+                            <strong className="block text-slate-800 text-xs font-bold mt-0.5">{selectedAdminOrder.paymentMethod || 'Google Pay'}</strong>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase">UPI UTR Ref ID:</span>
+                            <strong className="block font-mono text-slate-900 text-xs font-bold mt-0.5">
+                              {isModalPaid ? (selectedAdminOrder.transactionId || 'Verified') : 'Not Provided Yet'}
+                            </strong>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase">Bank Settlement:</span>
+                            <strong className="block text-slate-800 text-xs font-semibold mt-0.5">
+                              {isModalPaid ? (selectedAdminOrder.paymentTime ? formatDateTime(selectedAdminOrder.paymentTime) : 'Settled in Account') : 'Awaiting Customer Payment'}
+                            </strong>
+                          </div>
                         </div>
-                      )}
-                      {selectedAdminOrder.paymentTime && (
-                        <div>
-                          <span>Payment Timestamp:</span>
-                          <strong className="block text-slate-800 mt-0.5">{formatDateTime(selectedAdminOrder.paymentTime)}</strong>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Items list */}
                   <div className="space-y-2.5">

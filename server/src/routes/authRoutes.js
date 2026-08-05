@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { register, login, logout, getMe, getUsers, toggleUserRole } = require('../controllers/AuthController');
+const { sendOtp, verifyOtp, register, login, logout, getMe, getUsers, toggleUserRole } = require('../controllers/AuthController');
 const { authenticate, authorizeAdmin } = require('../middleware/auth');
 
+router.post('/send-otp', sendOtp);
+router.post('/verify-otp', verifyOtp);
 router.post('/register', register);
 router.post('/login', login);
 router.post('/logout', logout);

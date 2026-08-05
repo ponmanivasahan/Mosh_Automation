@@ -1,7 +1,118 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
+const { sendSMS } = require('../services/smsService');
 require('dotenv').config();
+
+// In-memory OTP storage: phone -> { otp, expiresAt }
+const otpStore = new Map();
+
+const sendOtp = async (req, res) => {
+  try {
+    const { phone } = req.body;
+    const cleanedPhone = (phone || '').replace(/\D/g, '');
+
+    if (!cleanedPhone || cleanedPhone.length !== 10) {
+      return res.status(400).json({ success: false, message: 'Please provide a valid 10-digit mobile phone number.' });
+    }
+
+    // Generate random 4-digit OTP
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes validity
+    otpStore.set(cleanedPhone, { otp, expiresAt });
+
+    // Send SMS via Gateway Service
+    await sendSMS(cleanedPhone, otp, `Your MOSH Automation login verification OTP is: ${otp}. Valid for 5 minutes.`);
+
+    return res.json({
+      success: true,
+      message: `SMS sent successfully to +91 ${cleanedPhone}. Please check your mobile phone for the 4-digit OTP verification code.`
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to send SMS OTP.', error: error.message });
+  }
+};
+
+const verifyOtp = async (req, res) => {
+  try {
+    const { name, phone, otp } = req.body;
+    const cleanedPhone = (phone || '').replace(/\D/g, '');
+    const cleanedOtp = (otp || '').replace(/\D/g, '');
+
+    if (!cleanedPhone || !cleanedOtp) {
+      return res.status(400).json({ success: false, message: 'Please provide mobile phone number and 4-digit OTP.' });
+    }
+
+    const record = otpStore.get(cleanedPhone);
+    if (!record) {
+      return res.status(400).json({ success: false, message: 'OTP expired or not requested yet. Please click Resend OTP.' });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(cleanedPhone);
+      return res.status(400).json({ success: false, message: 'OTP verification code expired. Please click Resend OTP.' });
+    }
+
+    if (record.otp !== cleanedOtp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP verification code. Please check the SMS sent to your phone and try again.' });
+    }
+
+    // Clear OTP on successful match
+    otpStore.delete(cleanedPhone);
+
+    // Perform login token creation
+    let [users] = await pool.query('SELECT * FROM users WHERE phone = ?', [cleanedPhone]);
+    let user;
+
+    if (users.length === 0) {
+      const cleanedName = name || 'Customer';
+      const role = (cleanedPhone === '8888888888' || cleanedPhone === '0987654321') ? 'admin' : 'customer';
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(cleanedPhone, salt);
+
+      const [result] = await pool.query(
+        'INSERT INTO users (name, phone, password_hash, role) VALUES (?, ?, ?, ?)',
+        [cleanedName, cleanedPhone, passwordHash, role]
+      );
+      
+      const [newUsers] = await pool.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+      user = newUsers[0];
+    } else {
+      user = users[0];
+      if (name && name !== user.name) {
+        await pool.query('UPDATE users SET name = ? WHERE phone = ?', [name, cleanedPhone]);
+        user.name = name;
+      }
+    }
+
+    await pool.query('UPDATE users SET logged_in_at = CURRENT_TIMESTAMP WHERE phone = ?', [cleanedPhone]);
+
+    const token = jwt.sign(
+      { id: user.id, name: user.name, phone: user.phone, role: user.role },
+      process.env.JWT_SECRET || 'mosh_secret_key_2026',
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return res.json({
+      success: true,
+      message: 'OTP verified successfully.',
+      user: {
+        name: user.name,
+        phone: user.phone,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'OTP verification failed.', error: error.message });
+  }
+};
 
 const register = async (req, res) => {
   try {
@@ -140,6 +251,8 @@ const toggleUserRole = async (req, res) => {
 };
 
 module.exports = {
+  sendOtp,
+  verifyOtp,
   register,
   login,
   logout,

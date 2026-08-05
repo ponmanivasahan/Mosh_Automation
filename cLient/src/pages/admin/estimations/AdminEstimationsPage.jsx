@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Package, Calculator, ClipboardList, Shield, RefreshCw, Edit3, Save, Download, X } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { getProducts, getBillingSettings } from '../../../utils/storage';
+import { API_URL } from '../../../utils/api';
 import { formatCurrency } from '../../../utils/format';
 import './AdminEstimationsPage.css';
 
@@ -200,7 +201,7 @@ const AdminEstimationsPage = () => {
 
     const imageHtml = selectedProduct.image.startsWith('data:') 
       ? `<img src="${selectedProduct.image}" style="max-height: 180px; max-width: 100%; object-fit: contain; margin-top: 15px;" />`
-      : `<img src="http://localhost:5000${selectedProduct.image}" style="max-height: 180px; max-width: 100%; object-fit: contain; margin-top: 15px;" onError="this.src='${selectedProduct.image}'" />`;
+      : `<img src="${API_URL}${selectedProduct.image}" style="max-height: 180px; max-width: 100%; object-fit: contain; margin-top: 15px;" onError="this.src='${selectedProduct.image}'" />`;
 
     printWindow.document.write(`
       <html>

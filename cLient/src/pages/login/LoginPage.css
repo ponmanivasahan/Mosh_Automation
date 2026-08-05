@@ -354,3 +354,93 @@
     font-size: 14px;
   }
 }
+
+/* OTP verification styles */
+.otp-toast-banner {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #065f46;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+}
+
+.otp-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.otp-autofill-btn {
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.otp-autofill-btn:hover {
+  background: #047857;
+}
+
+.otp-input-field {
+  letter-spacing: 0.3em;
+  text-align: center;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  background: #f8fafc !important;
+}
+
+.otp-action-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.otp-back-btn,
+.otp-resend-btn {
+  background: transparent;
+  border: none;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.otp-back-btn:hover {
+  color: #0f172a;
+  background: #f1f5f9;
+}
+
+.otp-resend-btn {
+  color: #0284c7;
+}
+
+.otp-resend-btn:hover:not(.disabled) {
+  color: #0369a1;
+  background: #f0f9ff;
+}
+
+.otp-resend-btn.disabled {
+  color: #94a3b8;
+  cursor: not-allowed;
+}
