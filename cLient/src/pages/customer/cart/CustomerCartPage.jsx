@@ -119,8 +119,8 @@ const CustomerCartPage = () => {
     const subtotal = cartItems.reduce((acc, item) => acc + Number(item.total || 0), 0);
     
     const discount = subtotal > 5000 ? Math.round(subtotal * 0.1) : 0;
-    const deliveryCharges = subtotal > 3000 || subtotal === 0 ? 0 : 99;
-    const packagingFee = subtotal > 0 ? 49 : 0;
+    const deliveryCharges = 0;
+    const packagingFee = 0;
     const finalAmount = subtotal - discount + deliveryCharges + packagingFee;
 
     return {
@@ -802,11 +802,11 @@ const CustomerCartPage = () => {
 
                   <form onSubmit={handleVerifyPayment} className="w-full space-y-3 pt-2">
                     <div>
-                      <label className="block text-left text-xs font-bold text-slate-700 mb-1">Enter UPI Transaction Ref ID / UTR *</label>
                       <input
+                        aria-label="UPI transaction reference or UTR"
                         required
                         type="text"
-                        placeholder="e.g. UPI txn ref or UTR"
+                        placeholder=""
                         value={transactionIdInput}
                         onChange={(e) => setTransactionIdInput(e.target.value)}
                         className="w-full text-center tracking-wide font-extrabold text-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-teal-500 focus:bg-white transition-colors"

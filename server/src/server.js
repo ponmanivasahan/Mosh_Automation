@@ -56,6 +56,7 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 // Serve client static assets if present (built into ../public)
+// Prefer serving a server/public folder when deployed
 const staticDir = path.join(__dirname, '..', 'public');
 if (require('fs').existsSync(staticDir)) {
   app.use(express.static(staticDir));
@@ -64,6 +65,17 @@ if (require('fs').existsSync(staticDir)) {
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) return next();
     res.sendFile(path.join(staticDir, 'index.html'));
+  });
+}
+
+// Also support serving the client app if it was built to `cLient/dist` (common Vite output)
+const clientDist = path.join(__dirname, '..', 'cLient', 'dist');
+if (require('fs').existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
   });
 }
 
