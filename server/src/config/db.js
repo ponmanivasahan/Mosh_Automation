@@ -160,19 +160,34 @@ const initDB = async () => {
       // Ensure columns exist on orders table
       try {
         await connection.query("ALTER TABLE orders ADD COLUMN payment_status ENUM('Pending', 'Paid', 'Failed') DEFAULT 'Pending';");
-      } catch(e){}
+        console.log("Migration SUCCESS: Added 'payment_status' to orders.");
+      } catch(e){
+        console.log("Migration INFO (payment_status):", e.message);
+      }
       try {
         await connection.query("ALTER TABLE orders ADD COLUMN transaction_id VARCHAR(100) DEFAULT NULL;");
-      } catch(e){}
+        console.log("Migration SUCCESS: Added 'transaction_id' to orders.");
+      } catch(e){
+        console.log("Migration INFO (transaction_id):", e.message);
+      }
       try {
         await connection.query("ALTER TABLE orders ADD COLUMN payment_time TIMESTAMP NULL DEFAULT NULL;");
-      } catch(e){}
+        console.log("Migration SUCCESS: Added 'payment_time' to orders.");
+      } catch(e){
+        console.log("Migration INFO (payment_time):", e.message);
+      }
       try {
         await connection.query("ALTER TABLE orders MODIFY COLUMN status ENUM('Processing', 'Paid', 'Dispatched', 'Completed', 'Cancelled') DEFAULT 'Processing';");
-      } catch(e){}
+        console.log("Migration SUCCESS: Modified 'status' ENUM in orders.");
+      } catch(e){
+        console.log("Migration INFO (status ENUM):", e.message);
+      }
       try {
         await connection.query("ALTER TABLE users ADD COLUMN logged_in_at TIMESTAMP NULL DEFAULT NULL;");
-      } catch(e){}
+        console.log("Migration SUCCESS: Added 'logged_in_at' to users.");
+      } catch(e){
+        console.log("Migration INFO (logged_in_at):", e.message);
+      }
 
       console.log('Database schema verified & seeded successfully.');
     } else {
