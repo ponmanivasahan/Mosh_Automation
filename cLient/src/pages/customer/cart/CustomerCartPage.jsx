@@ -202,7 +202,7 @@ const CustomerCartPage = () => {
   // UPI configuration URL
   const upiUrl = useMemo(() => {
     if (!activePaymentOrder) return '';
-    return `upi://pay?pa=moshautomation@okaxis&pn=MOSH%20Automation&am=${activePaymentOrder.total}&cu=INR&tn=Order%20${activePaymentOrder.id}`;
+    return `upi://pay?pa=vasupks01-1@okaxis&pn=MOSH%20Automation&am=${activePaymentOrder.total}&cu=INR&tn=Order%20${activePaymentOrder.id}`;
   }, [activePaymentOrder]);
 
   const qrImageUrl = useMemo(() => {
@@ -236,8 +236,8 @@ const CustomerCartPage = () => {
   const handleVerifyPayment = async (e) => {
     e.preventDefault();
     const cleanTxnId = transactionIdInput.trim();
-    if (!cleanTxnId || cleanTxnId.length < 8) {
-      alert('Please enter a valid 12-digit UPI transaction ID or UTR reference number.');
+    if (!cleanTxnId) {
+      alert('Please enter a valid UPI transaction ID or UTR reference number.');
       return;
     }
     
@@ -802,13 +802,13 @@ const CustomerCartPage = () => {
 
                   <form onSubmit={handleVerifyPayment} className="w-full space-y-3 pt-2">
                     <div>
-                      <label className="block text-left text-xs font-bold text-slate-700 mb-1">Enter UPI Transaction Ref ID *</label>
+                      <label className="block text-left text-xs font-bold text-slate-700 mb-1">Enter UPI Transaction Ref ID / UTR *</label>
                       <input
                         required
                         type="text"
-                        placeholder="e.g. 12-digit transaction ID"
+                        placeholder="e.g. UPI txn ref or UTR"
                         value={transactionIdInput}
-                        onChange={(e) => setTransactionIdInput(e.target.value.replace(/[^0-9]/g, ''))}
+                        onChange={(e) => setTransactionIdInput(e.target.value)}
                         className="w-full text-center tracking-wide font-extrabold text-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-teal-500 focus:bg-white transition-colors"
                       />
                     </div>
@@ -862,7 +862,7 @@ const CustomerCartPage = () => {
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${verificationStep > 1 ? 'bg-emerald-500 text-white' : verificationStep === 1 ? 'bg-teal-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'}`}>
                         {verificationStep > 1 ? <Check size={12} strokeWidth={3} /> : '1'}
                       </div>
-                      <span className="truncate">1. Validating 12-Digit UTR: <span className="font-mono text-slate-900">{transactionIdInput}</span></span>
+                      <span className="truncate">1. Validating UTR / Transaction Ref: <span className="font-mono text-slate-900">{transactionIdInput}</span></span>
                     </div>
 
                     <div className={`flex items-center gap-3 ${verificationStep >= 2 ? 'text-teal-800 font-bold' : 'text-slate-400'}`}>
