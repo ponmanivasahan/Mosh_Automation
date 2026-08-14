@@ -207,9 +207,20 @@ const verifyPayment = async (req, res) => {
   }
 };
 
+const deleteOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query('DELETE FROM orders WHERE id = ?', [id]);
+    return res.json({ success: true, message: 'Order deleted successfully.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to delete order.', error: error.message });
+  }
+};
+
 module.exports = {
   getOrders,
   createOrder,
   updateOrderStatus,
-  verifyPayment
+  verifyPayment,
+  deleteOrder
 };

@@ -250,6 +250,47 @@ const toggleUserRole = async (req, res) => {
   }
 };
 
+const updateUser = async (req, res) => {
+  try {
+    const { phone } = req.params;
+    const { name, role } = req.body;
+    
+    let query = 'UPDATE users SET ';
+    const params = [];
+    if (name) {
+      query += 'name = ?, ';
+      params.push(name);
+    }
+    if (role) {
+      query += 'role = ?, ';
+      params.push(role);
+    }
+    
+    if (params.length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields provided for update.' });
+    }
+    
+    query = query.slice(0, -2);
+    query += ' WHERE phone = ?';
+    params.push(phone);
+    
+    await pool.query(query, params);
+    return res.json({ success: true, message: 'User updated successfully.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to update user.', error: error.message });
+  }
+};
+
+const deleteUser = async (req, res) => {
+  try {
+    const { phone } = req.params;
+    await pool.query('DELETE FROM users WHERE phone = ?', [phone]);
+    return res.json({ success: true, message: 'User deleted successfully.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to delete user.', error: error.message });
+  }
+};
+
 module.exports = {
   sendOtp,
   verifyOtp,
@@ -258,5 +299,7 @@ module.exports = {
   logout,
   getMe,
   getUsers,
-  toggleUserRole
+  toggleUserRole,
+  updateUser,
+  deleteUser
 };

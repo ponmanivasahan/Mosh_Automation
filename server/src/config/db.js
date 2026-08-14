@@ -188,6 +188,18 @@ const initDB = async () => {
       } catch(e){
         console.log("Migration INFO (logged_in_at):", e.message);
       }
+      try {
+        await connection.query("ALTER TABLE stories MODIFY COLUMN image LONGTEXT NOT NULL;");
+        console.log("Migration SUCCESS: Modified 'image' column to LONGTEXT in stories.");
+      } catch(e){
+        console.log("Migration INFO (stories image column):", e.message);
+      }
+      try {
+        await connection.query("ALTER TABLE products MODIFY COLUMN image LONGTEXT NOT NULL;");
+        console.log("Migration SUCCESS: Modified 'image' column to LONGTEXT in products.");
+      } catch(e){
+        console.log("Migration INFO (products image column):", e.message);
+      }
 
       console.log('Database schema verified & seeded successfully.');
     } else {

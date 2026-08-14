@@ -36,7 +36,39 @@ const updateBillingSettings = async (req, res) => {
   }
 };
 
+const createBillingSettings = async (req, res) => {
+  try {
+    const { floatSensorFee, wireCostPerMeter, InstallationRate, taxRate, miscellaneousFee, notes } = req.body;
+    await pool.query(
+      `INSERT INTO billing_settings (id, float_sensor_fee, wire_cost_per_meter, base_installation_rate, tax_rate, miscellaneous_fee, notes) 
+       VALUES (1, ?, ?, ?, ?, ?, ?) 
+       ON DUPLICATE KEY UPDATE 
+       float_sensor_fee = VALUES(float_sensor_fee), 
+       wire_cost_per_meter = VALUES(wire_cost_per_meter), 
+       base_installation_rate = VALUES(base_installation_rate), 
+       tax_rate = VALUES(tax_rate), 
+       miscellaneous_fee = VALUES(miscellaneous_fee), 
+       notes = VALUES(notes)`,
+      [floatSensorFee || 1000.00, wireCostPerMeter || 45.00, InstallationRate || 1500.00, taxRate || 18.00, miscellaneousFee || 1000.00, notes || '']
+    );
+    return res.status(201).json({ success: true, message: 'Billing settings created/initialized successfully.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to create billing settings.', error: error.message });
+  }
+};
+
+const deleteBillingSettings = async (req, res) => {
+  try {
+    await pool.query('DELETE FROM billing_settings WHERE id = 1');
+    return res.json({ success: true, message: 'Billing settings deleted successfully.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to delete billing settings.', error: error.message });
+  }
+};
+
 module.exports = {
   getBillingSettings,
-  updateBillingSettings
+  updateBillingSettings,
+  createBillingSettings,
+  deleteBillingSettings
 };

@@ -37,8 +37,25 @@ const deleteNotification = async (req, res) => {
   }
 };
 
+const createNotification = async (req, res) => {
+  try {
+    const { id, title, message, orderId } = req.body;
+    if (!id || !title || !message) {
+      return res.status(400).json({ success: false, message: 'Please provide required notification fields.' });
+    }
+    await pool.query(
+      'INSERT INTO notifications (id, title, message, order_id, is_read) VALUES (?, ?, ?, ?, FALSE)',
+      [id, title, message, orderId || null]
+    );
+    return res.status(201).json({ success: true, message: 'Notification created successfully.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to create notification.', error: error.message });
+  }
+};
+
 module.exports = {
   getNotifications,
   markAsRead,
-  deleteNotification
+  deleteNotification,
+  createNotification
 };
