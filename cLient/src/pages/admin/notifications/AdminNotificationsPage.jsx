@@ -13,7 +13,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import { getNotifications } from '../../../utils/storage';
+import { getNotifications, markAllNotificationsRead, markNotificationRead, deleteNotification as deleteNotificationApi } from '../../../utils/storage';
 import { formatDateTime } from '../../../utils/format';
 import './AdminNotificationsPage.css';
 
@@ -53,21 +53,21 @@ const AdminNotificationsPage = () => {
   }, [notifications, filter]);
 
   const markAllRead = () => {
+    markAllNotificationsRead();
     const updated = notifications.map((n) => ({ ...n, read: true }));
-    localStorage.setItem('mosh_notifications', JSON.stringify(updated));
     setNotifications(updated);
   };
 
   const markSingleRead = (id) => {
+    markNotificationRead(id);
     const updated = notifications.map((n) => (n.id === id ? { ...n, read: true } : n));
-    localStorage.setItem('mosh_notifications', JSON.stringify(updated));
     setNotifications(updated);
   };
 
   const deleteNotification = (id, e) => {
     e.stopPropagation(); // Avoid triggering card click read handler
+    deleteNotificationApi(id);
     const updated = notifications.filter((n) => n.id !== id);
-    localStorage.setItem('mosh_notifications', JSON.stringify(updated));
     setNotifications(updated);
   };
 

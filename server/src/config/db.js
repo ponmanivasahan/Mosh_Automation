@@ -100,9 +100,10 @@ const initDB = async () => {
         host: config.host,
         port: config.port,
         user: config.user,
-        password: config.password
+        password: config.password,
+        database: config.database
       });
-      console.log(`Successfully opened connection to remote database host ${config.host}.`);
+      console.log(`Successfully opened connection to remote database host ${config.host} with database ${config.database}.`);
     } catch (err) {
       console.error(`Critical Database connection failure for remote host ${config.host}:`, err.message);
       console.error('Please configure your database environment variables on Render.');
@@ -146,7 +147,9 @@ const initDB = async () => {
   pool = mysql.createPool(config);
 
   try {
-    await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${config.database}\`;`);
+    if (!isUrlUsed && !isRemote) {
+      await tempConnection.query(`CREATE DATABASE IF NOT EXISTS \`${config.database}\`;`);
+    }
     await tempConnection.end();
 
     const connection = await pool.getConnection();

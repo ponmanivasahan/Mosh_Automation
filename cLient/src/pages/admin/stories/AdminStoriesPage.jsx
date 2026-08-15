@@ -87,7 +87,8 @@ const AdminStoriesPage = () => {
         youtubeUrl: form.youtubeUrl.trim(),
         instagramUrl: form.instagramUrl.trim()
       };
-      const next = updateStory(payload);
+      updateStory(payload);
+      const next = stories.map(s => s.id === editingId ? payload : s);
       setStories(next);
       setToast({ type: 'success', message: 'Success story updated successfully.' });
     } else {
@@ -110,7 +111,8 @@ const AdminStoriesPage = () => {
 
   const handleConfirmDelete = () => {
     if (!deletingId) return;
-    const next = deleteStory(deletingId);
+    deleteStory(deletingId);
+    const next = stories.filter(s => s.id !== deletingId);
     setStories(next);
     setToast({ type: 'success', message: 'Success story deleted successfully.' });
     if (editingId === deletingId) resetForm();

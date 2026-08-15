@@ -258,6 +258,21 @@ export const updateOrder = async (order) => {
   return next;
 };
 
+export const deleteOrder = async (id) => {
+  const orders = getOrders();
+  const next = orders.filter((o) => o.id !== id);
+  write(KEYS.orders, next);
+  try {
+    await fetch(`${API_URL}/api/orders/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to sync order deletion:', error);
+  }
+  return next;
+};
+
 export const verifyPayment = async (orderId, transactionId, paymentMethod) => {
   try {
     const res = await fetch(`${API_URL}/api/orders/${orderId}/verify-payment`, {
@@ -296,6 +311,16 @@ export const getNotifications = () => read(KEYS.notifications, []);
 export const addNotification = async (notification) => {
   const notifications = getNotifications();
   write(KEYS.notifications, [notification, ...notifications]);
+  try {
+    await fetch(`${API_URL}/api/notifications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(notification),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to sync notification creation:', error);
+  }
 };
 
 export const markAllNotificationsRead = async () => {
@@ -313,6 +338,37 @@ export const markAllNotificationsRead = async () => {
     console.error('Failed to mark notifications read:', error);
   }
 };
+
+export const markNotificationRead = async (id) => {
+  const notifications = getNotifications();
+  const next = notifications.map((n) => (n.id === id ? { ...n, read: true } : n));
+  write(KEYS.notifications, next);
+  try {
+    await fetch(`${API_URL}/api/notifications/${id}/read`, {
+      method: 'PATCH',
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to mark notification read:', error);
+  }
+  return next;
+};
+
+export const deleteNotification = async (id) => {
+  const notifications = getNotifications();
+  const next = notifications.filter((n) => n.id !== id);
+  write(KEYS.notifications, next);
+  try {
+    await fetch(`${API_URL}/api/notifications/${id}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to delete notification:', error);
+  }
+  return next;
+};
+
 
 export const getReviews = () => read(KEYS.reviews, []);
 
@@ -413,6 +469,40 @@ export const clearCart = () => {
 export const getSession = () => read(KEYS.session, null);
 export const setSession = (session) => write(KEYS.session, session);
 export const clearSession = () => localStorage.removeItem(KEYS.session);
+
+export const updateUser = async (user) => {
+  const rawUsers = localStorage.getItem('mosh_users');
+  let usersList = rawUsers ? JSON.parse(rawUsers) : [];
+  usersList = usersList.map((u) => (u.phone === user.phone ? { ...u, ...user } : u));
+  localStorage.setItem('mosh_users', JSON.stringify(usersList));
+  try {
+    await fetch(`${API_URL}/api/auth/users/${user.phone}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(user),
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to sync user updates:', error);
+  }
+  return usersList;
+};
+
+export const deleteUser = async (phone) => {
+  const rawUsers = localStorage.getItem('mosh_users');
+  let usersList = rawUsers ? JSON.parse(rawUsers) : [];
+  usersList = usersList.filter((u) => u.phone !== phone);
+  localStorage.setItem('mosh_users', JSON.stringify(usersList));
+  try {
+    await fetch(`${API_URL}/api/auth/users/${phone}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+  } catch (error) {
+    console.error('Failed to sync user deletion:', error);
+  }
+  return usersList;
+};
 
 export const getStories = () => read(KEYS.stories, defaultStories);
 

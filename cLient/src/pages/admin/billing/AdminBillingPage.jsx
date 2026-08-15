@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Package, HelpCircle, Check, AlertCircle, Edit, DollarSign, Clock, ListFilter } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import { getProducts, getEstimations, getBillingSettings, setBillingSettings } from '../../../utils/storage';
+import { getProducts, getEstimations, getBillingSettings, setBillingSettings, updateEstimation } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import './AdminBillingPage.css';
 
@@ -86,7 +86,8 @@ const AdminBillingPage = () => {
       return e;
     });
 
-    localStorage.setItem('mosh_estimations', JSON.stringify(updated));
+    const targetEst = updated.find(e => e.id === estId);
+    updateEstimation(targetEst);
     setEstimations(updated);
     setEditingEstId(null);
     setToast({ type: 'success', message: 'Estimation query updated successfully.' });

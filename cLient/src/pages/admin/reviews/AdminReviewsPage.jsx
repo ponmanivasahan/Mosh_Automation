@@ -44,7 +44,8 @@ const AdminReviewsPage = () => {
  
   const handleConfirmDelete = () => {
     if (!deletingId) return;
-    const next = deleteReview(deletingId);
+    deleteReview(deletingId);
+    const next = reviews.filter(r => r.id !== deletingId);
     setReviews(next);
     setToast({ type: 'success', message: 'Review deleted successfully.' });
     setDeletingId('');
@@ -52,7 +53,8 @@ const AdminReviewsPage = () => {
 
   const handleToggleFeatured = (review) => {
     const updated = { ...review, featured: !review.featured };
-    const next = updateReview(updated);
+    updateReview(updated);
+    const next = reviews.map(r => r.id === review.id ? updated : r);
     setReviews(next);
     setToast({
       type: 'success',
@@ -69,7 +71,8 @@ const AdminReviewsPage = () => {
       adminReply: text.trim(),
       repliedAt: new Date().toISOString()
     };
-    const next = updateReview(updated);
+    updateReview(updated);
+    const next = reviews.map(r => r.id === id ? updated : r);
     setReviews(next);
     setReplyingId('');
     setReplyText(prev => ({ ...prev, [id]: '' }));

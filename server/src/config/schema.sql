@@ -125,30 +125,30 @@ CREATE TABLE IF NOT EXISTS notifications (
 -- -- ==========================================
 
 -- -- Seed Admin User (phone: '0987654321', password: 'adminpassword', role: 'admin')
--- -- Bcrypt Hash of 'adminpassword': $2a$12$K.Fw6cEXQ1w7vQJ/M/gHbeVexYFqRscN06mKzF6i608JzWwW39pM2
--- INSERT INTO users (name, phone, password_hash, role)
--- VALUES ('System Admin', '0987654321', '$2a$12$K.Fw6cEXQ1w7vQJ/M/gHbeVexYFqRscN06mKzF6i608JzWwW39pM2', 'admin')
--- ON DUPLICATE KEY UPDATE name=name;
+-- Bcrypt Hash of 'adminpassword': $2a$12$K.Fw6cEXQ1w7vQJ/M/gHbeVexYFqRscN06mKzF6i608JzWwW39pM2
+INSERT INTO users (name, phone, password_hash, role)
+VALUES ('System Admin', '0987654321', '$2a$12$K.Fw6cEXQ1w7vQJ/M/gHbeVexYFqRscN06mKzF6i608JzWwW39pM2', 'admin')
+ON DUPLICATE KEY UPDATE name=name;
 
--- -- Seed Billing Defaults
--- INSERT INTO billing_settings (id, float_sensor_fee, wire_cost_per_meter, base_installation_rate, tax_rate, miscellaneous_fee, notes)
--- VALUES (1, 1000.00, 45.00, 1500.00, 18.00, 1000.00, 'Standard billing defaults for estimation calculations.')
--- ON DUPLICATE KEY UPDATE id=id;
+-- Seed Billing Defaults
+INSERT INTO billing_settings (id, float_sensor_fee, wire_cost_per_meter, base_installation_rate, tax_rate, miscellaneous_fee, notes)
+VALUES (1, 1000.00, 45.00, 1500.00, 18.00, 1000.00, 'Standard billing defaults for estimation calculations.')
+ON DUPLICATE KEY UPDATE id=id;
 
--- -- Seed Default Products
---   INSERT INTO products (id, name, description, price, image, float_fee, wire_base_fee, wire_base_meters, wire_extra_per_meter) VALUES
---   ('p-1', 'Auto Change Water Level Controller', 'Automatic tank control with smart water level switching and overflow protection.', 3200.00, '/Auto_Change_WaterLevel_Controller.png', 150.00, 300.00, 30, 10.00),
---   ('p-2', 'Double Tank Fully Automated', 'Dual tank automation for dependable water transfer and monitoring.', 4800.00, '/Dobule_Tank_FullyAutomated.png', 200.00, 350.00, 30, 12.00),
---   ('p-3', 'Wireless Tank Module', 'Remote tank module for connected water level tracking and control.', 2700.00, '/Wireless_Controller-Tank_Module.png', 0.00, 250.00, 30, 8.00),
---   ('p-4', 'GSM Based On-Off with Dry Run', 'GSM enabled automation with dry run protection for safer operation.', 3900.00, '/GSM_Based_On-Off_With_Dry-run.png', 0.00, 300.00, 30, 10.00),
---   ('p-5', 'Wireless Controller Base Module', 'Base unit for wireless control and tank management automation.', 2500.00, '/Wireless_Controller-Base_Module.png', 100.00, 300.00, 30, 10.00),
---   ('p-6', 'Water Level Sensors', 'Precision sensors for accurate water level monitoring and alerts.', 1800.00, '/Water_Level_Sensors.png', 80.00, 200.00, 30, 6.00),
---   ('p-7', 'Water Level Controller With Timer', 'Timer-based controller for scheduled water management.', 2900.00, '/Water_LevelController_With_Timer.png', 120.00, 300.00, 30, 10.00),
---   ('p-8', 'Three Phase Fully Automatic Controller', 'Heavy-duty automation controller for three-phase systems.', 5400.00, '/Three_Phase_Fully_Automatic_Controller.png', 0.00, 400.00, 30, 15.00),
---   ('p-9', 'Three Phase Dry Run Preventer', 'Protective dry run preventer for three-phase pump safety.', 4300.00, '/Three_Phase_Dry_Run_Preventer.png', 0.00, 350.00, 30, 12.00),
---   ('p-10', 'Single Phase Water Controller With Dry Run', 'Single-phase automation with built-in dry run protection.', 3600.00, '/Single_Phase_Water_Controller_With_Dry_Run.png', 0.00, 300.00, 30, 10.00),
---   ('p-11', 'Single Phase Fully Automatic Controller', 'Compact automatic controller for single-phase water systems.', 3400.00, '/Single_Phase_Fully_Automatic_Controller.png', 80.00, 300.00, 30, 10.00),
---   ('p-12', 'Single Phase Controller Above 1.5HP', 'Controller designed for higher-load single-phase pump setups.', 4100.00, '/Single_Phase_Controller_Above-1.5HP.png', 0.00, 350.00, 30, 12.00),
---   ('p-13', 'GSM Based On-Off', 'Remote GSM switching controller for flexible water management.', 3100.00, '/GSM_Based_On-Off.png', 0.00, 300.00, 30, 10.00),
---   ('p-14', 'Float Switch', 'Durable float switch for simple and reliable level detection.', 1200.00, '/Float_Switch.png', 400.00, 150.00, 30, 5.00)
---   ON DUPLICATE KEY UPDATE name=name;
+-- Seed Default Products
+  INSERT INTO products (id, name, description, price, image, float_fee, wire_base_fee, wire_base_meters, wire_extra_per_meter) VALUES
+  ('p-1', 'Auto Change Water Level Controller', 'Automatic tank control with smart water level switching and overflow protection.', 3200.00, '/Auto_Change_WaterLevel_Controller.png', 150.00, 300.00, 30, 10.00),
+  ('p-2', 'Double Tank Fully Automated', 'Dual tank automation for dependable water transfer and monitoring.', 4800.00, '/Dobule_Tank_FullyAutomated.png', 200.00, 350.00, 30, 12.00),
+  ('p-3', 'Wireless Tank Module', 'Remote tank module for connected water level tracking and control.', 2700.00, '/Wireless_Controller-Tank_Module.png', 0.00, 250.00, 30, 8.00),
+  ('p-4', 'GSM Based On-Off with Dry Run', 'GSM enabled automation with dry run protection for safer operation.', 3900.00, '/GSM_Based_On-Off_With_Dry-run.png', 0.00, 300.00, 30, 10.00),
+  ('p-5', 'Wireless Controller Base Module', 'Base unit for wireless control and tank management automation.', 2500.00, '/Wireless_Controller-Base_Module.png', 100.00, 300.00, 30, 10.00),
+  ('p-6', 'Water Level Sensors', 'Precision sensors for accurate water level monitoring and alerts.', 1800.00, '/Water_Level_Sensors.png', 80.00, 200.00, 30, 6.00),
+  ('p-7', 'Water Level Controller With Timer', 'Timer-based controller for scheduled water management.', 2900.00, '/Water_LevelController_With_Timer.png', 120.00, 300.00, 30, 10.00),
+  ('p-8', 'Three Phase Fully Automatic Controller', 'Heavy-duty automation controller for three-phase systems.', 5400.00, '/Three_Phase_Fully_Automatic_Controller.png', 0.00, 400.00, 30, 15.00),
+  ('p-9', 'Three Phase Dry Run Preventer', 'Protective dry run preventer for three-phase pump safety.', 4300.00, '/Three_Phase_Dry_Run_Preventer.png', 0.00, 350.00, 30, 12.00),
+  ('p-10', 'Single Phase Water Controller With Dry Run', 'Single-phase automation with built-in dry run protection.', 3600.00, '/Single_Phase_Water_Controller_With_Dry_Run.png', 0.00, 300.00, 30, 10.00),
+  ('p-11', 'Single Phase Fully Automatic Controller', 'Compact automatic controller for single-phase water systems.', 3400.00, '/Single_Phase_Fully_Automatic_Controller.png', 80.00, 300.00, 30, 10.00),
+  ('p-12', 'Single Phase Controller Above 1.5HP', 'Controller designed for higher-load single-phase pump setups.', 4100.00, '/Single_Phase_Controller_Above-1.5HP.png', 0.00, 350.00, 30, 12.00),
+  ('p-13', 'GSM Based On-Off', 'Remote GSM switching controller for flexible water management.', 3100.00, '/GSM_Based_On-Off.png', 0.00, 300.00, 30, 10.00),
+  ('p-14', 'Float Switch', 'Durable float switch for simple and reliable level detection.', 1200.00, '/Float_Switch.png', 400.00, 150.00, 30, 5.00)
+  ON DUPLICATE KEY UPDATE name=name;
