@@ -75,7 +75,7 @@ const verifyOtp = async (req, res) => {
         [cleanedName, cleanedPhone, passwordHash, role]
       );
       
-      const [newUsers] = await pool.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+      const [newUsers] = await pool.query('SELECT * FROM users WHERE phone = ?', [cleanedPhone]);
       user = newUsers[0];
     } else {
       user = users[0];
@@ -88,7 +88,7 @@ const verifyOtp = async (req, res) => {
     await pool.query('UPDATE users SET logged_in_at = CURRENT_TIMESTAMP WHERE phone = ?', [cleanedPhone]);
 
     const token = jwt.sign(
-      { id: user.id, name: user.name, phone: user.phone, role: user.role },
+      { name: user.name, phone: user.phone, role: user.role },
       process.env.JWT_SECRET || 'mosh_secret_key_2026',
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
@@ -170,7 +170,7 @@ const login = async (req, res) => {
         [cleanedName, phone, passwordHash, role]
       );
       
-      const [newUsers] = await pool.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+      const [newUsers] = await pool.query('SELECT * FROM users WHERE phone = ?', [phone]);
       user = newUsers[0];
     } else {
       user = users[0];
@@ -186,7 +186,7 @@ const login = async (req, res) => {
 
     // Sign JWT
     const token = jwt.sign(
-      { id: user.id, name: user.name, phone: user.phone, role: user.role },
+      { name: user.name, phone: user.phone, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
