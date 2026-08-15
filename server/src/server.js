@@ -13,6 +13,7 @@ const storiesRoutes = require('./routes/storiesRoutes');
 const estimationsRoutes = require('./routes/estimationsRoutes');
 const billingRoutes = require('./routes/billingRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const cartRoutes = require('./routes/cartRoutes');
 
 const path = require('path');
 const app = express();
@@ -53,6 +54,7 @@ app.use('/api/stories', storiesRoutes);
 app.use('/api/estimations', estimationsRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/cart', cartRoutes);
 
 // Serve client static assets if present (built into ../public)
 // Prefer serving a server/public folder when deployed

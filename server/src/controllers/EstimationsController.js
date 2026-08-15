@@ -74,8 +74,8 @@ const createEstimation = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please fill all required inquiry fields.' });
     }
 
-    const finalCustomerName = customerName || name || 'Customer';
-    const finalCustomerPhone = customerPhone || phone || '0000000000';
+    const finalCustomerName = name || 'Customer';
+    const finalCustomerPhone = phone;
     const finalStage = stage || 'requested';
 
     const queryDetails = {

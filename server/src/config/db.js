@@ -224,6 +224,18 @@ const initDB = async () => {
       } catch(e){
         console.log("Migration INFO (products image column):", e.message);
       }
+      try {
+        await connection.query("CREATE TABLE IF NOT EXISTS cart (id INT AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL UNIQUE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+        console.log("Migration SUCCESS: Created 'cart' table.");
+      } catch(e) {
+        console.log("Migration INFO (cart table):", e.message);
+      }
+      try {
+        await connection.query("CREATE TABLE IF NOT EXISTS cart_items (id INT AUTO_INCREMENT PRIMARY KEY, cart_id INT NOT NULL, product_id VARCHAR(50) NOT NULL, quantity INT NOT NULL DEFAULT 1, FOREIGN KEY (cart_id) REFERENCES cart(id) ON DELETE CASCADE, FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE, UNIQUE KEY unique_cart_product (cart_id, product_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+        console.log("Migration SUCCESS: Created 'cart_items' table.");
+      } catch(e) {
+        console.log("Migration INFO (cart_items table):", e.message);
+      }
 
       console.log('Database schema verified & seeded successfully.');
     } else {
