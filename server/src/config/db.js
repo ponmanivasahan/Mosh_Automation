@@ -40,12 +40,17 @@ if (dbUrl) {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
-      multipleStatements: true
+      multipleStatements: true,
+      ssl: {
+        rejectUnauthorized: false
+      }
     };
     console.log(`Initial pool parsed DATABASE_URL successfully: host=${connectionConfig.host}`);
   } catch (err) {
     console.error('Failed to parse database connection URL during pool initialization:', err.message);
   }
+} else if (connectionConfig.host && connectionConfig.host !== 'localhost' && connectionConfig.host !== '127.0.0.1') {
+  connectionConfig.ssl = { rejectUnauthorized: false };
 }
 
 // Create initial pool
@@ -89,12 +94,17 @@ const initDB = async () => {
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0,
-        multipleStatements: true
+        multipleStatements: true,
+        ssl: {
+          rejectUnauthorized: false
+        }
       };
       isUrlUsed = true;
     } catch (err) {
       console.error('Failed to parse database connection URL in initDB:', err.message);
     }
+  } else if (config.host && config.host !== 'localhost' && config.host !== '127.0.0.1') {
+    config.ssl = { rejectUnauthorized: false };
   }
 
   const isRemote = config.host !== 'localhost' && config.host !== '127.0.0.1';
@@ -109,7 +119,10 @@ const initDB = async () => {
         port: config.port,
         user: config.user,
         password: config.password,
-        database: config.database
+        database: config.database,
+        ssl: {
+          rejectUnauthorized: false
+        }
       });
       console.log(`Successfully opened connection to remote database host ${config.host} with database ${config.database}.`);
     } catch (err) {
