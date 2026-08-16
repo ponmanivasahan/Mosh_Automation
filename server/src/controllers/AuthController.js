@@ -95,8 +95,8 @@ const verifyOtp = async (req, res) => {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: true,
+      sameSite: 'none',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
@@ -194,9 +194,9 @@ const login = async (req, res) => {
     // Set cookie
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: parseInt(process.env.COOKIE_EXPIRES_IN) * 24 * 60 * 60 * 1000 // days to ms
+      secure: true,
+      sameSite: 'none',
+      maxAge: parseInt(process.env.COOKIE_EXPIRES_IN || 7) * 24 * 60 * 60 * 1000 // days to ms
     });
 
     return res.json({
