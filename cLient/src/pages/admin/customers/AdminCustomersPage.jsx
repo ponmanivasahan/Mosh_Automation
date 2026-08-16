@@ -40,6 +40,22 @@ const AdminCustomersPage = () => {
       const response = await fetch(`${API_URL}/api/admin/customers`, {
         credentials: 'include'
       });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          setError('Authentication expired. Please log in again.');
+        } else if (response.status === 403) {
+          setError('You do not have permission to access this page.');
+        } else if (response.status === 404) {
+          setError('Customer API endpoint not found.');
+        } else if (response.status === 500) {
+          setError('Server error. Please try again.');
+        } else {
+          setError(`Server returned status code ${response.status}.`);
+        }
+        return;
+      }
+
       const data = await response.json();
       if (data.success) {
         setCustomers(data.customers || []);
@@ -48,7 +64,7 @@ const AdminCustomersPage = () => {
         setError(data.message || 'Failed to retrieve customers.');
       }
     } catch (err) {
-      setError('Connection to admin API failed.');
+      setError('Unable to connect to the server.');
     } finally {
       setLoading(false);
       if (showSyncState) setSyncing(false);

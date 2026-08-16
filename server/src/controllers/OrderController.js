@@ -75,7 +75,7 @@ const createOrder = async (req, res) => {
 
     // Insert order header
     await connection.query(
-      'INSERT INTO orders (id, user_phone, customer_name, total, status, payment_status, shipping_address, shipping_city, shipping_pincode, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO orders (id, user_phone, customer_name, total, status, payment_status, shipping_address, shipping_city, shipping_pincode, payment_method, customer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         id,
         phone,
@@ -86,7 +86,8 @@ const createOrder = async (req, res) => {
         shippingAddress.address,
         shippingAddress.city,
         shippingAddress.pincode,
-        paymentMethod
+        paymentMethod,
+        req.user.id
       ]
     );
 

@@ -222,7 +222,27 @@ const getMe = async (req, res) => {
   if (!req.user) {
     return res.status(401).json({ success: false, message: 'Not authenticated.' });
   }
-  return res.json({ success: true, user: req.user });
+  try {
+    const [rows] = await pool.query('SELECT id, name, phone, email, role, status, created_at FROM users WHERE id = ?', [req.user.id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found in database.' });
+    }
+    const user = rows[0];
+    return res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email || `${user.name.toLowerCase().replace(/\s+/g, '') || 'customer'}@example.com`,
+        role: user.role,
+        status: user.status || 'Active',
+        createdAt: user.created_at
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Failed to fetch customer profile.', error: error.message });
+  }
 };
 
 const getUsers = async (req, res) => {

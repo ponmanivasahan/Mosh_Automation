@@ -10,9 +10,9 @@ const getCustomers = async (req, res) => {
         u.email, 
         u.status,
         u.created_at AS createdAt,
-        (SELECT COUNT(*) FROM orders o WHERE o.user_phone = u.phone) AS numOrders,
-        (SELECT COUNT(*) FROM estimations e WHERE e.customer_phone = u.phone) AS numQueries,
-        (SELECT COUNT(*) FROM reviews r WHERE r.customer_phone = u.phone) AS numReviews
+        (SELECT COUNT(*) FROM orders o WHERE o.customer_id = u.id OR o.user_phone = u.phone) AS numOrders,
+        (SELECT COUNT(*) FROM estimations e WHERE e.customer_id = u.id OR e.customer_phone = u.phone) AS numQueries,
+        (SELECT COUNT(*) FROM reviews r WHERE r.customer_id = u.id OR r.customer_phone = u.phone) AS numReviews
       FROM users u
       WHERE u.role = 'customer'
       ORDER BY u.created_at DESC

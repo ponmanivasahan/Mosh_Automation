@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { Eye, ShoppingCart, Info, Award } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import { getCart, getProducts, setCart } from '../../../utils/storage';
+import { getCart, getProducts, setCart, getDbStatus } from '../../../utils/storage';
 import { formatCurrency } from '../../../utils/format';
 import { customerLinks } from '../../../utils/customerLinks';
 import './CustomerProductsPage.css';
@@ -14,10 +14,12 @@ const CustomerProductsPage = () => {
   const [products, setProducts] = useState(() => getProducts());
   const [cartItems, setCartItems] = useState(getCart());
   const [message, setMessage] = useState('');
+  const [dbConnected, setDbConnected] = useState(() => getDbStatus());
 
   useEffect(() => {
     const syncProducts = () => {
       setProducts(getProducts());
+      setDbConnected(getDbStatus());
     };
     const interval = setInterval(syncProducts, 1000);
     window.addEventListener('storage', syncProducts);
@@ -112,7 +114,12 @@ const CustomerProductsPage = () => {
 
   return (
     <AppShell title="Products & Solutions" links={customerLinks}>
-      <div className="customer-products-container">
+      {!dbConnected ? (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-rose-50 border border-rose-100 rounded-2xl m-4">
+          <p className="text-sm font-bold text-rose-600">Unable to load data from server. Please try again.</p>
+        </div>
+      ) : (
+        <div className="customer-products-container">
         {/* Page header with kicker */}
         <div className="products-page-header">
           <div>
@@ -210,6 +217,7 @@ const CustomerProductsPage = () => {
           }}
         />
       </div>
+      )}
     </AppShell>
   );
 };

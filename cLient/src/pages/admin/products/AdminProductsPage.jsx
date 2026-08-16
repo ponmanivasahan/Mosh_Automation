@@ -12,7 +12,7 @@ import {
   FileText
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import { getProducts, setProducts } from '../../../utils/storage';
+import { getProducts, addProduct, updateProduct, deleteProduct, getDbStatus } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import './AdminProductsPage.css';
 
@@ -48,6 +48,7 @@ const AdminProductsPage = () => {
   const [products, setProductsState] = useState(() => getProducts());
   const [searchQuery, setSearchQuery] = useState('');
   const [message, setMessage] = useState('');
+  const [dbConnected, setDbConnected] = useState(() => getDbStatus());
 
   // Register Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -64,6 +65,7 @@ const AdminProductsPage = () => {
   useEffect(() => {
     const fetchLatest = () => {
       setProductsState(getProducts());
+      setDbConnected(getDbStatus());
     };
     const interval = setInterval(fetchLatest, 1500);
     window.addEventListener('storage', fetchLatest);
@@ -106,7 +108,7 @@ const AdminProductsPage = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     if (!registerForm.name.trim() || !registerForm.description.trim() || Number(registerForm.price) <= 0 || !registerForm.image) {
       setMessage('Please fill all fields and upload a product image.');
@@ -134,15 +136,19 @@ const AdminProductsPage = () => {
       createdAt: new Date().toISOString()
     };
 
-    const nextList = [payload, ...products];
-    setProducts(nextList);
-    setProductsState(nextList);
-    resetRegister();
-    setMessage('Product published to catalog successfully!');
-    setTimeout(() => setMessage(''), 3000);
+    try {
+      await addProduct(payload);
+      setProductsState(getProducts());
+      resetRegister();
+      setMessage('Product published to catalog successfully!');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      console.error(err);
+      setMessage(err.message || 'Failed to publish product. Please try again.');
+    }
   };
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!editForm.name.trim() || !editForm.description.trim() || Number(editForm.price) <= 0 || !editForm.image) {
       setMessage('Please fill all fields and upload a product image.');
@@ -170,22 +176,30 @@ const AdminProductsPage = () => {
       createdAt: products.find(p => p.id === editingId)?.createdAt || new Date().toISOString()
     };
 
-    const nextList = products.map(p => p.id === editingId ? payload : p);
-    setProducts(nextList);
-    setProductsState(nextList);
-    resetEdit();
-    setMessage('Product changes saved successfully!');
-    setTimeout(() => setMessage(''), 3000);
+    try {
+      await updateProduct(editingId, payload);
+      setProductsState(getProducts());
+      resetEdit();
+      setMessage('Product changes saved successfully!');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      console.error(err);
+      setMessage(err.message || 'Failed to save product changes. Please try again.');
+    }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deletingId) return;
-    const nextList = products.filter(p => p.id !== deletingId);
-    setProducts(nextList);
-    setProductsState(nextList);
-    setDeletingId('');
-    setMessage('Product removed from catalog.');
-    setTimeout(() => setMessage(''), 3000);
+    try {
+      await deleteProduct(deletingId);
+      setProductsState(getProducts());
+      setDeletingId('');
+      setMessage('Product removed from catalog.');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      console.error(err);
+      setMessage(err.message || 'Failed to delete product. Please try again.');
+    }
   };
 
   const triggerEdit = (product) => {
@@ -217,7 +231,12 @@ const AdminProductsPage = () => {
 
   return (
     <AppShell title="Product Management Portal" links={adminLinks}>
-      <div className="max-w-7xl mx-auto space-y-8 pb-16">
+      {!dbConnected ? (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-rose-50 border border-rose-100 rounded-2xl m-4">
+          <p className="text-sm font-bold text-rose-600">Unable to load products from server. Please try again.</p>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto space-y-8 pb-16">
         
         {/* Toast Alert Feedback */}
         <AnimatePresence>
@@ -788,6 +807,7 @@ const AdminProductsPage = () => {
         </AnimatePresence>
 
       </div>
+      )}
     </AppShell>
   );
 };

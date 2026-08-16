@@ -7,25 +7,29 @@ require('dotenv').config();
 // Parse initial database connection configuration
 const dbUrl = process.env.DATABASE_URL || process.env.JAWSDB_URL || process.env.CLEARDB_DATABASE_URL || process.env.MYSQL_URL;
 
+const rawHost = process.env.DB_HOST || process.env.MYSQLHOST || 'localhost';
+const rawPort = process.env.DB_PORT || process.env.MYSQLPORT || '3306';
+const rawUser = process.env.DB_USER || process.env.MYSQLUSER || 'root';
+const rawPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || 'tonystark';
+const rawDatabase = process.env.DB_NAME || process.env.MYSQLDATABASE || 'mosh_automation';
+
 let connectionConfig = {
-  host: process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
-  user: process.env.DB_USER || process.env.MYSQLUSER || 'root',
-  password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || 'tonystark',
-  database: process.env.DB_NAME || process.env.MYSQLDATABASE || 'mosh_automation',
-  port: process.env.DB_PORT || process.env.MYSQLPORT || 3306,
+  host: rawHost,
+  port: Number(rawPort) || 3306,
+  user: rawUser,
+  password: rawPassword,
+  database: rawDatabase,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  multipleStatements: true,
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  multipleStatements: true
 };
+
+if (rawHost !== 'localhost' && rawHost !== '127.0.0.1') {
+  connectionConfig.ssl = {
+    rejectUnauthorized: false
+  };
+}
 
 if (dbUrl) {
   try {
@@ -253,6 +257,56 @@ const initDB = async () => {
         console.log("Migration SUCCESS: Created 'cart_items' table.");
       } catch(e) {
         console.log("Migration INFO (cart_items table):", e.message);
+      }
+
+      // Add customer_id columns and foreign key constraints
+      try {
+        await connection.query("ALTER TABLE orders ADD COLUMN customer_id INT DEFAULT NULL;");
+        console.log("Migration SUCCESS: Added 'customer_id' column to orders.");
+      } catch(e){
+        console.log("Migration INFO (orders customer_id column):", e.message);
+      }
+      try {
+        await connection.query("ALTER TABLE orders ADD CONSTRAINT fk_orders_customer_id FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE SET NULL;");
+        console.log("Migration SUCCESS: Added 'fk_orders_customer_id' constraint to orders.");
+      } catch(e){
+        console.log("Migration INFO (orders fk_orders_customer_id constraint):", e.message);
+      }
+
+      try {
+        await connection.query("ALTER TABLE estimations ADD COLUMN customer_id INT DEFAULT NULL;");
+        console.log("Migration SUCCESS: Added 'customer_id' column to estimations.");
+      } catch(e){
+        console.log("Migration INFO (estimations customer_id column):", e.message);
+      }
+      try {
+        await connection.query("ALTER TABLE estimations ADD CONSTRAINT fk_estimations_customer_id FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE SET NULL;");
+        console.log("Migration SUCCESS: Added 'fk_estimations_customer_id' constraint to estimations.");
+      } catch(e){
+        console.log("Migration INFO (estimations fk_estimations_customer_id constraint):", e.message);
+      }
+
+      try {
+        await connection.query("ALTER TABLE reviews ADD COLUMN customer_id INT DEFAULT NULL;");
+        console.log("Migration SUCCESS: Added 'customer_id' column to reviews.");
+      } catch(e){
+        console.log("Migration INFO (reviews customer_id column):", e.message);
+      }
+      try {
+        await connection.query("ALTER TABLE reviews ADD CONSTRAINT fk_reviews_customer_id FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE SET NULL;");
+        console.log("Migration SUCCESS: Added 'fk_reviews_customer_id' constraint to reviews.");
+      } catch(e){
+        console.log("Migration INFO (reviews fk_reviews_customer_id constraint):", e.message);
+      }
+
+      // Sync existing records with their corresponding user ID
+      try {
+        await connection.query("UPDATE orders o JOIN users u ON o.user_phone = u.phone SET o.customer_id = u.id WHERE o.customer_id IS NULL;");
+        await connection.query("UPDATE estimations e JOIN users u ON e.customer_phone = u.phone SET e.customer_id = u.id WHERE e.customer_id IS NULL;");
+        await connection.query("UPDATE reviews r JOIN users u ON r.customer_phone = u.phone SET r.customer_id = u.id WHERE r.customer_id IS NULL;");
+        console.log("Migration SUCCESS: Synced existing orders/estimations/reviews with user ids.");
+      } catch(e) {
+        console.log("Migration INFO (syncing user ids):", e.message);
       }
 
       console.log('Database schema verified & seeded successfully.');

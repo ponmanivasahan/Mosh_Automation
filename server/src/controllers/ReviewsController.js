@@ -31,8 +31,8 @@ const createReview = async (req, res) => {
     }
 
     await pool.query(
-      'INSERT INTO reviews (id, customer_name, customer_phone, product_name, rating, comment) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, name, phone, productName, rating, comment || '']
+      'INSERT INTO reviews (id, customer_name, customer_phone, product_name, rating, comment, customer_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, name, phone, productName, rating, comment || '', req.user.id]
     );
 
     return res.status(201).json({ success: true, message: 'Review submitted successfully.' });

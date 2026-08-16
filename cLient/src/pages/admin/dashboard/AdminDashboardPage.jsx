@@ -21,7 +21,7 @@ import {
   Check
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import { getProducts, getOrders, getReviews, updateOrder, addNotification } from '../../../utils/storage';
+import { getProducts, getOrders, getReviews, updateOrder, addNotification, getDbStatus } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import './AdminDashboardPage.css';
 
@@ -40,6 +40,9 @@ const AdminDashboardPage = () => {
   const [products, setProducts] = useState(() => getProducts());
   const [orders, setOrders] = useState(() => getOrders());
   const [reviews, setReviews] = useState(() => getReviews());
+  const [dbConnected, setDbConnected] = useState(() => getDbStatus());
+  const [customers, setCustomers] = useState([]);
+
   const [activeModalType, setActiveModalType] = useState(null);
   const [selectedAdminOrder, setSelectedAdminOrder] = useState(null);
   const [orderFilter, setOrderFilter] = useState('All');
@@ -58,10 +61,22 @@ const AdminDashboardPage = () => {
 
   // Live Syncing feed
   useEffect(() => {
-    const fetchLatest = () => {
+    const fetchLatest = async () => {
       setProducts(getProducts());
       setOrders(getOrders());
       setReviews(getReviews());
+      setDbConnected(getDbStatus());
+      try {
+        const res = await fetch(`${API_URL}/api/admin/customers`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            setCustomers(data.customers || []);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to sync customers list:', err);
+      }
     };
     fetchLatest();
     const interval = setInterval(fetchLatest, 1500);
@@ -96,9 +111,8 @@ const AdminDashboardPage = () => {
   }, [orders]);
 
   const totalCustomers = useMemo(() => {
-    const uniquePhones = new Set(orders.map(o => o.customerPhone));
-    return uniquePhones.size;
-  }, [orders]);
+    return customers.length;
+  }, [customers]);
 
   // Order status modification handler
   const handleStatusChange = (orderId, newStatus) => {
@@ -127,19 +141,13 @@ const AdminDashboardPage = () => {
 
   // Extract unique customers list for modal
   const customersList = useMemo(() => {
-    const map = new Map();
-    orders.forEach(o => {
-      if (o.customerPhone && !map.has(o.customerPhone)) {
-        map.set(o.customerPhone, {
-          name: o.customerName || 'Customer',
-          phone: o.customerPhone,
-          city: o.shippingAddress?.city || 'Coimbatore',
-          ordersCount: orders.filter(x => x.customerPhone === o.customerPhone).length
-        });
-      }
-    });
-    return Array.from(map.values());
-  }, [orders]);
+    return customers.map(c => ({
+      name: c.name,
+      phone: c.phone,
+      city: 'Coimbatore',
+      ordersCount: c.numOrders || 0
+    }));
+  }, [customers]);
 
   // Filtered orders feed
   const filteredOrders = useMemo(() => {
@@ -155,7 +163,12 @@ const AdminDashboardPage = () => {
 
   return (
     <AppShell title="Admin Portal Control Dashboard" links={adminLinks}>
-      <div className="admin-dashboard-page space-y-8">
+      {!dbConnected ? (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-rose-50 border border-rose-100 rounded-2xl m-4">
+          <p className="text-sm font-bold text-rose-600">Unable to load data from server. Please try again.</p>
+        </div>
+      ) : (
+        <div className="admin-dashboard-page space-y-8">
         
         {/* Top Header Overview Panel */}
         <header className="admin-topbar panel flex justify-between items-center bg-slate-100 p-6 rounded-lg border border-slate-200">
@@ -271,119 +284,7 @@ const AdminDashboardPage = () => {
           </motion.article>
         </section>
         
-        {/* Top Header Overview Panel */}
-        <header className="admin-topbar panel flex justify-between items-center bg-slate-100 p-6 rounded-lg border border-slate-200">
-          <div>
-            <p className="dashboard-eyebrow text-teal-700 uppercase tracking-wider text-[10px] font-bold">HQ Systems Control</p>
-            <h2 className="text-2xl font-bold text-slate-800">Admin Portal Overview</h2>
-            <p className="text-xs text-slate-500 mt-1">Real-time telemetry tracking client orders, products catalog status, and customer reviews.</p>
-          </div>
-          <div className="admin-topbar-chip flex items-center gap-2 bg-white text-teal-700 px-4 py-2 rounded-xl border shadow-sm">
-            <RefreshCw size={14} className="animate-spin text-teal-600" />
-            <strong className="text-xs font-bold">Live Sync Active</strong>
-          </div>
-        </header>
 
-        {/* Dynamic Metric Cards Grid */}
-        <section className="admin-metrics-grid grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
-          {/* Card 1: Total Products */}
-          <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
-            onClick={() => setActiveModalType('products')}
-            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
-          >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Products</p>
-              <Package size={16} className="text-blue-500" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-800 mt-3">{products.length}</h3>
-            <span className="text-[10px] text-slate-400 font-bold block mt-1">Click to view items</span>
-          </motion.article>
-
-          {/* Card 2: Active Orders */}
-          <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
-            onClick={() => setActiveModalType('active-orders')}
-            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
-          >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Active Orders</p>
-              <ShoppingCart size={16} className="text-amber-500" />
-            </div>
-            <h3 className="text-2xl font-bold text-amber-600 mt-3">{activeOrdersCount}</h3>
-            <span className="text-[10px] text-slate-400 font-bold block mt-1">Placed & Processing</span>
-          </motion.article>
-
-          {/* Card 3: Dispatched Orders */}
-          <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
-            onClick={() => setActiveModalType('dispatched-orders')}
-            className="metric-card bg-slate-100 border border-teal-200 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
-          >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Dispatched</p>
-              <Truck size={16} className="text-teal-500" />
-            </div>
-            <h3 className="text-2xl font-bold text-teal-600 mt-3">{dispatchedOrdersCount}</h3>
-            <span className="text-[10px] text-slate-400 font-bold block mt-1">On the way</span>
-          </motion.article>
-
-          {/* Card 4: Completed Orders */}
-          <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
-            onClick={() => setActiveModalType('completed-orders')}
-            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
-          >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Completed</p>
-              <CheckCircle size={16} className="text-emerald-500" />
-            </div>
-            <h3 className="text-2xl font-extrabold text-emerald-600 mt-3">{completedOrdersCount}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Delivered orders</span>
-          </motion.article>
-
-          {/* Card 5: Cancelled Orders */}
-          <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
-            onClick={() => setActiveModalType('cancelled-orders')}
-            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
-          >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Cancelled Orders</p>
-              <Trash2 size={16} className="text-rose-500" />
-            </div>
-            <h3 className="text-2xl font-extrabold text-rose-600 mt-3">{cancelledOrdersCount}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Cancelled items list</span>
-          </motion.article>
-
-          {/* Card 6: Total Customers */}
-          <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
-            onClick={() => setActiveModalType('customers')}
-            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
-          >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Customers</p>
-              <Users size={16} className="text-indigo-500" />
-            </div>
-            <h3 className="text-2xl font-extrabold text-indigo-600 mt-3">{totalCustomers}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Registered clients</span>
-          </motion.article>
-
-          {/* Card 7: Total Revenue */}
-          <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
-            onClick={() => setActiveModalType('revenue')}
-            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
-          >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Revenue</p>
-              <TrendingUp size={16} className="text-pink-500" />
-            </div>
-            <h3 className="text-xl font-extrabold text-pink-600 mt-3 truncate">{formatCurrency(totalRevenue)}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Excl. cancelled</span>
-          </motion.article>
-        </section>
 
         {/* Recent Orders - Live management list */}
         <section className="panel bg-slate-100 border-2 rounded-2xl p-5 md:p-6 space-y-5">
@@ -815,6 +716,7 @@ const AdminDashboardPage = () => {
           )}
         </AnimatePresence>
       </div>
+      )}
     </AppShell>
   );
 };

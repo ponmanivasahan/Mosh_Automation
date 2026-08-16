@@ -54,13 +54,45 @@ const CustomerCartPage = () => {
   const [verificationProgress, setVerificationProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    isAlert: false,
+    onConfirm: null
+  });
+
+  const triggerConfirm = (title, message, onConfirm) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      isAlert: false,
+      onConfirm: () => {
+        onConfirm && onConfirm();
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  const triggerAlert = (title, message) => {
+    setConfirmModal({
+      isOpen: true,
+      title,
+      message,
+      isAlert: true,
+      onConfirm: () => {
+        setConfirmModal(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
   const [shippingDetails, setShippingDetails] = useState({
     name: session?.name || '',
     address: '',
     city: '',
     pincode: '',
     phone: session?.phone || '',
-    email: '',
     paymentMethod: 'Google Pay'
   });
 
@@ -167,8 +199,8 @@ const CustomerCartPage = () => {
 
   const confirmOrder = async (e) => {
     e.preventDefault();
-    if (!shippingDetails.name.trim() || !shippingDetails.address.trim() || !shippingDetails.city.trim() || !shippingDetails.pincode.trim() || !shippingDetails.email.trim()) {
-      alert('Please fill in all the required delivery details including your email address.');
+    if (!shippingDetails.name.trim() || !shippingDetails.address.trim() || !shippingDetails.city.trim() || !shippingDetails.pincode.trim()) {
+      triggerAlert('Validation Error', 'Please fill in all the required delivery details.');
       return;
     }
 
@@ -177,7 +209,6 @@ const CustomerCartPage = () => {
       id: orderId,
       customerName: shippingDetails.name,
       customerPhone: session.phone,
-      email: shippingDetails.email,
       items: cartItems,
       total: priceDetails.finalAmount,
       createdAt: new Date().toISOString(),
@@ -229,17 +260,21 @@ const CustomerCartPage = () => {
   };
 
   const handleCancelPayment = () => {
-    if (window.confirm('Are you sure you want to cancel the payment process? The order will remain as unpaid.')) {
-      setActivePaymentOrder(null);
-      setMessage('Payment process cancelled by user.');
-    }
+    triggerConfirm(
+      'Cancel Payment',
+      'Are you sure you want to cancel the payment process? The order will remain as unpaid.',
+      () => {
+        setActivePaymentOrder(null);
+        setMessage('Payment process cancelled by user.');
+      }
+    );
   };
 
   const handleVerifyPayment = async (e) => {
     e.preventDefault();
     const cleanTxnId = transactionIdInput.trim();
     if (!cleanTxnId) {
-      alert('Please enter a valid UPI transaction ID or UTR reference number.');
+      triggerAlert('Validation Error', 'Please enter a valid UPI transaction ID or UTR reference number.');
       return;
     }
     
@@ -286,25 +321,29 @@ const CustomerCartPage = () => {
   };
 
   const handleCancelOrder = (order) => {
-    if (window.confirm("Are you sure you want to cancel this order?")) {
-      const updated = {
-        ...order,
-        status: 'Cancelled'
-      };
-      updateOrder(updated);
-      
-      addNotification({
-        id: `not-${Date.now()}`,
-        title: 'Order Cancelled',
-        message: `${session.name} cancelled order #${order.id} totaling ${formatCurrency(order.total)}.`,
-        createdAt: new Date().toISOString(),
-        read: false,
-        orderId: order.id
-      });
-      
-      setSelectedOrder(null);
-      setMessage(`Order #${order.id} has been cancelled successfully.`);
-    }
+    triggerConfirm(
+      'Cancel Order',
+      'Are you sure you want to cancel this order?',
+      () => {
+        const updated = {
+          ...order,
+          status: 'Cancelled'
+        };
+        updateOrder(updated);
+        
+        addNotification({
+          id: `not-${Date.now()}`,
+          title: 'Order Cancelled',
+          message: `${session.name} cancelled order #${order.id} totaling ${formatCurrency(order.total)}.`,
+          createdAt: new Date().toISOString(),
+          read: false,
+          orderId: order.id
+        });
+        
+        setSelectedOrder(null);
+        setMessage(`Order #${order.id} has been cancelled successfully.`);
+      }
+    );
   };
 
   const handleMarkDelivered = (order) => {
@@ -624,19 +663,6 @@ const CustomerCartPage = () => {
                     placeholder="Enter your name"
                     value={shippingDetails.name}
                     onChange={(e) => setShippingDetails({ ...shippingDetails, name: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="checkout-email" className="mb-1 text-xs font-semibold text-slate-700">Email Address *</label>
-                  <input
-                    id="checkout-email"
-                    type="email"
-                    required
-                    placeholder="Enter your email address"
-                    value={shippingDetails.email}
-                    onChange={(e) => setShippingDetails({ ...shippingDetails, email: e.target.value })}
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
                   />
                 </div>
@@ -1110,6 +1136,31 @@ const CustomerCartPage = () => {
           </div>
         )}
       </AnimatePresence>
+      {/* Themed Confirmation & Alert Modal Overlay */}
+      {confirmModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 flex flex-col text-left space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <h3 className="text-lg font-extrabold text-slate-900 leading-tight">{confirmModal.title}</h3>
+            <p className="text-xs text-slate-500 font-semibold leading-relaxed">{confirmModal.message}</p>
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={confirmModal.onConfirm}
+                className="flex-1 rounded-2xl bg-teal-650 px-4 py-3 text-xs font-bold text-white hover:bg-teal-700 shadow-md shadow-teal-600/10 transition"
+              >
+                OK
+              </button>
+              {!confirmModal.isAlert && (
+                <button
+                  onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                  className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 };

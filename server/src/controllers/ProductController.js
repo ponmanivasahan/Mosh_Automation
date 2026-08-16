@@ -40,7 +40,21 @@ const createProduct = async (req, res) => {
       [id, name, description, price, image, floatFee || 0, baseFee, baseMeters, extraPerMeter]
     );
 
-    return res.status(201).json({ success: true, message: 'Product created successfully.' });
+    // Verify insertion directly in MySQL
+    const [rows] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
+    if (!rows.length) {
+      return res.status(500).json({ success: false, message: 'Failed to verify new product insertion in database.' });
+    }
+
+    return res.status(201).json({ 
+      success: true, 
+      message: 'Product created successfully.',
+      product: {
+        id: rows[0].id,
+        name: rows[0].name,
+        price: Number(rows[0].price)
+      }
+    });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to create product.', error: error.message });
   }
@@ -55,12 +69,33 @@ const updateProduct = async (req, res) => {
     const baseMeters = wire?.baseMeters || 0;
     const extraPerMeter = wire?.extraPerMeter || 0;
 
-    await pool.query(
+    const [result] = await pool.query(
       'UPDATE products SET name = ?, description = ?, price = ?, image = ?, float_fee = ?, wire_base_fee = ?, wire_base_meters = ?, wire_extra_per_meter = ? WHERE id = ?',
       [name, description, price, image, floatFee || 0, baseFee, baseMeters, extraPerMeter, id]
     );
 
-    return res.json({ success: true, message: 'Product updated successfully.' });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'No product was found with the specified ID to update.' });
+    }
+
+    // Retrieve updated record directly from MySQL
+    const [rows] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
+    const updated = rows[0];
+    const formatted = {
+      id: updated.id,
+      name: updated.name,
+      description: updated.description,
+      price: Number(updated.price),
+      image: updated.image,
+      floatFee: Number(updated.float_fee),
+      wire: {
+        baseFee: Number(updated.wire_base_fee),
+        baseMeters: Number(updated.wire_base_meters),
+        extraPerMeter: Number(updated.wire_extra_per_meter)
+      }
+    };
+
+    return res.json({ success: true, message: 'Product updated successfully.', product: formatted });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to update product.', error: error.message });
   }

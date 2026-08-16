@@ -28,9 +28,7 @@ const write = (key, value) => {
 
 const fallbackImage = productImageOptions[0]?.value || '';
 
-const normalizeProduct = (product, index) => {
-  const defaultProduct = defaultProducts[index] || defaultProducts.find((item) => item.id === product.id);
-
+const normalizeProduct = (product) => {
   let img = product.image;
   if (img && (img.includes('src/assets') || img.includes('src\\assets'))) {
     // Extract filename supporting both Windows and Unix slashes
@@ -39,89 +37,94 @@ const normalizeProduct = (product, index) => {
     img = '/' + filename;
   }
   if (!img) {
-    img = defaultProduct?.image || fallbackImage;
+    img = fallbackImage;
   }
 
+  // Ensure wire layout matches what client UI expects
+  const wire = product.wire || {
+    baseFee: Number(product.wire_base_fee || 0),
+    baseMeters: Number(product.wire_base_meters || 0),
+    extraPerMeter: Number(product.wire_extra_per_meter || 0)
+  };
+
   return {
-    ...defaultProduct,
-    ...product,
-    image: img
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    price: Number(product.price),
+    image: img,
+    floatFee: Number(product.float_fee || product.floatFee || 0),
+    wire: {
+      baseFee: Number(wire.baseFee || 0),
+      baseMeters: Number(wire.baseMeters || 0),
+      extraPerMeter: Number(wire.extraPerMeter || 0)
+    }
   };
 };
 
-export const ensureInitialData = async () => {
-  // Set offline/local defaults first
-  const existingProducts = read(KEYS.products, []);
-  if (!Array.isArray(existingProducts) || !existingProducts.length) {
-    write(KEYS.products, defaultProducts);
-  }
-  if (!localStorage.getItem(KEYS.billingSettings)) {
-    write(KEYS.billingSettings, defaultBillingSettings);
-  }
-  if (!localStorage.getItem(KEYS.estimations)) {
-    write(KEYS.estimations, []);
-  }
-  if (!localStorage.getItem(KEYS.orders)) {
-    write(KEYS.orders, []);
-  }
-  if (!localStorage.getItem(KEYS.notifications)) {
-    write(KEYS.notifications, []);
-  }
-  if (!localStorage.getItem(KEYS.reviews)) {
-    write(KEYS.reviews, defaultReviews);
-  }
-  if (!localStorage.getItem(KEYS.stories)) {
-    write(KEYS.stories, defaultStories);
-  }
-  if (!localStorage.getItem(KEYS.cart)) {
-    write(KEYS.cart, []);
-  }
+export const getDbStatus = () => {
+  if (typeof window === 'undefined') return true;
+  return localStorage.getItem('mosh_db_connected') !== 'false';
+};
 
-  // Attempt to sync from backend database
+export const ensureInitialData = async () => {
+  // Try to populate lists from MySQL backend database
   try {
     const prodRes = await fetch(`${API_URL}/api/products`);
+    if (!prodRes.ok) throw new Error('Products request failed');
     const prodData = await prodRes.json();
-    if (prodData.success && prodData.products?.length) {
-      write(KEYS.products, prodData.products);
+    if (prodData.success) {
+      write(KEYS.products, prodData.products || []);
+    } else {
+      throw new Error(prodData.message);
     }
 
     const billRes = await fetch(`${API_URL}/api/billing`);
+    if (!billRes.ok) throw new Error('Billing request failed');
     const billData = await billRes.json();
     if (billData.success && billData.settings) {
       write(KEYS.billingSettings, billData.settings);
     }
 
     const storyRes = await fetch(`${API_URL}/api/stories`);
+    if (!storyRes.ok) throw new Error('Stories request failed');
     const storyData = await storyRes.json();
     if (storyData.success && storyData.stories) {
       write(KEYS.stories, storyData.stories);
     }
 
     const revRes = await fetch(`${API_URL}/api/reviews`);
+    if (!revRes.ok) throw new Error('Reviews request failed');
     const revData = await revRes.json();
     if (revData.success && revData.reviews) {
       write(KEYS.reviews, revData.reviews);
     }
 
     const orderRes = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
+    if (!orderRes.ok) throw new Error('Orders request failed');
     const orderData = await orderRes.json();
     if (orderData.success && orderData.orders) {
       write(KEYS.orders, orderData.orders);
     }
 
     const estRes = await fetch(`${API_URL}/api/estimations`, { credentials: 'include' });
+    if (!estRes.ok) throw new Error('Estimations request failed');
     const estData = await estRes.json();
     if (estData.success && estData.estimations) {
       write(KEYS.estimations, estData.estimations);
     }
 
     const notifRes = await fetch(`${API_URL}/api/notifications`, { credentials: 'include' });
+    if (!notifRes.ok) throw new Error('Notifications request failed');
     const notifData = await notifRes.json();
     if (notifData.success && notifData.notifications) {
       write(KEYS.notifications, notifData.notifications);
     }
+
+    localStorage.setItem('mosh_db_connected', 'true');
   } catch (e) {
     console.warn('Backend database unreachable. Running in offline fallback cache mode.', e);
+    localStorage.setItem('mosh_db_connected', 'false');
   }
 };
 
@@ -129,52 +132,51 @@ ensureInitialData();
 
 export const getProducts = () => {
   const storedProducts = read(KEYS.products, null);
-  const products = Array.isArray(storedProducts) && storedProducts.length ? storedProducts : defaultProducts;
+  const products = Array.isArray(storedProducts) ? storedProducts : [];
   return products.map(normalizeProduct);
 };
 
-export const setProducts = async (products) => {
-  const normalizedNew = products.map(normalizeProduct);
-  const oldProducts = getProducts();
-  
-  write(KEYS.products, normalizedNew);
-
-  try {
-    // 1. Delete removed products
-    for (const oldP of oldProducts) {
-      if (!normalizedNew.some(newP => newP.id === oldP.id)) {
-        await fetch(`${API_URL}/api/products/${oldP.id}`, {
-          method: 'DELETE',
-          credentials: 'include'
-        });
-      }
-    }
-
-    // 2. Create or Update products
-    for (const newP of normalizedNew) {
-      const oldP = oldProducts.find(p => p.id === newP.id);
-      if (!oldP) {
-        await fetch(`${API_URL}/api/products`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newP),
-          credentials: 'include'
-        });
-      } else if (JSON.stringify(newP) !== JSON.stringify(oldP)) {
-        await fetch(`${API_URL}/api/products/${newP.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newP),
-          credentials: 'include'
-        });
-      }
-    }
-  } catch (error) {
-    console.error('Failed to sync products with backend database:', error);
+export const addProduct = async (product) => {
+  const response = await fetch(`${API_URL}/api/products`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(product),
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to add product to database.');
   }
+  await ensureInitialData();
 };
 
-export const getBillingSettings = () => read(KEYS.billingSettings, defaultBillingSettings);
+export const updateProduct = async (id, product) => {
+  const response = await fetch(`${API_URL}/api/products/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(product),
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to update product in database.');
+  }
+  await ensureInitialData();
+};
+
+export const deleteProduct = async (id) => {
+  const response = await fetch(`${API_URL}/api/products/${id}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to delete product from database.');
+  }
+  await ensureInitialData();
+};
+
+export const getBillingSettings = () => read(KEYS.billingSettings, {});
 
 export const setBillingSettings = async (settings) => {
   write(KEYS.billingSettings, settings);
@@ -504,7 +506,7 @@ export const deleteUser = async (phone) => {
   return usersList;
 };
 
-export const getStories = () => read(KEYS.stories, defaultStories);
+export const getStories = () => read(KEYS.stories, []);
 
 export const addStory = async (story) => {
   const stories = getStories();

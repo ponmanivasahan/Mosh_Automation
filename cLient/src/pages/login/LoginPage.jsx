@@ -121,13 +121,11 @@ const LoginPage = () => {
       if (data.success && data.user) {
         completeUserLogin(data.user);
       } else {
-        setError(data.message || 'Login failed. Please verify your connection.');
+        setError(data.message || 'Login failed. Please try again.');
       }
     } catch (e) {
-      // Connect offline mode
-      console.warn('Authentication server offline. Logging in via fallback offline cache.');
-      const role = getRoleFromPhone(cleanedPhone);
-      completeUserLogin({ name: cleanedName, phone: cleanedPhone, role });
+      console.error(e);
+      setError('Unable to connect to the server. Please try again.');
     }
   };
 

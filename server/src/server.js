@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const { initDB } = require('./config/db');
+const { initDB, pool } = require('./config/db');
 require('dotenv').config();
 
 // Route Imports
@@ -24,6 +24,12 @@ const allowedOrigins = new Set([
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://localhost:5174',
+  'http://localhost:5175',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://127.0.0.1:5175',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
   'https://mosh-automation.vercel.app'
 ].filter(Boolean));
 
@@ -45,6 +51,28 @@ app.use(cookieParser());
 // Simple Health Status Check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Mosh Automation Backend is active & secure.' });
+});
+
+// Database Health Status Check
+app.get('/api/health/db', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    const rawHost = process.env.DB_HOST || process.env.MYSQLHOST || 'localhost';
+    const rawDatabase = process.env.DB_NAME || process.env.MYSQLDATABASE || 'mosh_automation';
+    
+    console.log(`Database connected\nHost: ${rawHost}\nDatabase: ${rawDatabase}`);
+    
+    return res.json({
+      success: true,
+      database: 'connected'
+    });
+  } catch (error) {
+    console.error('Database connection test failed:', error.message);
+    return res.status(500).json({
+      success: false,
+      database: 'disconnected'
+    });
+  }
 });
 
 // Mounted Modular Routes
