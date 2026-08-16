@@ -10,7 +10,8 @@ import {
   LogOut,
   Bell,
   Menu,
-  X
+  X,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import { useEffect, useState } from 'react';
@@ -28,7 +29,8 @@ const iconMap = {
   'Rate & Reviews': MessageSquare,
   Reviews: MessageSquare,
   'Success Stories': Sparkles,
-  'Help Center': HelpCircle
+  'Help Center': HelpCircle,
+  Customers: Users
 };
 
 const AppShell = ({ title, links, children }) => {

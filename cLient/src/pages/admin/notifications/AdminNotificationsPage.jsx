@@ -19,10 +19,13 @@ import './AdminNotificationsPage.css';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Add/Delete Products' },
-  { to: '/admin/billing', label: 'Estimation Billing' },
-  { to: '/admin/estimations', label: 'Customer Estimations' },
-  { to: '/admin/notifications', label: 'Notifications' }
+  { to: '/admin/products', label: 'Product Management' },
+  { to: '/admin/billing', label: 'Query Management' },
+  { to: '/admin/reviews', label: 'Reviews' },
+  { to: '/admin/stories', label: 'Success Stories' },
+  { to: '/admin/estimations', label: 'Estimation Calculator' },
+  { to: '/admin/settings', label: 'Settings' },
+  { to: '/admin/customers', label: 'Customers' }
 ];
 
 const AdminNotificationsPage = () => {

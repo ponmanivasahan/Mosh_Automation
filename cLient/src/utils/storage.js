@@ -552,3 +552,10 @@ export const deleteStory = async (id) => {
   }
   return next;
 };
+
+// Start background sync polling to keep local state up-to-date with MySQL single source of truth
+if (typeof window !== 'undefined') {
+  setInterval(async () => {
+    await ensureInitialData();
+  }, 2500);
+}

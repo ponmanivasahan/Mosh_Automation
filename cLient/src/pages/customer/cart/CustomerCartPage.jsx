@@ -60,6 +60,7 @@ const CustomerCartPage = () => {
     city: '',
     pincode: '',
     phone: session?.phone || '',
+    email: '',
     paymentMethod: 'Google Pay'
   });
 
@@ -166,8 +167,8 @@ const CustomerCartPage = () => {
 
   const confirmOrder = async (e) => {
     e.preventDefault();
-    if (!shippingDetails.name.trim() || !shippingDetails.address.trim() || !shippingDetails.city.trim() || !shippingDetails.pincode.trim()) {
-      alert('Please fill in all the required delivery details.');
+    if (!shippingDetails.name.trim() || !shippingDetails.address.trim() || !shippingDetails.city.trim() || !shippingDetails.pincode.trim() || !shippingDetails.email.trim()) {
+      alert('Please fill in all the required delivery details including your email address.');
       return;
     }
 
@@ -176,6 +177,7 @@ const CustomerCartPage = () => {
       id: orderId,
       customerName: shippingDetails.name,
       customerPhone: session.phone,
+      email: shippingDetails.email,
       items: cartItems,
       total: priceDetails.finalAmount,
       createdAt: new Date().toISOString(),
@@ -622,6 +624,19 @@ const CustomerCartPage = () => {
                     placeholder="Enter your name"
                     value={shippingDetails.name}
                     onChange={(e) => setShippingDetails({ ...shippingDetails, name: e.target.value })}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="checkout-email" className="mb-1 text-xs font-semibold text-slate-700">Email Address *</label>
+                  <input
+                    id="checkout-email"
+                    type="email"
+                    required
+                    placeholder="Enter your email address"
+                    value={shippingDetails.email}
+                    onChange={(e) => setShippingDetails({ ...shippingDetails, email: e.target.value })}
                     className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
                   />
                 </div>

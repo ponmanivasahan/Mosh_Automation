@@ -88,7 +88,7 @@ const verifyOtp = async (req, res) => {
     await pool.query('UPDATE users SET logged_in_at = CURRENT_TIMESTAMP WHERE phone = ?', [cleanedPhone]);
 
     const token = jwt.sign(
-      { name: user.name, phone: user.phone, role: user.role },
+      { id: user.id, name: user.name, phone: user.phone, role: user.role },
       process.env.JWT_SECRET || 'mosh_secret_key_2026',
       { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
@@ -186,7 +186,7 @@ const login = async (req, res) => {
 
     // Sign JWT
     const token = jwt.sign(
-      { name: user.name, phone: user.phone, role: user.role },
+      { id: user.id, name: user.name, phone: user.phone, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );

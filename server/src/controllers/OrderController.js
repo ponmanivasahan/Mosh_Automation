@@ -59,7 +59,7 @@ const getOrders = async (req, res) => {
 const createOrder = async (req, res) => {
   const connection = await pool.getConnection();
   try {
-    const { id, items, total, shippingAddress, paymentMethod } = req.body;
+    const { id, items, total, shippingAddress, paymentMethod, email } = req.body;
     const { name, phone } = req.user;
 
     if (!id || !items || !items.length || !total || !shippingAddress) {
@@ -67,6 +67,11 @@ const createOrder = async (req, res) => {
     }
 
     await connection.beginTransaction();
+
+    // Update customer's email in database if provided
+    if (email) {
+      await connection.query('UPDATE users SET email = ? WHERE phone = ?', [email, phone]);
+    }
 
     // Insert order header
     await connection.query(

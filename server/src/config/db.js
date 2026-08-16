@@ -213,6 +213,24 @@ const initDB = async () => {
         console.log("Migration INFO (logged_in_at):", e.message);
       }
       try {
+        await connection.query("ALTER TABLE users ADD COLUMN email VARCHAR(255) NULL;");
+        console.log("Migration SUCCESS: Added 'email' to users.");
+      } catch(e){
+        console.log("Migration INFO (email):", e.message);
+      }
+      try {
+        await connection.query("ALTER TABLE users ADD COLUMN status ENUM('Active', 'Inactive') DEFAULT 'Active';");
+        console.log("Migration SUCCESS: Added 'status' to users.");
+      } catch(e){
+        console.log("Migration INFO (status):", e.message);
+      }
+      try {
+        await connection.query("ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;");
+        console.log("Migration SUCCESS: Added 'updated_at' to users.");
+      } catch(e){
+        console.log("Migration INFO (updated_at):", e.message);
+      }
+      try {
         await connection.query("ALTER TABLE stories MODIFY COLUMN image LONGTEXT NOT NULL;");
         console.log("Migration SUCCESS: Modified 'image' column to LONGTEXT in stories.");
       } catch(e){
