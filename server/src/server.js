@@ -91,6 +91,17 @@ app.get('/api/health/db', async (req, res) => {
   }
 });
 
+// Temporary database inspection endpoint
+app.get('/api/debug-db', async (req, res) => {
+  try {
+    const [dbName] = await pool.query("SELECT DATABASE()");
+    const [tables] = await pool.query("SHOW TABLES");
+    res.json({ success: true, database: dbName, tables: tables });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Mounted Modular Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
