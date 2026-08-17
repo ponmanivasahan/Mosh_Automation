@@ -23,6 +23,7 @@ import {
 import AppShell from '../../../components/AppShell';
 import { getProducts, getOrders, getReviews, updateOrder, addNotification, getDbStatus } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
+import { API_URL } from '../../../utils/api';
 import './AdminDashboardPage.css';
 
 const adminLinks = [

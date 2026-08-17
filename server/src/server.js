@@ -49,9 +49,14 @@ app.use(cors({
     if (origin.startsWith('https://') && origin.endsWith('.vercel.app')) {
       return callback(null, true);
     }
+
+    // Allow any Render deployments (starts with https:// and ends with .onrender.com)
+    if (origin.startsWith('https://') && origin.endsWith('.onrender.com')) {
+      return callback(null, true);
+    }
     
     // Allow local network IP addresses (e.g. http://192.168.1.10:5173) for mobile testing
-    if (/^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin)) {
+    if (/^https?:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)(:\d+)?$/.test(origin)) {
       return callback(null, true);
     }
     

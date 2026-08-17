@@ -120,14 +120,18 @@ export const ensureInitialData = async () => {
       throw new Error('Estimations request failed');
     }
 
-    const notifRes = await fetch(`${API_URL}/api/notifications`, { credentials: 'include' });
-    if (notifRes.ok) {
-      const notifData = await notifRes.json();
-      if (notifData.success && notifData.notifications) {
-        write(KEYS.notifications, notifData.notifications);
+    const session = getSession();
+    const isAdmin = session && session.role === 'admin';
+    if (isAdmin) {
+      const notifRes = await fetch(`${API_URL}/api/notifications`, { credentials: 'include' });
+      if (notifRes.ok) {
+        const notifData = await notifRes.json();
+        if (notifData.success && notifData.notifications) {
+          write(KEYS.notifications, notifData.notifications);
+        }
+      } else if (notifRes.status !== 401 && notifRes.status !== 403) {
+        throw new Error('Notifications request failed');
       }
-    } else if (notifRes.status !== 401 && notifRes.status !== 403) {
-      throw new Error('Notifications request failed');
     }
 
     localStorage.setItem('mosh_db_connected', 'true');
