@@ -1,8 +1,7 @@
 -- Mosh Automation MySQL Schema
 -- Creates and configures the database tables
 
-CREATE DATABASE IF NOT EXISTS mosh_automation;
-USE mosh_automation;
+-- Table creation starts here (uses currently connected database)
 
 -- 1. Users Table (Administrators and Customers)
 CREATE TABLE IF NOT EXISTS users (
