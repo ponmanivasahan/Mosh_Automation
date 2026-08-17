@@ -143,6 +143,43 @@ export const ensureInitialData = async () => {
 
 ensureInitialData();
 
+// Individual sync helpers — re-fetch a single resource from the backend
+const syncOrders = async () => {
+  try {
+    const res = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.orders) write(KEYS.orders, data.orders);
+    }
+  } catch (e) {
+    console.warn('syncOrders failed:', e);
+  }
+};
+
+const syncReviews = async () => {
+  try {
+    const res = await fetch(`${API_URL}/api/reviews`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.reviews) write(KEYS.reviews, data.reviews);
+    }
+  } catch (e) {
+    console.warn('syncReviews failed:', e);
+  }
+};
+
+const syncStories = async () => {
+  try {
+    const res = await fetch(`${API_URL}/api/stories`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && data.stories) write(KEYS.stories, data.stories);
+    }
+  } catch (e) {
+    console.warn('syncStories failed:', e);
+  }
+};
+
 export const getProducts = () => {
   const storedProducts = read(KEYS.products, null);
   const products = Array.isArray(storedProducts) ? storedProducts : [];
