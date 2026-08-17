@@ -45,13 +45,8 @@ app.use(cors({
       return callback(null, true);
     }
     
-    // Allow any Vercel deployments (starts with https:// and ends with .vercel.app)
-    if (origin.startsWith('https://') && origin.endsWith('.vercel.app')) {
-      return callback(null, true);
-    }
-
-    // Allow any Render deployments (starts with https:// and ends with .onrender.com)
-    if (origin.startsWith('https://') && origin.endsWith('.onrender.com')) {
+    // Allow any HTTPS origin (production deployments, custom domains, vercel previews)
+    if (origin.startsWith('https://')) {
       return callback(null, true);
     }
     
