@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import CustomSelect from '../../../components/CustomSelect';
 import {
   HelpCircle,
   Search,
@@ -275,70 +276,19 @@ const CustomerQueryPage = () => {
           <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8  space-y-6">
             
             {/* Searchable Product dropdown trigger */}
-            <div className="space-y-2 relative">
-              <label className="block text-sm font-semibold text-slate-800">Select Product</label>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="w-full flex items-center justify-between px-4 py-3.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-2xl transition text-left focus:outline-none focus:ring-2 focus:ring-teal-500/20"
-                >
-                  {selectedProduct ? (
-                    <div className="flex items-center gap-3">
-                      <img src={selectedProduct.image} alt={selectedProduct.name} className="w-8 h-8 object-contain rounded-lg bg-white p-1 border border-slate-100" />
-                      <span className="font-semibold text-slate-800 text-sm">{selectedProduct.name}</span>
-                    </div>
-                  ) : (
-                    <span className="text-slate-400 text-sm">Select Product...</span>
-                  )}
-                  <ChevronDown className={`h-5 w-5 text-slate-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-
-                {/* Dropdown panel */}
-                <AnimatePresence>
-                  {dropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      className="absolute z-30 w-full mt-2 bg-white border border-slate-200/80 rounded-2xl  overflow-hidden"
-                    >
-                      <div className="p-3 border-b border-slate-100 flex items-center gap-2">
-                        <Search className="h-4 w-4 text-slate-400" />
-                        <input
-                          type="text"
-                          value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="Search product..."
-                          className="w-full text-sm outline-none bg-transparent"
-                        />
-                      </div>
-                      <div className="max-h-60 overflow-y-auto">
-                        {filteredProducts.length ? (
-                          filteredProducts.map((p) => (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedProductId(p.id);
-                                setDropdownOpen(false);
-                                setSearchQuery('');
-                              }}
-                              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition text-left border-b border-slate-100 last:border-0"
-                            >
-                              <img src={p.image} alt={p.name} className="w-8 h-8 object-contain rounded-lg bg-white p-1 border border-slate-100" />
-                              <span className="text-sm font-semibold text-slate-800">{p.name}</span>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="py-4 text-center text-xs text-slate-400">No products found</div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+            <CustomSelect
+              label="Select Product"
+              value={selectedProductId}
+              onChange={setSelectedProductId}
+              options={products.map(p => ({
+                value: p.id,
+                label: p.name,
+                image: p.image,
+                description: p.description
+              }))}
+              searchable={true}
+              placeholder="Select Product..."
+            />
 
             {/* Query Entry Textarea */}
             <div className="space-y-2">
@@ -594,63 +544,19 @@ const CustomerQueryPage = () => {
               </div>
 
               {/* Product Selection drop inside modal */}
-              <div className="space-y-2 relative">
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Associated Product</label>
-                <button
-                  type="button"
-                  onClick={() => setEditDropdownOpen(!editDropdownOpen)}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl transition text-left focus:outline-none"
-                >
-                  {editSelectedProduct ? (
-                    <div className="flex items-center gap-3">
-                      <img src={editSelectedProduct.image} alt={editSelectedProduct.name} className="w-6 h-6 object-contain rounded bg-white p-0.5 border" />
-                      <span className="font-semibold text-slate-800 text-xs">{editSelectedProduct.name}</span>
-                    </div>
-                  ) : (
-                    <span className="text-slate-400 text-xs">Select Product...</span>
-                  )}
-                  <ChevronDown className="h-4 w-4 text-slate-400" />
-                </button>
-
-                {/* Modal Dropdown panel */}
-                <AnimatePresence>
-                  {editDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 4 }}
-                      className="absolute z-40 w-full mt-1 bg-white border border-slate-200 rounded-xl  overflow-hidden"
-                    >
-                      <div className="p-2.5 border-b flex items-center gap-2">
-                        <Search className="h-4.5 w-4.5 text-slate-400" />
-                        <input
-                          type="text"
-                          value={editSearchQuery}
-                          onChange={(e) => setEditSearchQuery(e.target.value)}
-                          placeholder="Search product..."
-                          className="w-full text-xs outline-none bg-transparent"
-                        />
-                      </div>
-                      <div className="max-h-48 overflow-y-auto">
-                        {editFilteredProducts.map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            onClick={() => {
-                              setEditProductId(p.id);
-                              setEditDropdownOpen(false);
-                            }}
-                            className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-slate-50 transition text-left text-xs font-semibold text-slate-800"
-                          >
-                            <img src={p.image} alt={p.name} className="w-6 h-6 object-contain rounded bg-white p-0.5 border" />
-                            {p.name}
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <CustomSelect
+                label="Associated Product"
+                value={editProductId}
+                onChange={setEditProductId}
+                options={products.map(p => ({
+                  value: p.id,
+                  label: p.name,
+                  image: p.image,
+                  description: p.description
+                }))}
+                searchable={true}
+                placeholder="Select Product..."
+              />
 
               {/* Requirement Edit details */}
               <div className="space-y-2">

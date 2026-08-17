@@ -47,12 +47,27 @@ const normalizeProduct = (product) => {
     extraPerMeter: Number(product.wire_extra_per_meter || 0)
   };
 
+  // Derive category from product name if not present
+  const name = product.name || '';
+  const nameLower = name.toLowerCase();
+  let category = product.category || '';
+  if (!category) {
+    if (nameLower.includes('gsm'))             category = 'GSM Controllers';
+    else if (nameLower.includes('wireless'))   category = 'Wireless';
+    else if (nameLower.includes('three phase'))category = 'Three Phase';
+    else if (nameLower.includes('single phase'))category = 'Single Phase';
+    else if (nameLower.includes('float'))      category = 'Float Switch';
+    else if (nameLower.includes('sensor'))     category = 'Sensors';
+    else                                       category = 'Water Level';
+  }
+
   return {
     id: product.id,
     name: product.name,
     description: product.description,
     price: Number(product.price),
     image: img,
+    category,
     floatFee: Number(product.float_fee || product.floatFee || 0),
     wire: {
       baseFee: Number(wire.baseFee || 0),

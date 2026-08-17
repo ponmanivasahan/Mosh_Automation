@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Package, Calculator, ClipboardList, Shield, RefreshCw, Edit3, Save, Download, X } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import CustomSelect from '../../../components/CustomSelect';
 import { getProducts, getBillingSettings } from '../../../utils/storage';
 import { API_URL } from '../../../utils/api';
 import { formatCurrency } from '../../../utils/format';
@@ -309,6 +310,20 @@ const AdminEstimationsPage = () => {
               ${imageHtml}
               <div class="product-name">${selectedProduct.name}</div>
               <div class="product-desc">${selectedProduct.description}</div>
+              <div style="margin-top: 15px; border-top: 1px dashed #cbd5e1; padding-top: 15px; text-align: left; font-size: 12px; color: #475569;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                  <strong>Base Price:</strong>
+                  <span>₹${calculations.basePrice.toLocaleString()}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                  <strong>Float Sensor Fee:</strong>
+                  <span>₹${selectedProduct.floatFee} / unit</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <strong>Wire Base Fee:</strong>
+                  <span>₹${selectedProduct.wire?.baseFee || 0} ${Number(selectedProduct.wire?.baseMeters) ? `(${selectedProduct.wire.baseMeters}m included)` : ''}</span>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -402,17 +417,16 @@ const AdminEstimationsPage = () => {
             </div>
 
             <div className="space-y-3">
-              <select
+              <CustomSelect
                 value={selectedProductId}
-                onChange={(e) => setSelectedProductId(e.target.value)}
-                className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
-              >
-                {products.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} (₹{p.price})
-                  </option>
-                ))}
-              </select>
+                onChange={setSelectedProductId}
+                options={products.map(p => ({
+                  value: p.id,
+                  label: `${p.name} (₹${p.price})`,
+                  image: p.image
+                }))}
+                searchable={products.length > 5}
+              />
 
               {selectedProduct && (
                 <div className="p-4 rounded-lg bg-white border border-slate-200 space-y-4 shadow-sm">

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Package, HelpCircle, Check, AlertCircle, Edit, DollarSign, Clock, ListFilter } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import CustomSelect from '../../../components/CustomSelect';
 import { getProducts, getEstimations, getBillingSettings, setBillingSettings, updateEstimation } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import './AdminBillingPage.css';
@@ -214,15 +215,15 @@ const AdminBillingPage = () => {
                             </div>
                             <div className="form-field-group">
                               <label className="text-xs font-bold text-slate-700">Stage Status</label>
-                              <select
+                              <CustomSelect
                                 value={editStage}
-                                onChange={(e) => setEditStage(e.target.value)}
-                                className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none mt-1 font-bold"
-                              >
-                                <option value="requested">Pending</option>
-                                <option value="replied">Replied / Answered</option>
-                                <option value="closed">Closed</option>
-                              </select>
+                                onChange={setEditStage}
+                                options={[
+                                  { value: 'requested', label: 'Pending' },
+                                  { value: 'replied', label: 'Replied / Answered' },
+                                  { value: 'closed', label: 'Closed' }
+                                ]}
+                              />
                             </div>
                           </div>
 

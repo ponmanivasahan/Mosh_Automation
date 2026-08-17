@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import CustomSelect from '../../../components/CustomSelect';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag,
@@ -725,36 +726,17 @@ const CustomerCartPage = () => {
                 </div>
 
                 <div>
-                  <label className="mb-1 text-xs font-semibold text-slate-700">Payment Method *</label>
-                  <div className="grid grid-cols-3 gap-2 mt-1">
-                    <button
-                      type="button"
-                      onClick={() => setShippingDetails({ ...shippingDetails, paymentMethod: 'Google Pay' })}
-                      className={`text-xs py-2.5 px-2 rounded-xl border font-bold transition-all flex items-center justify-center gap-1.5 ${
-                        shippingDetails.paymentMethod === 'Google Pay' ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm' : 'bg-white text-slate-500 border-slate-200'
-                      }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-blue-600 inline-block shrink-0" /> GPay
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShippingDetails({ ...shippingDetails, paymentMethod: 'PhonePe' })}
-                      className={`text-xs py-2.5 px-2 rounded-xl border font-bold transition-all flex items-center justify-center gap-1.5 ${
-                        shippingDetails.paymentMethod === 'PhonePe' ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm' : 'bg-white text-slate-500 border-slate-200'
-                      }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-purple-600 inline-block shrink-0" /> PhonePe
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShippingDetails({ ...shippingDetails, paymentMethod: 'Paytm' })}
-                      className={`text-xs py-2.5 px-2 rounded-xl border font-bold transition-all flex items-center justify-center gap-1.5 ${
-                        shippingDetails.paymentMethod === 'Paytm' ? 'bg-teal-50 text-teal-700 border-teal-200 shadow-sm' : 'bg-white text-slate-500 border-slate-200'
-                      }`}
-                    >
-                      <span className="w-2 h-2 rounded-full bg-sky-500 inline-block shrink-0" /> Paytm
-                    </button>
-                  </div>
+                  <CustomSelect
+                    label="Payment Method"
+                    required
+                    value={shippingDetails.paymentMethod}
+                    onChange={(val) => setShippingDetails({ ...shippingDetails, paymentMethod: val })}
+                    options={[
+                      { value: 'Google Pay', label: 'GPay' },
+                      { value: 'PhonePe', label: 'PhonePe' }
+                    ]}
+                    placeholder="Select payment method..."
+                  />
                 </div>
 
                 <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">

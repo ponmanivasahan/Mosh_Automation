@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import CustomSelect from '../../../components/CustomSelect';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
@@ -367,34 +368,26 @@ const AdminProductsPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Category *</label>
-                      <select
+                      <CustomSelect
                         value={registerForm.category}
-                        onChange={(e) => updateRegister('category', e.target.value)}
-                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
-                      >
-                        <option value="Automation">Automation</option>
-                        <option value="Wireless">Wireless Systems</option>
-                        <option value="Sensors">Sensors & Plugs</option>
-                        <option value="Accessories">Accessories</option>
-                      </select>
+                        onChange={(val) => updateRegister('category', val)}
+                        options={['Automation', 'Wireless Systems', 'Sensors & Plugs', 'Accessories']}
+                      />
                     </div>
 
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Availability *</label>
-                      <select
+                      <CustomSelect
                         value={registerForm.availability}
-                        onChange={(e) => updateRegister('availability', e.target.value)}
-                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
-                      >
-                        <option value="In Stock">In Stock</option>
-                        <option value="Out of Stock">Out of Stock</option>
-                      </select>
+                        onChange={(val) => updateRegister('availability', val)}
+                        options={['In Stock', 'Out of Stock']}
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="form-field-group">
-                      <label className="text-xs font-bold text-slate-700">Price (₹) *</label>
+                      <label className="text-xs font-bold text-slate-700">Base Price *</label>
                       <input
                         required
                         type="number"
@@ -434,10 +427,10 @@ const AdminProductsPage = () => {
 
                   <div className="grid grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
                     <div className="form-field-group col-span-2">
-                      <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider">Estimation Billing Parameters</h4>
+                      <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider">Estimation Points</h4>
                     </div>
                     <div className="form-field-group">
-                      <label className="text-xs font-bold text-slate-700">Float Switch Fee (₹)</label>
+                      <label className="text-xs font-bold text-slate-700">Float Sensor Fee / Unit</label>
                       <input
                         type="number"
                         value={registerForm.floatFee}
@@ -446,7 +439,7 @@ const AdminProductsPage = () => {
                       />
                     </div>
                     <div className="form-field-group">
-                      <label className="text-xs font-bold text-slate-700">Wire Base Fee (₹)</label>
+                      <label className="text-xs font-bold text-slate-700">Wire Base Fee</label>
                       <input
                         type="number"
                         value={registerForm.wireBaseFee}
@@ -455,7 +448,7 @@ const AdminProductsPage = () => {
                       />
                     </div>
                     <div className="form-field-group">
-                      <label className="text-xs font-bold text-slate-700">Wire Base Length (m)</label>
+                      <label className="text-xs font-bold text-slate-700">Included Wire Length (meters)</label>
                       <input
                         type="number"
                         value={registerForm.wireBaseMeters}
@@ -586,34 +579,26 @@ const AdminProductsPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Category *</label>
-                      <select
+                      <CustomSelect
                         value={editForm.category}
-                        onChange={(e) => updateEdit('category', e.target.value)}
-                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
-                      >
-                        <option value="Automation">Automation</option>
-                        <option value="Wireless">Wireless Systems</option>
-                        <option value="Sensors">Sensors & Plugs</option>
-                        <option value="Accessories">Accessories</option>
-                      </select>
+                        onChange={(val) => updateEdit('category', val)}
+                        options={['Automation', 'Wireless Systems', 'Sensors & Plugs', 'Accessories']}
+                      />
                     </div>
 
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Availability *</label>
-                      <select
+                      <CustomSelect
                         value={editForm.availability}
-                        onChange={(e) => updateEdit('availability', e.target.value)}
-                        className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
-                      >
-                        <option value="In Stock">In Stock</option>
-                        <option value="Out of Stock">Out of Stock</option>
-                      </select>
+                        onChange={(val) => updateEdit('availability', val)}
+                        options={['In Stock', 'Out of Stock']}
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="form-field-group">
-                      <label className="text-xs font-bold text-slate-700">Price (₹) *</label>
+                      <label className="text-xs font-bold text-slate-700">Base Price *</label>
                       <input
                         required
                         type="number"
@@ -651,10 +636,10 @@ const AdminProductsPage = () => {
 
                   <div className="grid grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
                     <div className="form-field-group col-span-2">
-                      <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider">Estimation Billing Parameters</h4>
+                      <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider">Estimation Points</h4>
                     </div>
                     <div className="form-field-group">
-                      <label className="text-xs font-bold text-slate-700">Float Switch Fee (₹)</label>
+                      <label className="text-xs font-bold text-slate-700">Float Sensor Fee / Unit</label>
                       <input
                         type="number"
                         value={editForm.floatFee}
@@ -663,7 +648,7 @@ const AdminProductsPage = () => {
                       />
                     </div>
                     <div className="form-field-group">
-                      <label className="text-xs font-bold text-slate-700">Wire Base Fee (₹)</label>
+                      <label className="text-xs font-bold text-slate-700">Wire Base Fee</label>
                       <input
                         type="number"
                         value={editForm.wireBaseFee}
@@ -672,7 +657,7 @@ const AdminProductsPage = () => {
                       />
                     </div>
                     <div className="form-field-group">
-                      <label className="text-xs font-bold text-slate-700">Wire Base Length (m)</label>
+                      <label className="text-xs font-bold text-slate-700">Included Wire Length (meters)</label>
                       <input
                         type="number"
                         value={editForm.wireBaseMeters}

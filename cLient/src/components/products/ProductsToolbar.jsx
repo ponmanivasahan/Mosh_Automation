@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
+import CustomSelect from '../CustomSelect';
 
 const ProductsToolbar = ({ filters, onChange, categories }) => {
   return (
@@ -14,26 +15,16 @@ const ProductsToolbar = ({ filters, onChange, categories }) => {
         />
       </div>
 
-      <select
+      <CustomSelect
         value={filters.category}
-        onChange={(e) => onChange({ ...filters, category: e.target.value })}
-        className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-      >
-        <option value="">All Categories</option>
-        {categories.map((c) => (
-          <option key={c} value={c}>{c}</option>
-        ))}
-      </select>
-
-      <select
-        value={filters.sort}
-        onChange={(e) => onChange({ ...filters, sort: e.target.value })}
-        className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-      >
-        <option value="newest">Newest</option>
-        <option value="price-asc">Price: Low to High</option>
-        <option value="price-desc">Price: High to Low</option>
-      </select>
+        onChange={(val) => onChange({ ...filters, category: val })}
+        placeholder="All Categories"
+        options={[
+          { value: '', label: 'All Categories' },
+          ...categories.map(c => ({ value: c, label: c }))
+        ]}
+        searchable={categories.length > 5}
+      />
 
       <button
         onClick={() => onChange({ q: '', category: '', sort: 'newest' })}

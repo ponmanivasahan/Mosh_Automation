@@ -141,9 +141,20 @@ const CustomerProductsPage = () => {
           <div className="new-products-grid">
             {filtered.map((product) => (
               <article key={product.id} className="premium-product-card">
-                <div className="card-img-container">
+                <div className="card-badge-row">
                   <span className="card-badge">{product.category || 'Automation'}</span>
-                  <img src={product.image} alt={product.name} className="card-product-img" />
+                </div>
+
+                <div className="card-img-container">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="card-product-img"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.parentElement.classList.add('card-img-fallback');
+                    }}
+                  />
                 </div>
 
                 <div className="card-info">

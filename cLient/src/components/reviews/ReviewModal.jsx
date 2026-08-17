@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import CustomSelect from '../CustomSelect';
 import { getProducts } from '../../utils/storage';
 
 const ReviewModal = ({ open, onClose, onSave, initial }) => {
@@ -58,23 +59,23 @@ const ReviewModal = ({ open, onClose, onSave, initial }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4 grid gap-3">
-          <label className="block text-sm font-semibold text-slate-700">
-            Select Product
-            <select value={productName} onChange={(e) => setProductName(e.target.value)} className="w-full mt-2 border p-2 rounded text-sm bg-white">
-              {products.map((p) => (
-                <option key={p.id} value={p.name}>{p.name}</option>
-              ))}
-            </select>
-          </label>
+          <div className="block text-sm font-semibold text-slate-700">
+            <CustomSelect
+              label="Select Product"
+              value={productName}
+              onChange={setProductName}
+              options={products.map(p => ({ value: p.name, label: p.name }))}
+            />
+          </div>
 
-          <label className="block text-sm font-semibold text-slate-700">
-            Rating
-            <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className="w-full mt-2 border p-2 rounded text-sm bg-white">
-              {[5, 4, 3, 2, 1].map((v) => (
-                <option key={v} value={v}>{v} stars</option>
-              ))}
-            </select>
-          </label>
+          <div className="block text-sm font-semibold text-slate-700">
+            <CustomSelect
+              label="Rating"
+              value={rating}
+              onChange={setRating}
+              options={[5, 4, 3, 2, 1].map(v => ({ value: v, label: `${v} stars` }))}
+            />
+          </div>
 
           <label className="block text-sm font-semibold text-slate-700">
             Review
