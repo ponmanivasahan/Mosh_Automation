@@ -112,21 +112,26 @@ if (require('fs').existsSync(staticDir)) {
 
   // Fallback to index.html for SPA routes (allow API routes to function)
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
+    if (req.path.startsWith('/api') || req.path === '/health') return next();
     res.sendFile(path.join(staticDir, 'index.html'));
   });
 }
 
 // Also support serving the client app if it was built to `cLient/dist` (common Vite output)
-const clientDist = path.join(__dirname, '..', 'cLient', 'dist');
+const clientDist = path.join(__dirname, '..', '..', 'cLient', 'dist');
 if (require('fs').existsSync(clientDist)) {
   app.use(express.static(clientDist));
 
   app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
+    if (req.path.startsWith('/api') || req.path === '/health') return next();
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 }
+
+// Default home route fallback if static assets are not built/served
+app.get('/', (req, res) => {
+  res.json({ status: 'OK', message: 'Mosh Automation Backend is active & secure.' });
+});
 
 // Global Error Handler boundary
 app.use((err, req, res, next) => {
