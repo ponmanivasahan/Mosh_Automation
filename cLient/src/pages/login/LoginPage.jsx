@@ -130,7 +130,8 @@ const LoginPage = () => {
         return;
       }
       if (response.status >= 500) {
-        setError('Server error. Please try again later.');
+        const errData = await response.json().catch(() => ({}));
+        setError(errData.error || errData.message || 'Server error. Please try again later.');
         return;
       }
 

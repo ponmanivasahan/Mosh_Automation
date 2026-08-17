@@ -214,7 +214,12 @@ const login = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-  res.clearCookie('token');
+  const isProd = process.env.NODE_ENV === 'production';
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: isProd ? true : false,
+    sameSite: isProd ? 'none' : 'lax'
+  });
   return res.json({ success: true, message: 'Logged out successfully.' });
 };
 
