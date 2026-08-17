@@ -69,7 +69,7 @@ const AdminStoriesPage = () => {
     setEditingId('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title.trim() || !form.description.trim() || !form.image) {
       setToast({ type: 'error', message: 'Please provide a title, description, and thumbnail image.' });
@@ -87,10 +87,15 @@ const AdminStoriesPage = () => {
         youtubeUrl: form.youtubeUrl.trim(),
         instagramUrl: form.instagramUrl.trim()
       };
-      updateStory(payload);
-      const next = stories.map(s => s.id === editingId ? payload : s);
-      setStories(next);
-      setToast({ type: 'success', message: 'Success story updated successfully.' });
+      try {
+        await updateStory(payload);
+        const next = stories.map(s => s.id === editingId ? payload : s);
+        setStories(next);
+        setToast({ type: 'success', message: 'Success story updated successfully.' });
+        resetForm();
+      } catch (err) {
+        setToast({ type: 'error', message: err.message || 'Failed to update success story.' });
+      }
     } else {
       // Adding
       const payload = {
@@ -102,20 +107,28 @@ const AdminStoriesPage = () => {
         youtubeUrl: form.youtubeUrl.trim(),
         instagramUrl: form.instagramUrl.trim()
       };
-      addStory(payload);
-      setStories(getStories());
-      setToast({ type: 'success', message: 'Success story published successfully.' });
+      try {
+        await addStory(payload);
+        setStories(getStories());
+        setToast({ type: 'success', message: 'Success story published successfully.' });
+        resetForm();
+      } catch (err) {
+        setToast({ type: 'error', message: err.message || 'Failed to publish success story.' });
+      }
     }
-    resetForm();
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deletingId) return;
-    deleteStory(deletingId);
-    const next = stories.filter(s => s.id !== deletingId);
-    setStories(next);
-    setToast({ type: 'success', message: 'Success story deleted successfully.' });
-    if (editingId === deletingId) resetForm();
+    try {
+      await deleteStory(deletingId);
+      const next = stories.filter(s => s.id !== deletingId);
+      setStories(next);
+      setToast({ type: 'success', message: 'Success story deleted successfully.' });
+      if (editingId === deletingId) resetForm();
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to delete success story.' });
+    }
     setDeletingId('');
   };
 

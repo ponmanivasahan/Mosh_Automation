@@ -101,24 +101,33 @@ export const ensureInitialData = async () => {
     }
 
     const orderRes = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
-    if (!orderRes.ok) throw new Error('Orders request failed');
-    const orderData = await orderRes.json();
-    if (orderData.success && orderData.orders) {
-      write(KEYS.orders, orderData.orders);
+    if (orderRes.ok) {
+      const orderData = await orderRes.json();
+      if (orderData.success && orderData.orders) {
+        write(KEYS.orders, orderData.orders);
+      }
+    } else if (orderRes.status !== 401 && orderRes.status !== 403) {
+      throw new Error('Orders request failed');
     }
 
     const estRes = await fetch(`${API_URL}/api/estimations`, { credentials: 'include' });
-    if (!estRes.ok) throw new Error('Estimations request failed');
-    const estData = await estRes.json();
-    if (estData.success && estData.estimations) {
-      write(KEYS.estimations, estData.estimations);
+    if (estRes.ok) {
+      const estData = await estRes.json();
+      if (estData.success && estData.estimations) {
+        write(KEYS.estimations, estData.estimations);
+      }
+    } else if (estRes.status !== 401 && estRes.status !== 403) {
+      throw new Error('Estimations request failed');
     }
 
     const notifRes = await fetch(`${API_URL}/api/notifications`, { credentials: 'include' });
-    if (!notifRes.ok) throw new Error('Notifications request failed');
-    const notifData = await notifRes.json();
-    if (notifData.success && notifData.notifications) {
-      write(KEYS.notifications, notifData.notifications);
+    if (notifRes.ok) {
+      const notifData = await notifRes.json();
+      if (notifData.success && notifData.notifications) {
+        write(KEYS.notifications, notifData.notifications);
+      }
+    } else if (notifRes.status !== 401 && notifRes.status !== 403) {
+      throw new Error('Notifications request failed');
     }
 
     localStorage.setItem('mosh_db_connected', 'true');
@@ -229,50 +238,45 @@ export const updateEstimation = async (estimation) => {
 export const getOrders = () => read(KEYS.orders, []);
 
 export const addOrder = async (order) => {
-  const orders = getOrders();
-  write(KEYS.orders, [order, ...orders]);
-  try {
-    await fetch(`${API_URL}/api/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order),
-      credentials: 'include'
-    });
-  } catch (error) {
-    console.error('Failed to sync new order:', error);
+  const res = await fetch(`${API_URL}/api/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(order),
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Unable to place order. Please try again.');
   }
+  await syncOrders();
 };
 
 export const updateOrder = async (order) => {
-  const orders = getOrders();
-  const next = orders.map((o) => (o.id === order.id ? { ...o, ...order } : o));
-  write(KEYS.orders, next);
-  try {
-    await fetch(`${API_URL}/api/orders/${order.id}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: order.status }),
-      credentials: 'include'
-    });
-  } catch (error) {
-    console.error('Failed to sync order status:', error);
+  const res = await fetch(`${API_URL}/api/orders/${order.id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: order.status }),
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Unable to update order. Please try again.');
   }
-  return next;
+  await syncOrders();
+  return getOrders();
 };
 
 export const deleteOrder = async (id) => {
-  const orders = getOrders();
-  const next = orders.filter((o) => o.id !== id);
-  write(KEYS.orders, next);
-  try {
-    await fetch(`${API_URL}/api/orders/${id}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-  } catch (error) {
-    console.error('Failed to sync order deletion:', error);
+  const res = await fetch(`${API_URL}/api/orders/${id}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Unable to delete order. Please try again.');
   }
-  return next;
+  await syncOrders();
+  return getOrders();
 };
 
 export const verifyPayment = async (orderId, transactionId, paymentMethod) => {
@@ -375,60 +379,62 @@ export const deleteNotification = async (id) => {
 export const getReviews = () => read(KEYS.reviews, []);
 
 export const addReview = async (review) => {
-  const reviews = getReviews();
-  write(KEYS.reviews, [review, ...reviews]);
-  try {
-    await fetch(`${API_URL}/api/reviews`, {
-      method: 'POST',
+  const res = await fetch(`${API_URL}/api/reviews`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(review),
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Unable to submit review. Please try again.');
+  }
+  await syncReviews();
+};
+
+export const updateReview = async (review) => {
+  let res;
+  if (review.adminReply !== undefined) {
+    res = await fetch(`${API_URL}/api/reviews/${review.id}/reply`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adminReply: review.adminReply }),
+      credentials: 'include'
+    });
+  } else if (review.featured !== undefined) {
+    res = await fetch(`${API_URL}/api/reviews/${review.id}/featured`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ featured: review.featured }),
+      credentials: 'include'
+    });
+  } else {
+    res = await fetch(`${API_URL}/api/reviews/${review.id}`, {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(review),
       credentials: 'include'
     });
-  } catch (error) {
-    console.error('Failed to sync product review:', error);
   }
-};
-
-export const updateReview = async (review) => {
-  const reviews = getReviews();
-  const next = reviews.map((r) => (r.id === review.id ? { ...r, ...review } : r));
-  write(KEYS.reviews, next);
-  try {
-    if (review.adminReply !== undefined) {
-      await fetch(`${API_URL}/api/reviews/${review.id}/reply`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adminReply: review.adminReply }),
-        credentials: 'include'
-      });
-    }
-    if (review.featured !== undefined) {
-      await fetch(`${API_URL}/api/reviews/${review.id}/featured`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ featured: review.featured }),
-        credentials: 'include'
-      });
-    }
-  } catch (error) {
-    console.error('Failed to update review status:', error);
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Unable to update review. Please try again.');
   }
-  return next;
+  await syncReviews();
+  return getReviews();
 };
 
 export const deleteReview = async (id) => {
-  const reviews = getReviews();
-  const next = reviews.filter((r) => r.id !== id);
-  write(KEYS.reviews, next);
-  try {
-    await fetch(`${API_URL}/api/reviews/${id}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-  } catch (error) {
-    console.error('Failed to delete product review:', error);
+  const res = await fetch(`${API_URL}/api/reviews/${id}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Unable to delete review. Please try again.');
   }
-  return next;
+  await syncReviews();
+  return getReviews();
 };
 
 export const getCart = () => {
@@ -509,50 +515,45 @@ export const deleteUser = async (phone) => {
 export const getStories = () => read(KEYS.stories, []);
 
 export const addStory = async (story) => {
-  const stories = getStories();
-  write(KEYS.stories, [story, ...stories]);
-  try {
-    await fetch(`${API_URL}/api/stories`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(story),
-      credentials: 'include'
-    });
-  } catch (error) {
-    console.error('Failed to create success story:', error);
+  const res = await fetch(`${API_URL}/api/stories`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(story),
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Unable to create success story. Please try again.');
   }
+  await syncStories();
 };
 
 export const updateStory = async (story) => {
-  const stories = getStories();
-  const next = stories.map((s) => (s.id === story.id ? { ...s, ...story } : s));
-  write(KEYS.stories, next);
-  try {
-    await fetch(`${API_URL}/api/stories/${story.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(story),
-      credentials: 'include'
-    });
-  } catch (error) {
-    console.error('Failed to update success story:', error);
+  const res = await fetch(`${API_URL}/api/stories/${story.id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(story),
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Unable to update success story. Please try again.');
   }
-  return next;
+  await syncStories();
+  return getStories();
 };
 
 export const deleteStory = async (id) => {
-  const stories = getStories();
-  const next = stories.filter((s) => s.id !== id);
-  write(KEYS.stories, next);
-  try {
-    await fetch(`${API_URL}/api/stories/${id}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-  } catch (error) {
-    console.error('Failed to delete success story:', error);
+  const res = await fetch(`${API_URL}/api/stories/${id}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Unable to delete success story. Please try again.');
   }
-  return next;
+  await syncStories();
+  return getStories();
 };
 
 // Start background sync polling to keep local state up-to-date with MySQL single source of truth

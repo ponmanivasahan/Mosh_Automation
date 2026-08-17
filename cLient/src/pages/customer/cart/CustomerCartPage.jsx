@@ -223,13 +223,16 @@ const CustomerCartPage = () => {
     };
 
     // Save order status as processing (pending payment)
-    await addOrder(order);
-
-    setActivePaymentOrder(order);
-    setPaymentTimer(600);
-    setTransactionIdInput('');
-    setPaymentStatusState('paying');
-    setShowCheckoutModal(false);
+    try {
+      await addOrder(order);
+      setActivePaymentOrder(order);
+      setPaymentTimer(600);
+      setTransactionIdInput('');
+      setPaymentStatusState('paying');
+      setShowCheckoutModal(false);
+    } catch (err) {
+      triggerAlert('Order Failed', err.message || 'Unable to place order. Please try again.');
+    }
   };
 
   // UPI configuration URL

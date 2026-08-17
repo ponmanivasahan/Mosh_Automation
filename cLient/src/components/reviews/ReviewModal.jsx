@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { getProducts } from '../../utils/storage';
 
 const ReviewModal = ({ open, onClose, onSave, initial }) => {
+  const [products] = useState(() => getProducts());
+  const [productName, setProductName] = useState('');
   const [rating, setRating] = useState(5);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -10,13 +13,15 @@ const ReviewModal = ({ open, onClose, onSave, initial }) => {
   useEffect(() => {
     if (initial) {
       setRating(initial.rating || 5);
-      setMessage(initial.message || '');
+      setMessage(initial.comment || initial.message || '');
+      setProductName(initial.productName || (products.length > 0 ? products[0].name : 'Mosh Water Controller'));
     } else {
       setRating(5);
       setMessage('');
+      setProductName(products.length > 0 ? products[0].name : 'Mosh Water Controller');
     }
     setError('');
-  }, [initial, open]);
+  }, [initial, open, products]);
 
   if (!open) return null;
 
@@ -28,9 +33,10 @@ const ReviewModal = ({ open, onClose, onSave, initial }) => {
     }
     const payload = {
       id: initial?.id || `rev-${Date.now()}`,
-      name: initial?.name || (initial?.name === null ? 'Customer' : undefined),
+      name: initial?.name || undefined,
       rating: Number(rating),
       message: message.trim(),
+      productName: productName,
       date: new Date().toISOString().slice(0, 10)
     };
     onSave && onSave(payload);
@@ -52,25 +58,34 @@ const ReviewModal = ({ open, onClose, onSave, initial }) => {
         </div>
 
         <form onSubmit={handleSubmit} className="mt-4 grid gap-3">
-          <label className="block">
+          <label className="block text-sm font-semibold text-slate-700">
+            Select Product
+            <select value={productName} onChange={(e) => setProductName(e.target.value)} className="w-full mt-2 border p-2 rounded text-sm bg-white">
+              {products.map((p) => (
+                <option key={p.id} value={p.name}>{p.name}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block text-sm font-semibold text-slate-700">
             Rating
-            <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className="w-full mt-2 border p-2 rounded">
+            <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className="w-full mt-2 border p-2 rounded text-sm bg-white">
               {[5, 4, 3, 2, 1].map((v) => (
                 <option key={v} value={v}>{v} stars</option>
               ))}
             </select>
           </label>
 
-          <label className="block">
+          <label className="block text-sm font-semibold text-slate-700">
             Review
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={6} className="w-full mt-2 border p-2 rounded" />
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={6} className="w-full mt-2 border p-2 rounded text-sm" placeholder="Write your feedback..." />
           </label>
 
           {error && <div className="text-red-600 text-sm">{error}</div>}
 
           <div className="flex gap-3 justify-end">
-            <button type="button" onClick={onClose} className="rounded-lg border px-4 py-2">Cancel</button>
-            <button type="submit" className="rounded-lg bg-teal-600 text-white px-4 py-2">{initial ? 'Update Review' : 'Submit Review'}</button>
+            <button type="button" onClick={onClose} className="rounded-lg border px-4 py-2 text-sm">Cancel</button>
+            <button type="submit" className="rounded-lg bg-teal-600 text-white px-4 py-2 text-sm font-semibold">{initial ? 'Update Review' : 'Submit Review'}</button>
           </div>
         </form>
       </motion.div>

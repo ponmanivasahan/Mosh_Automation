@@ -36,11 +36,27 @@ const allowedOrigins = new Set([
 // Security and parser middleware config
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.has(origin)) {
-      callback(null, true);
-    } else {
-      callback(null, false);
+    if (!origin) {
+      return callback(null, true);
     }
+    
+    // Check exact allowed origins Set
+    if (allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+    
+    // Allow any Vercel deployments (starts with https:// and ends with .vercel.app)
+    if (origin.startsWith('https://') && origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // Allow local network IP addresses (e.g. http://192.168.1.10:5173) for mobile testing
+    if (/^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin)) {
+      return callback(null, true);
+    }
+    
+    // Default: reject CORS
+    callback(null, false);
   },
   credentials: true
 }));

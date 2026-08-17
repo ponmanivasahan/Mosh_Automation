@@ -116,6 +116,24 @@ const LoginPage = () => {
         body: JSON.stringify({ name: cleanedName, phone: cleanedPhone }),
         credentials: 'include'
       });
+
+      if (response.status === 401) {
+        setError('Invalid phone number or username.');
+        return;
+      }
+      if (response.status === 403) {
+        setError('Access denied.');
+        return;
+      }
+      if (response.status === 404) {
+        setError('Login service is unavailable.');
+        return;
+      }
+      if (response.status >= 500) {
+        setError('Server error. Please try again later.');
+        return;
+      }
+
       const data = await response.json();
 
       if (data.success && data.user) {
@@ -124,8 +142,8 @@ const LoginPage = () => {
         setError(data.message || 'Login failed. Please try again.');
       }
     } catch (e) {
-      console.error(e);
-      setError('Unable to connect to the server. Please try again.');
+      console.error('Login network error:', e);
+      setError('Unable to connect to the server. Please check your internet connection and try again.');
     }
   };
 

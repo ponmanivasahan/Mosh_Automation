@@ -42,41 +42,53 @@ const AdminReviewsPage = () => {
     }
   }, [toast]);
  
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!deletingId) return;
-    deleteReview(deletingId);
-    const next = reviews.filter(r => r.id !== deletingId);
-    setReviews(next);
-    setToast({ type: 'success', message: 'Review deleted successfully.' });
+    try {
+      await deleteReview(deletingId);
+      const next = reviews.filter(r => r.id !== deletingId);
+      setReviews(next);
+      setToast({ type: 'success', message: 'Review deleted successfully.' });
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to delete review.' });
+    }
     setDeletingId('');
   };
-
-  const handleToggleFeatured = (review) => {
+ 
+  const handleToggleFeatured = async (review) => {
     const updated = { ...review, featured: !review.featured };
-    updateReview(updated);
-    const next = reviews.map(r => r.id === review.id ? updated : r);
-    setReviews(next);
-    setToast({
-      type: 'success',
-      message: updated.featured ? 'Review marked as featured.' : 'Review removed from featured.'
-    });
+    try {
+      await updateReview(updated);
+      const next = reviews.map(r => r.id === review.id ? updated : r);
+      setReviews(next);
+      setToast({
+        type: 'success',
+        message: updated.featured ? 'Review marked as featured.' : 'Review removed from featured.'
+      });
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to update review.' });
+    }
   };
-
-  const handleSubmitReply = (id, review) => {
+ 
+  const handleSubmitReply = async (id, review) => {
     const text = replyText[id];
     if (!text || !text.trim()) return;
-
+ 
     const updated = {
       ...review,
       adminReply: text.trim(),
       repliedAt: new Date().toISOString()
     };
-    updateReview(updated);
-    const next = reviews.map(r => r.id === id ? updated : r);
-    setReviews(next);
-    setReplyingId('');
-    setReplyText(prev => ({ ...prev, [id]: '' }));
-    setToast({ type: 'success', message: 'Reply submitted successfully.' });
+    try {
+      await updateReview(updated);
+      const next = reviews.map(r => r.id === id ? updated : r);
+      setReviews(next);
+      setReplyingId('');
+      setReplyText(prev => ({ ...prev, [id]: '' }));
+      setToast({ type: 'success', message: 'Reply submitted successfully.' });
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to submit reply.' });
+    }
   };
 
   return (

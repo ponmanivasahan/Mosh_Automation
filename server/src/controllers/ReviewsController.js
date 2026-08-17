@@ -23,17 +23,23 @@ const getReviews = async (req, res) => {
 
 const createReview = async (req, res) => {
   try {
-    const { id, rating, comment, productName } = req.body;
+    const { id, rating, comment, productName, message } = req.body;
     const { name, phone } = req.user;
 
     if (!id || !rating || !productName) {
       return res.status(400).json({ success: false, message: 'Missing required review fields.' });
     }
 
-    await pool.query(
+    const commentVal = comment !== undefined ? comment : (message || '');
+
+    const [result] = await pool.query(
       'INSERT INTO reviews (id, customer_name, customer_phone, product_name, rating, comment, customer_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, name, phone, productName, rating, comment || '', req.user.id]
+      [id, name, phone, productName, rating, commentVal, req.user.id]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(500).json({ success: false, message: 'Unable to save review. Please try again.' });
+    }
 
     return res.status(201).json({ success: true, message: 'Review submitted successfully.' });
   } catch (error) {
@@ -46,10 +52,14 @@ const replyReview = async (req, res) => {
     const { id } = req.params;
     const { adminReply } = req.body;
 
-    await pool.query(
+    const [result] = await pool.query(
       'UPDATE reviews SET admin_reply = ?, replied_at = CURRENT_TIMESTAMP WHERE id = ?',
       [adminReply, id]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Review not found.' });
+    }
 
     return res.json({ success: true, message: 'Reply submitted successfully.' });
   } catch (error) {
@@ -62,7 +72,10 @@ const toggleFeatured = async (req, res) => {
     const { id } = req.params;
     const { featured } = req.body;
 
-    await pool.query('UPDATE reviews SET featured = ? WHERE id = ?', [featured, id]);
+    const [result] = await pool.query('UPDATE reviews SET featured = ? WHERE id = ?', [featured, id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Review not found.' });
+    }
     return res.json({ success: true, message: 'Review featured state updated successfully.' });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to update featured state.', error: error.message });
@@ -72,7 +85,10 @@ const toggleFeatured = async (req, res) => {
 const deleteReview = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM reviews WHERE id = ?', [id]);
+    const [result] = await pool.query('DELETE FROM reviews WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Review not found.' });
+    }
     return res.json({ success: true, message: 'Review deleted successfully.' });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to delete review.', error: error.message });

@@ -27,10 +27,14 @@ const createStory = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide all required story fields.' });
     }
 
-    await pool.query(
+    const [result] = await pool.query(
       'INSERT INTO stories (id, title, subtitle, description, image, youtube_url, instagram_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [id, title, subtitle || '', description, image, youtubeUrl || '', instagramUrl || '']
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(500).json({ success: false, message: 'Unable to save success story. Please try again.' });
+    }
 
     return res.status(201).json({ success: true, message: 'Success story created successfully.' });
   } catch (error) {
@@ -43,10 +47,14 @@ const updateStory = async (req, res) => {
     const { id } = req.params;
     const { title, subtitle, description, image, youtubeUrl, instagramUrl } = req.body;
 
-    await pool.query(
+    const [result] = await pool.query(
       'UPDATE stories SET title = ?, subtitle = ?, description = ?, image = ?, youtube_url = ?, instagram_url = ? WHERE id = ?',
       [title, subtitle || '', description, image, youtubeUrl || '', instagramUrl || '', id]
     );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Success story not found.' });
+    }
 
     return res.json({ success: true, message: 'Success story updated successfully.' });
   } catch (error) {
@@ -57,7 +65,10 @@ const updateStory = async (req, res) => {
 const deleteStory = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM stories WHERE id = ?', [id]);
+    const [result] = await pool.query('DELETE FROM stories WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Success story not found.' });
+    }
     return res.json({ success: true, message: 'Success story deleted successfully.' });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to delete success story.', error: error.message });

@@ -114,27 +114,31 @@ const AdminDashboardPage = () => {
   }, [customers]);
 
   // Order status modification handler
-  const handleStatusChange = (orderId, newStatus) => {
+  const handleStatusChange = async (orderId, newStatus) => {
     const targetOrder = orders.find(o => o.id === orderId);
     if (!targetOrder) return;
     const updated = { ...targetOrder, status: newStatus };
-    updateOrder(updated);
+    try {
+      await updateOrder(updated);
 
-    // Notify user of dispatch
-    if (newStatus === 'Dispatched') {
-      addNotification({
-        id: `not-${Date.now()}`,
-        title: 'Order Dispatched',
-        message: `Your order #${orderId} has been dispatched for delivery.`,
-        createdAt: new Date().toISOString(),
-        read: false,
-        orderId: orderId
-      });
-    }
+      // Notify user of dispatch
+      if (newStatus === 'Dispatched') {
+        await addNotification({
+          id: `not-${Date.now()}`,
+          title: 'Order Dispatched',
+          message: `Your order #${orderId} has been dispatched for delivery.`,
+          createdAt: new Date().toISOString(),
+          read: false,
+          orderId: orderId
+        });
+      }
 
-    setOrders(getOrders());
-    if (selectedAdminOrder && selectedAdminOrder.id === orderId) {
-      setSelectedAdminOrder(updated);
+      setOrders(getOrders());
+      if (selectedAdminOrder && selectedAdminOrder.id === orderId) {
+        setSelectedAdminOrder(updated);
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to update order status.');
     }
   };
 

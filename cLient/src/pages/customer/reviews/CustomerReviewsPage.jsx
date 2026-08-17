@@ -51,26 +51,34 @@ const CustomerReviewsPage = () => {
     setModalOpen(true);
   };
 
-  const handleSave = (payload) => {
-    if (editing) {
-      const updatedList = updateReview(payload);
-      setReviews(updatedList);
-      setFeedback('Your review has been updated successfully.');
-    } else {
-      const toAdd = { ...payload, name: session?.name || 'Customer' };
-      addReview(toAdd);
-      setReviews([toAdd, ...reviews]);
-      setFeedback('Thank you! Your review has been added.');
+  const handleSave = async (payload) => {
+    try {
+      if (editing) {
+        const updatedList = await updateReview(payload);
+        setReviews(updatedList);
+        setFeedback('Your review has been updated successfully.');
+      } else {
+        const toAdd = { ...payload, name: session?.name || 'Customer' };
+        await addReview(toAdd);
+        setReviews([toAdd, ...reviews]);
+        setFeedback('Thank you! Your review has been added.');
+      }
+      setModalOpen(false);
+    } catch (err) {
+      alert(err.message || 'Failed to submit review.');
     }
-    setModalOpen(false);
   };
-
-  const confirmDelete = () => {
+ 
+  const confirmDelete = async () => {
     if (deleteTargetId) {
-      const updatedList = deleteReview(deleteTargetId);
-      setReviews(updatedList);
-      setFeedback('Your review has been deleted.');
-      setDeleteTargetId(null);
+      try {
+        const updatedList = await deleteReview(deleteTargetId);
+        setReviews(updatedList);
+        setFeedback('Your review has been deleted.');
+        setDeleteTargetId(null);
+      } catch (err) {
+        alert(err.message || 'Failed to delete review.');
+      }
     }
   };
 
