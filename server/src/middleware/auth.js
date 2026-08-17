@@ -10,7 +10,7 @@ const authenticate = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Access denied. Please log in.' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'mosh_secret_key_2026');
     req.user = decoded; // { id, name, phone, role }
     next();
   } catch (error) {
