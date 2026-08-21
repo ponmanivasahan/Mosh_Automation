@@ -1,18 +1,43 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { X, ShoppingCart, Star, Heart, ShieldAlert, Award, Layers } from 'lucide-react';
 import { getReviews, getProducts } from '../../utils/storage';
 import { formatCurrency } from '../../utils/format';
+import { API_URL } from '../../utils/api';
 
 const ProductModal = ({ open, onClose, product, onAdd }) => {
   const [selectedImage, setSelectedImage] = useState(product?.image);
+  const [liveOffers, setLiveOffers] = useState(product?.offers || []);
 
-  // Sync selected image if product switches
+  // Sync selected image and offers if product switches
   useMemo(() => {
     if (product) {
       setSelectedImage(product.image);
+      setLiveOffers(product.offers || []);
     }
   }, [product]);
+
+  // Targeted refetch of offers when product modal opens
+  useEffect(() => {
+    if (product?.id) {
+      fetch(`${API_URL}/api/products/${product.id}/offers`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.offers) {
+            setLiveOffers(data.offers.map(o => ({
+              id: o.id,
+              title: o.title,
+              description: o.description,
+              type: o.offer_type,
+              value: Number(o.offer_value),
+              validUntil: o.valid_until,
+              showOffer: Boolean(o.show_offer)
+            })));
+          }
+        })
+        .catch(err => console.error("Failed to sync live offers", err));
+    }
+  }, [product?.id]);
 
   // Load reviews and related products
   const productReviews = useMemo(() => {
@@ -29,11 +54,37 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
 
   if (!open || !product) return null;
 
+  // Active offers computation
+  const activeOffers = liveOffers.filter(o => {
+    if (!o.showOffer) return false;
+    if (o.validUntil) {
+      const until = new Date(o.validUntil);
+      until.setHours(23, 59, 59, 999);
+      if (until < new Date()) return false;
+    }
+    return true;
+  });
+
+  let promoPrice = null;
+  for (const offer of activeOffers) {
+    if (offer.type === 'Flat Discount' && offer.value > 0) {
+      const candidate = product.price - offer.value;
+      if (candidate > 0 && (!promoPrice || candidate < promoPrice)) {
+        promoPrice = candidate;
+      }
+    } else if (offer.type === 'Percentage Discount' && offer.value > 0) {
+      const candidate = product.price - (product.price * (offer.value / 100));
+      if (candidate > 0 && (!promoPrice || candidate < promoPrice)) {
+        promoPrice = candidate;
+      }
+    }
+  }
+
   // Visual gallery thumbnails simulated
   const gallery = [product.image, product.image, product.image];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -95,9 +146,16 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
             
             {/* Price section */}
             <div className="flex justify-between items-end bg-slate-50 border p-4 rounded-xl">
-              <div>
-                <p className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Standard Price</p>
-                <strong className="text-2xl font-extrabold text-teal-600">{formatCurrency(product.price)}</strong>
+              <div className="flex flex-col">
+                <p className="text-[9px] uppercase tracking-wider text-slate-400 font-bold mb-1">Standard Price</p>
+                {promoPrice ? (
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm text-slate-400 line-through decoration-rose-500 decoration-2 font-bold mb-0.5">{formatCurrency(product.price)}</span>
+                    <strong className="text-3xl font-extrabold text-rose-600 drop-shadow-sm scale-105 origin-left transition-transform animate-pulse">{formatCurrency(promoPrice)}</strong>
+                  </div>
+                ) : (
+                  <strong className="text-2xl font-extrabold text-teal-600">{formatCurrency(product.price)}</strong>
+                )}
               </div>
               <button
                 onClick={() => {
@@ -109,6 +167,31 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
                 <ShoppingCart size={14} /> Add to Cart
               </button>
             </div>
+
+            {/* Active Offers Section */}
+            {activeOffers.length > 0 && (
+              <div className="space-y-3 p-4 bg-[#fef3c7] border border-[#fde68a] rounded-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-3 opacity-20 pointer-events-none">
+                  <Award size={64} className="text-[#b45309]" />
+                </div>
+                <h4 className="text-xs font-bold text-[#b45309] uppercase tracking-wider flex items-center gap-1 relative z-10">
+                  <Award size={14} /> Offers & Benefits
+                </h4>
+                <div className="space-y-3 relative z-10">
+                  {activeOffers.map((offer, idx) => (
+                    <div key={idx} className="flex flex-col text-xs bg-white/60 p-2 rounded-lg border border-[#fde68a]">
+                      <span className="font-extrabold text-[#92400e] text-sm animate-pulse">🎉 {offer.title}</span>
+                      {offer.description && <span className="text-[#92400e] font-semibold mt-1">{offer.description}</span>}
+                      {offer.validUntil && (
+                        <span className="text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md flex items-center gap-1 w-fit mt-2">
+                          ⏳ Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             <div className="space-y-2">

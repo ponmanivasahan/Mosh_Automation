@@ -3,6 +3,27 @@ const { pool } = require('../config/db');
 const getProducts = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT * FROM products ORDER BY created_at DESC');
+    
+    // Fetch all offers
+    const [offers] = await pool.query('SELECT * FROM product_offers');
+    
+    // Group offers by product_id
+    const offersByProduct = {};
+    for (const offer of offers) {
+      if (!offersByProduct[offer.product_id]) {
+        offersByProduct[offer.product_id] = [];
+      }
+      offersByProduct[offer.product_id].push({
+        id: offer.id,
+        title: offer.title,
+        description: offer.description,
+        type: offer.offer_type,
+        value: Number(offer.offer_value),
+        validUntil: offer.valid_until,
+        showOffer: Boolean(offer.show_offer)
+      });
+    }
+
     // Map back wire configuration structure to match frontend layout expectation
     const formatted = rows.map(p => ({
       id: p.id,
@@ -15,7 +36,8 @@ const getProducts = async (req, res) => {
         baseFee: Number(p.wire_base_fee),
         baseMeters: Number(p.wire_base_meters),
         extraPerMeter: Number(p.wire_extra_per_meter)
-      }
+      },
+      offers: offersByProduct[p.id] || []
     }));
     return res.json({ success: true, products: formatted });
   } catch (error) {
@@ -25,7 +47,7 @@ const getProducts = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const { id, name, description, price, image, floatFee, wire } = req.body;
+    const { id, name, description, price, image, floatFee, wire, offers } = req.body;
 
     if (!id || !name || !price || !image) {
       return res.status(400).json({ success: false, message: 'Please fill all required product fields.' });
@@ -39,6 +61,15 @@ const createProduct = async (req, res) => {
       'INSERT INTO products (id, name, description, price, image, float_fee, wire_base_fee, wire_base_meters, wire_extra_per_meter) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [id, name, description, price, image, floatFee || 0, baseFee, baseMeters, extraPerMeter]
     );
+    
+    if (offers && Array.isArray(offers) && offers.length > 0) {
+      for (const offer of offers) {
+        await pool.query(
+          'INSERT INTO product_offers (product_id, title, description, offer_type, offer_value, valid_until, show_offer) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [id, offer.title, offer.description || '', offer.type, offer.value || 0, offer.validUntil || null, offer.showOffer !== false]
+        );
+      }
+    }
 
     // Verify insertion directly in MySQL
     const [rows] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
@@ -46,14 +77,36 @@ const createProduct = async (req, res) => {
       return res.status(500).json({ success: false, message: 'Failed to verify new product insertion in database.' });
     }
 
+    const [offerRows] = await pool.query('SELECT * FROM product_offers WHERE product_id = ?', [id]);
+    const formattedOffers = offerRows.map(offer => ({
+      id: offer.id,
+      title: offer.title,
+      description: offer.description,
+      type: offer.offer_type,
+      value: Number(offer.offer_value),
+      validUntil: offer.valid_until,
+      showOffer: Boolean(offer.show_offer)
+    }));
+
+    const formatted = {
+      id: rows[0].id,
+      name: rows[0].name,
+      description: rows[0].description,
+      price: Number(rows[0].price),
+      image: rows[0].image,
+      floatFee: Number(rows[0].float_fee),
+      wire: {
+        baseFee: Number(rows[0].wire_base_fee),
+        baseMeters: Number(rows[0].wire_base_meters),
+        extraPerMeter: Number(rows[0].wire_extra_per_meter)
+      },
+      offers: formattedOffers
+    };
+
     return res.status(201).json({ 
       success: true, 
       message: 'Product created successfully.',
-      product: {
-        id: rows[0].id,
-        name: rows[0].name,
-        price: Number(rows[0].price)
-      }
+      product: formatted
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to create product.', error: error.message });
@@ -63,7 +116,7 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, image, floatFee, wire } = req.body;
+    const { name, description, price, image, floatFee, wire, offers } = req.body;
 
     const baseFee = wire?.baseFee || 0;
     const baseMeters = wire?.baseMeters || 0;
@@ -77,10 +130,35 @@ const updateProduct = async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ success: false, message: 'No product was found with the specified ID to update.' });
     }
+    
+    if (offers && Array.isArray(offers)) {
+      // For simplicity in updating, if offers array is provided, we can sync it (delete missing, insert new, update existing)
+      // Or simply delete all and re-insert to ensure exact match of the provided array
+      await pool.query('DELETE FROM product_offers WHERE product_id = ?', [id]);
+      for (const offer of offers) {
+        await pool.query(
+          'INSERT INTO product_offers (product_id, title, description, offer_type, offer_value, valid_until, show_offer) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [id, offer.title, offer.description || '', offer.type, offer.value || 0, offer.validUntil || null, offer.showOffer !== false]
+        );
+      }
+    }
 
     // Retrieve updated record directly from MySQL
     const [rows] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
     const updated = rows[0];
+
+    // Retrieve offers
+    const [offerRows] = await pool.query('SELECT * FROM product_offers WHERE product_id = ?', [id]);
+    const formattedOffers = offerRows.map(offer => ({
+      id: offer.id,
+      title: offer.title,
+      description: offer.description,
+      type: offer.offer_type,
+      value: Number(offer.offer_value),
+      validUntil: offer.valid_until,
+      showOffer: Boolean(offer.show_offer)
+    }));
+
     const formatted = {
       id: updated.id,
       name: updated.name,
@@ -92,7 +170,8 @@ const updateProduct = async (req, res) => {
         baseFee: Number(updated.wire_base_fee),
         baseMeters: Number(updated.wire_base_meters),
         extraPerMeter: Number(updated.wire_extra_per_meter)
-      }
+      },
+      offers: formattedOffers
     };
 
     return res.json({ success: true, message: 'Product updated successfully.', product: formatted });

@@ -7,6 +7,7 @@ import { API_URL } from '../../../utils/api';
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
   { to: '/admin/products', label: 'Product Management' },
+  { to: '/admin/invoices', label: 'Billing' },
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
   { to: '/admin/stories', label: 'Success Stories' },

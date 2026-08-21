@@ -138,6 +138,20 @@ CREATE TABLE IF NOT EXISTS cart_items (
   UNIQUE KEY unique_cart_product (cart_id, product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 12. Product Offers Table
+CREATE TABLE IF NOT EXISTS product_offers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_id VARCHAR(50) NOT NULL,
+  title VARCHAR(150) NOT NULL,
+  description TEXT,
+  offer_type VARCHAR(50) NOT NULL,
+  offer_value DECIMAL(10, 2) DEFAULT 0.00,
+  valid_until DATE,
+  show_offer BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ==========================================
 -- -- SEED DATA SECTION
 -- -- ==========================================

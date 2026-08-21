@@ -31,7 +31,17 @@ const CustomerProductsPage = () => {
   const [filters, setFilters] = useState({ q: '', category: '', sort: 'newest' });
   const [viewProduct, setViewProduct] = useState(null);
   const [checkoutProduct, setCheckoutProduct] = useState(null);
+  const [addedToCart, setAddedToCart] = useState(null);
   const [loading] = useState(false);
+
+  useEffect(() => {
+    if (viewProduct) {
+      const updated = products.find(p => p.id === viewProduct.id);
+      if (updated && JSON.stringify(updated) !== JSON.stringify(viewProduct)) {
+        setViewProduct(updated);
+      }
+    }
+  }, [products, viewProduct]);
 
   // Auto-dismiss the success message after 3 seconds
   useEffect(() => {
@@ -139,54 +149,144 @@ const CustomerProductsPage = () => {
           </div>
         ) : filtered.length ? (
           <div className="new-products-grid">
-            {filtered.map((product) => (
-              <article key={product.id} className="premium-product-card">
-                <div className="card-badge-row">
-                  <span className="card-badge">{product.category || 'Automation'}</span>
-                </div>
+            {filtered.map((product) => {
+              const activeOffers = (product.offers || []).filter(o => {
+                if (!o.showOffer) return false;
+                if (o.validUntil) {
+                  const until = new Date(o.validUntil);
+                  until.setHours(23, 59, 59, 999);
+                  if (until < new Date()) return false;
+                }
+                return true;
+              });
 
-                <div className="card-img-container">
+              // Calculate promotional price if Flat Discount or Percentage Discount exists
+              let promoPrice = null;
+              let discountOffer = null;
+              
+              for (const offer of activeOffers) {
+                if (offer.type === 'Flat Discount' && offer.value > 0) {
+                  const candidate = product.price - offer.value;
+                  if (candidate > 0 && (!promoPrice || candidate < promoPrice)) {
+                    promoPrice = candidate;
+                    discountOffer = offer;
+                  }
+                } else if (offer.type === 'Percentage Discount' && offer.value > 0) {
+                  const candidate = product.price - (product.price * (offer.value / 100));
+                  if (candidate > 0 && (!promoPrice || candidate < promoPrice)) {
+                    promoPrice = candidate;
+                    discountOffer = offer;
+                  }
+                }
+              }
+
+              return (
+              <article key={product.id} className="premium-product-card relative flex flex-col h-full bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden">
+                <div className="card-img-container relative bg-slate-50 overflow-hidden cursor-pointer group" onClick={() => setViewProduct(product)}>
+                  {/* Overlay Badges */}
+                  <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10 pointer-events-none">
+                    <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-teal-700 text-[10px] font-bold rounded-full shadow-sm uppercase tracking-wider border border-teal-100">
+                      {product.category || 'Automation'}
+                    </span>
+                    {activeOffers.length > 0 && (
+                      <span className="px-2.5 py-1 bg-amber-400 text-amber-950 text-[10px] font-bold rounded-full shadow-sm uppercase tracking-wider flex items-center gap-1">
+                        <Award size={12} /> {activeOffers.length} Offer{activeOffers.length > 1 ? 's' : ''}
+                      </span>
+                    )}
+                  </div>
+                  
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="card-product-img"
+                    className="w-full h-56 object-contain p-6 mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
                       e.target.style.display = 'none';
                       e.target.parentElement.classList.add('card-img-fallback');
                     }}
                   />
+                  
+                  {/* Hover Quick View */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="bg-white text-slate-800 px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-lg">
+                      <Eye size={16} /> Quick View
+                    </span>
+                  </div>
                 </div>
 
-                <div className="card-info">
-                  <h3 className="card-title">{product.name}</h3>
-                  <p className="card-desc">{product.description}</p>
+                <div className="card-info flex-1 flex flex-col p-5">
+                  <h3 className="card-title text-lg font-bold text-slate-800 line-clamp-1 group-hover:text-teal-600 transition-colors">{product.name}</h3>
+                  <p className="card-desc text-sm text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{product.description}</p>
+                  
+                  {activeOffers.length > 0 && (
+                    <div className="mt-3 flex flex-col gap-1.5">
+                      {activeOffers.slice(0, 2).map((offer, idx) => (
+                        <div key={idx} className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded shadow-sm">
+                            🎉 {offer.title}
+                          </span>
+                          {offer.validUntil && (
+                            <span className="text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-100 px-2 py-0.5 rounded flex items-center gap-1">
+                              ⏳ Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="card-footer">
-                  <div className="card-price-row">
-                    <span className="price-label">Price</span>
-                    <span className="price-value">{formatCurrency(product.price)}</span>
+                <div className="card-footer p-5 pt-0 mt-auto border-t border-slate-100/60">
+                  <div className="card-price-row flex flex-wrap items-baseline gap-2 pt-4 mb-4">
+                    {promoPrice ? (
+                      <>
+                        <span className="text-2xl font-black text-teal-600 tracking-tight">
+                          {formatCurrency(promoPrice)}
+                        </span>
+                        <span className="text-sm text-slate-400 line-through decoration-rose-500 decoration-2 font-bold">
+                          {formatCurrency(product.price)}
+                        </span>
+                        {discountOffer && (
+                          <span className="text-[10px] font-bold text-rose-500 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded ml-auto">
+                            {discountOffer.type === 'Percentage Discount' ? `${discountOffer.value}% OFF` : `FLAT ${formatCurrency(discountOffer.value)} OFF`}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-2xl font-black text-teal-600 tracking-tight">
+                        {formatCurrency(product.price)}
+                      </span>
+                    )}
                   </div>
 
-                  <div className="card-btn-group">
+                  <div className="card-btn-group flex gap-2">
                     <button
                       onClick={() => setViewProduct(product)}
-                      className="btn-card-view"
+                      className="flex-1 py-2.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold rounded-xl border border-slate-200 transition-colors text-sm flex items-center justify-center gap-1.5"
                       type="button"
                     >
                       <Eye size={16} /> Details
                     </button>
                     <button
                       onClick={() => addToCart(product)}
-                      className="btn-card-add"
+                      disabled={addedToCart === product.id}
+                      className={`flex-1 py-2.5 px-3 font-semibold rounded-xl transition-all duration-300 text-sm flex items-center justify-center gap-1.5 ${
+                        addedToCart === product.id
+                          ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
+                          : 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20'
+                      }`}
                       type="button"
                     >
-                      <ShoppingCart size={16} /> Add to Cart
+                      {addedToCart === product.id ? (
+                        <><CheckCircle size={16} /> Added</>
+                      ) : (
+                        <><ShoppingCart size={16} /> Add to Cart</>
+                      )}
                     </button>
                   </div>
                 </div>
               </article>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-20 bg-white border border-slate-100 rounded-3xl p-8">

@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Package, Calculator, ClipboardList, Shield, RefreshCw, Edit3, Save, Download, X } from 'lucide-react';
+import { PDFDownloadLink } from '@react-pdf/renderer';
+import SystemEstimatePDF from '../../../components/pdf/SystemEstimatePDF';
 import AppShell from '../../../components/AppShell';
 import CustomSelect from '../../../components/CustomSelect';
 import { getProducts, getBillingSettings } from '../../../utils/storage';
@@ -10,6 +12,7 @@ import './AdminEstimationsPage.css';
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
   { to: '/admin/products', label: 'Product Management' },
+  { to: '/admin/invoices', label: 'Billing' },
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
   { to: '/admin/stories', label: 'Success Stories' },
@@ -31,6 +34,14 @@ const AdminEstimationsPage = () => {
   const [wireLength, setWireLength] = useState(30);
   const [floatSensors, setFloatSensors] = useState(1);
   const [includeInstallation, setIncludeInstallation] = useState(true);
+  // Customer Details Form State
+  const [customerName, setCustomerName] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [customerMobile, setCustomerMobile] = useState('');
+  const [customerGstin, setCustomerGstin] = useState('');
+  const [customerState, setCustomerState] = useState('');
+  const [customerStateCode, setCustomerStateCode] = useState('');
+
 
   // Invoice Override States (Edit without DB change)
   const [isEditingInvoice, setIsEditingInvoice] = useState(false);
@@ -193,203 +204,7 @@ const AdminEstimationsPage = () => {
     setIsEditingInvoice(false);
   };
 
-  // Download PDF Routine
-  const handleDownloadPDF = () => {
-    if (!selectedProduct || !calculations) return;
-
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const imageHtml = selectedProduct.image.startsWith('data:') 
-      ? `<img src="${selectedProduct.image}" style="max-height: 180px; max-width: 100%; object-fit: contain; margin-top: 15px;" />`
-      : `<img src="${API_URL}${selectedProduct.image}" style="max-height: 180px; max-width: 100%; object-fit: contain; margin-top: 15px;" onError="this.src='${selectedProduct.image}'" />`;
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Estimation Invoice - ${selectedProduct.name}</title>
-          <style>
-            body {
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-              color: #334155;
-              padding: 40px;
-              line-height: 1.5;
-            }
-            .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              border-bottom: 2px solid #0d9488;
-              padding-bottom: 20px;
-              margin-bottom: 30px;
-            }
-            .logo {
-              font-size: 24px;
-              font-weight: bold;
-              color: #0d9488;
-            }
-            .title {
-              text-align: right;
-            }
-            .title h1 {
-              margin: 0;
-              font-size: 20px;
-              color: #1e293b;
-            }
-            .grid {
-              display: grid;
-              grid-template-cols: 1fr 1.2fr;
-              gap: 40px;
-              margin-bottom: 30px;
-            }
-            .product-box {
-              border: 1px solid #e2e8f0;
-              border-radius: 12px;
-              padding: 20px;
-              background-color: #f8fafc;
-              text-align: center;
-            }
-            .product-name {
-              font-size: 16px;
-              font-weight: bold;
-              margin-top: 10px;
-              color: #0f172a;
-            }
-            .product-desc {
-              font-size: 12px;
-              color: #64748b;
-              margin-top: 5px;
-            }
-            .invoice-table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-            .invoice-table th, .invoice-table td {
-              padding: 12px;
-              text-align: left;
-              border-bottom: 1px solid #e2e8f0;
-              font-size: 13px;
-            }
-            .invoice-table th {
-              background-color: #f1f5f9;
-              font-weight: bold;
-              color: #475569;
-            }
-            .total-row {
-              font-size: 16px;
-              font-weight: bold;
-              color: #0d9488;
-              background-color: #f0fdfa;
-            }
-            .footer {
-              margin-top: 50px;
-              text-align: center;
-              font-size: 11px;
-              color: #94a3b8;
-              border-top: 1px dashed #cbd5e1;
-              padding-top: 15px;
-            }
-            @media print {
-              .no-print { display: none; }
-              body { padding: 20px; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="logo">MOSH AUTOMATION</div>
-            <div class="title">
-              <h1>ESTIMATION REPORT</h1>
-              <p style="margin: 5px 0 0 0; font-size: 12px; color: #64748b;">Generated on: ${new Date().toLocaleDateString()}</p>
-            </div>
-          </div>
-
-          <div class="grid">
-            <div class="product-box">
-              <h3 style="margin: 0 0 10px 0; font-size: 14px; color: #0d9488; text-transform: uppercase;">Selected System</h3>
-              ${imageHtml}
-              <div class="product-name">${selectedProduct.name}</div>
-              <div class="product-desc">${selectedProduct.description}</div>
-              <div style="margin-top: 15px; border-top: 1px dashed #cbd5e1; padding-top: 15px; text-align: left; font-size: 12px; color: #475569;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                  <strong>Base Price:</strong>
-                  <span>₹${calculations.basePrice.toLocaleString()}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                  <strong>Float Sensor Fee:</strong>
-                  <span>₹${selectedProduct.floatFee} / unit</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <strong>Wire Base Fee:</strong>
-                  <span>₹${selectedProduct.wire?.baseFee || 0} ${Number(selectedProduct.wire?.baseMeters) ? `(${selectedProduct.wire.baseMeters}m included)` : ''}</span>
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 style="margin: 0 0 15px 0; font-size: 14px; color: #0d9488; text-transform: uppercase;">Invoice Breakdown</h3>
-              <table class="invoice-table">
-                <thead>
-                  <tr>
-                    <th>Item Description</th>
-                    <th style="text-align: right;">Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Products Base Price (Qty: ${quantity})</td>
-                    <td style="text-align: right;">₹${calculations.basePrice.toLocaleString()}</td>
-                  </tr>
-                  <tr>
-                    <td>Float Switch Sensors (Qty: ${floatSensors})</td>
-                    <td style="text-align: right;">₹${calculations.totalFloatCost.toLocaleString()}</td>
-                  </tr>
-                  <tr>
-                    <td>Base Wire Cable (${calculations.wireBaseMeters}m included)</td>
-                    <td style="text-align: right;">₹${calculations.baseWireCost.toLocaleString()}</td>
-                  </tr>
-                  <tr>
-                    <td>Extra Wire Cable (${calculations.extraMeters}m extra)</td>
-                    <td style="text-align: right;">₹${calculations.extraWireCost.toLocaleString()}</td>
-                  </tr>
-                  <tr>
-                    <td>Installation Support Fee</td>
-                    <td style="text-align: right;">₹${calculations.installationFee.toLocaleString()}</td>
-                  </tr>
-                  <tr>
-                    <td style="font-weight: bold;">Subtotal</td>
-                    <td style="text-align: right; font-weight: bold;">₹${calculations.subtotal.toLocaleString()}</td>
-                  </tr>
-                  <tr>
-                    <td>GST Tax (${calculations.taxPercent}%)</td>
-                    <td style="text-align: right;">₹${calculations.taxAmount.toLocaleString()}</td>
-                  </tr>
-                  <tr class="total-row">
-                    <td>Total Estimated Price</td>
-                    <td style="text-align: right;">₹${calculations.total.toLocaleString()}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="footer">
-            <p>This is a custom computer-generated estimate request. Prices may vary depending on site complications.</p>
-            <p>&copy; ${new Date().getFullYear()} Mosh Automation. All Rights Reserved.</p>
-          </div>
-
-          <script>
-            window.onload = function() {
-              setTimeout(function() {
-                window.print();
-              }, 500);
-            };
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
-  };
+  
 
   return (
     <AppShell title="Estimation Calculator" links={adminLinks}>
@@ -648,19 +463,78 @@ const AdminEstimationsPage = () => {
                       <p className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Estimated Cost</p>
                       <strong className="text-xl font-extrabold text-teal-600 leading-tight">{formatCurrency(calculations.total)}</strong>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleDownloadPDF}
+                    {selectedProduct && calculations ? (
+                    <PDFDownloadLink
+                      document={<SystemEstimatePDF estimation={{
+                        customerName,
+                        customerAddress,
+                        customerMobile,
+                        customerGstin,
+                        customerState,
+                        customerStateCode,
+                        selectedProduct,
+                        calculations,
+                        quantity,
+                        wireLength,
+                        floatSensors,
+                        estimationDate: new Date().toISOString(),
+                        estimationNumber: 'EST-NEW'
+                      }} />}
+                      fileName={`Estimation_${customerName || 'New'}.pdf`}
                       className="text-xs bg-teal-600 hover:bg-teal-700 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow transition cursor-pointer"
                     >
+                      {({ loading }) => (
+                        <>
+                          <Download size={13} /> {loading ? 'Loading...' : 'Download PDF'}
+                        </>
+                      )}
+                    </PDFDownloadLink>
+                  ) : (
+                    <button disabled className="text-xs bg-slate-400 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow cursor-not-allowed">
                       <Download size={13} /> PDF
                     </button>
+                  )}
                   </div>
                 </div>
               </div>
             )}
+                    </div>
+        </div>
+
+        {/* Customer Details Form at the Bottom */}
+        <div className="mt-8 bg-slate-100 border border-slate-200/80 p-6 rounded-lg mb-8 shadow-sm">
+          <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-6 border-b pb-3">
+            <ClipboardList size={18} className="text-teal-600" />
+            Customer Details for Estimation (Optional)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <label className="block text-sm font-bold text-slate-700">
+              Customer Name
+              <input type="text" placeholder="Customer Name" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              Address
+              <input type="text" placeholder="Full Address" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              Mobile No
+              <input type="text" placeholder="Mobile No" value={customerMobile} onChange={e => setCustomerMobile(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              GSTIN No
+              <input type="text" placeholder="GSTIN Number" value={customerGstin} onChange={e => setCustomerGstin(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              State Name
+              <input type="text" placeholder="State Name" value={customerState} onChange={e => setCustomerState(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              State Code
+              <input type="text" placeholder="State Code" value={customerStateCode} onChange={e => setCustomerStateCode(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+            </label>
           </div>
         </div>
+
       </div>
     </AppShell>
   );

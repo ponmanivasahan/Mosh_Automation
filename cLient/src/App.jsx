@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminBillingPage from './pages/admin/billing/AdminBillingPage';
+import AdminInvoicesPage from './pages/admin/invoices/AdminInvoicesPage';
 import AdminDashboardPage from './pages/admin/dashboard/AdminDashboardPage';
 import AdminProductsPage from './pages/admin/products/AdminProductsPage';
 import AdminReviewsPage from './pages/admin/reviews/AdminReviewsPage';
@@ -100,6 +101,14 @@ const App = () => (
       element={
         <ProtectedRoute role="admin">
           <AdminProductsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/invoices"
+      element={
+        <ProtectedRoute role="admin">
+          <AdminInvoicesPage />
         </ProtectedRoute>
       }
     />

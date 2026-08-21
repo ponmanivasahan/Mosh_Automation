@@ -10,7 +10,8 @@ const KEYS = {
   reviews: 'mosh_reviews',
   stories: 'mosh_stories',
   billingSettings: 'mosh_billing_settings',
-  session: 'mosh_session'
+  session: 'mosh_session',
+  invoices: 'mosh_invoices'
 };
 
 const read = (key, fallback) => {
@@ -73,7 +74,8 @@ const normalizeProduct = (product) => {
       baseFee: Number(wire.baseFee || 0),
       baseMeters: Number(wire.baseMeters || 0),
       extraPerMeter: Number(wire.extraPerMeter || 0)
-    }
+    },
+    offers: product.offers || []
   };
 };
 
@@ -82,20 +84,24 @@ export const getDbStatus = () => {
   return localStorage.getItem('mosh_db_connected') !== 'false';
 };
 
-export const ensureInitialData = async () => {
-  // Try to populate lists from MySQL backend database
-  try {
-    const prodRes = await fetch(`${API_URL}/api/products`);
-    if (!prodRes.ok) throw new Error('Products request failed');
-    const prodData = await prodRes.json();
-    if (prodData.success) {
-      write(KEYS.products, prodData.products || []);
-    } else {
-      throw new Error(prodData.message);
-    }
+let initialDataPromise = null;
 
-    const billRes = await fetch(`${API_URL}/api/billing`);
-    if (!billRes.ok) throw new Error('Billing request failed');
+export const ensureInitialData = async () => {
+  if (initialDataPromise) return initialDataPromise;
+
+  initialDataPromise = (async () => {
+    try {
+      const prodRes = await fetch(`${API_URL}/api/products?t=${Date.now()}`, { 
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } 
+      });
+      if (!prodRes.ok) throw new Error('Products request failed');
+      const prodData = await prodRes.json();
+      if (prodData.success) {
+        write(KEYS.products, prodData.products || []);
+      }
+      const billRes = await fetch(`${API_URL}/api/billing`);
+      if (!billRes.ok) throw new Error('Billing request failed');
     const billData = await billRes.json();
     if (billData.success && billData.settings) {
       write(KEYS.billingSettings, billData.settings);
@@ -113,6 +119,14 @@ export const ensureInitialData = async () => {
     const revData = await revRes.json();
     if (revData.success && revData.reviews) {
       write(KEYS.reviews, revData.reviews);
+    }
+
+    const invRes = await fetch(`${API_URL}/api/invoices`, { credentials: 'include' });
+    if (invRes.ok) {
+      const invData = await invRes.json();
+      if (invData.success && invData.invoices) {
+        write(KEYS.invoices, invData.invoices);
+      }
     }
 
     const orderRes = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
@@ -154,6 +168,8 @@ export const ensureInitialData = async () => {
     console.warn('Backend database unreachable. Running in offline fallback cache mode.', e);
     localStorage.setItem('mosh_db_connected', 'false');
   }
+  })();
+  return initialDataPromise;
 };
 
 ensureInitialData();
@@ -208,11 +224,18 @@ export const addProduct = async (product) => {
     body: JSON.stringify(product),
     credentials: 'include'
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to add product to database.');
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to add product to database.');
   }
-  await ensureInitialData();
+  
+  if (data.product) {
+    const products = read(KEYS.products, []);
+    products.unshift(data.product);
+    write(KEYS.products, products);
+  } else {
+    await ensureInitialData();
+  }
 };
 
 export const updateProduct = async (id, product) => {
@@ -222,11 +245,23 @@ export const updateProduct = async (id, product) => {
     body: JSON.stringify(product),
     credentials: 'include'
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to update product in database.');
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to update product in database.');
   }
-  await ensureInitialData();
+
+  if (data.product) {
+    const products = read(KEYS.products, []);
+    const idx = products.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      products[idx] = { ...data.product, offers: product.offers || [] };
+      write(KEYS.products, products);
+    } else {
+      await ensureInitialData();
+    }
+  } else {
+    await ensureInitialData();
+  }
 };
 
 export const deleteProduct = async (id) => {
@@ -234,11 +269,14 @@ export const deleteProduct = async (id) => {
     method: 'DELETE',
     credentials: 'include'
   });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || 'Failed to delete product from database.');
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to delete product from database.');
   }
-  await ensureInitialData();
+  
+  const products = read(KEYS.products, []);
+  const updated = products.filter(p => p.id !== id);
+  write(KEYS.products, updated);
 };
 
 export const getBillingSettings = () => read(KEYS.billingSettings, {});
@@ -612,9 +650,79 @@ export const deleteStory = async (id) => {
   return getStories();
 };
 
+export const addProductOffer = async (productId, offer) => {
+  const response = await fetch(`${API_URL}/api/products/${productId}/offers`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(offer),
+    credentials: 'include'
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to add product offer.');
+  }
+  await ensureInitialData();
+  return data.offer;
+};
+
+export const updateProductOffer = async (productId, offerId, offer) => {
+  const response = await fetch(`${API_URL}/api/products/${productId}/offers/${offerId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(offer),
+    credentials: 'include'
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to update product offer.');
+  }
+  await ensureInitialData();
+  return data.offer;
+};
+
+export const deleteProductOffer = async (productId, offerId) => {
+  const response = await fetch(`${API_URL}/api/products/${productId}/offers/${offerId}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.message || 'Failed to delete product offer.');
+  }
+  await ensureInitialData();
+};
+
 // Start background sync polling to keep local state up-to-date with MySQL single source of truth
 if (typeof window !== 'undefined') {
   setInterval(async () => {
     await ensureInitialData();
   }, 2500);
 }
+
+
+// --- INVOICES ---
+export const getInvoices = () => read(KEYS.invoices, []);
+
+export const addInvoice = async (invoice) => {
+  const response = await fetch(`${API_URL}/api/invoices`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(invoice)
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) throw new Error(data.message || 'Failed');
+  await ensureInitialData();
+  return data;
+};
+
+export const deleteInvoice = async (id) => {
+  const response = await fetch(`${API_URL}/api/invoices/${id}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) throw new Error(data.message || 'Failed');
+  await ensureInitialData();
+  return data;
+};

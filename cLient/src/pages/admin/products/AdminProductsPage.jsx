@@ -20,12 +20,15 @@ import './AdminProductsPage.css';
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
   { to: '/admin/products', label: 'Product Management' },
+  { to: '/admin/invoices', label: 'Billing' },
   { to: '/admin/billing', label: 'Query Management' },
   { to: '/admin/reviews', label: 'Reviews' },
   { to: '/admin/stories', label: 'Success Stories' },
   { to: '/admin/estimations', label: 'Estimation Calculator' },
   { to: '/admin/customers', label: 'Customers' }
 ];
+
+import OfferManager from '../../../components/products/OfferManager';
 
 const emptyForm = {
   name: '',
@@ -41,7 +44,8 @@ const emptyForm = {
   floatFee: '0',
   wireBaseFee: '0',
   wireBaseMeters: '30',
-  wireExtraPerMeter: '0'
+  wireExtraPerMeter: '0',
+  offers: []
 };
 
 const AdminProductsPage = () => {
@@ -133,6 +137,7 @@ const AdminProductsPage = () => {
         baseMeters: Number(registerForm.wireBaseMeters || 30),
         extraPerMeter: Number(registerForm.wireExtraPerMeter || 0)
       },
+      offers: registerForm.offers || [],
       createdAt: new Date().toISOString()
     };
 
@@ -173,6 +178,7 @@ const AdminProductsPage = () => {
         baseMeters: Number(editForm.wireBaseMeters || 30),
         extraPerMeter: Number(editForm.wireExtraPerMeter || 0)
       },
+      offers: editForm.offers || [],
       createdAt: products.find(p => p.id === editingId)?.createdAt || new Date().toISOString()
     };
 
@@ -218,7 +224,8 @@ const AdminProductsPage = () => {
       floatFee: String(product.floatFee || 0),
       wireBaseFee: String(product.wire?.baseFee || 0),
       wireBaseMeters: String(product.wire?.baseMeters || 30),
-      wireExtraPerMeter: String(product.wire?.extraPerMeter || 0)
+      wireExtraPerMeter: String(product.wire?.extraPerMeter || 0),
+      offers: product.offers || []
     });
   };
 
@@ -301,11 +308,78 @@ const AdminProductsPage = () => {
                     <h3 className="text-sm font-bold text-slate-800 mt-1 truncate max-w-full">{p.name}</h3>
                     <p className="text-xs text-slate-500 truncate mt-0.5 font-semibold max-w-full">{p.description}</p>
                     <p className="text-[10px] text-slate-400 mt-1 truncate max-w-full">Created: {p.createdAt ? formatDateTime(p.createdAt) : 'Initial setup'}</p>
+                    
+                    {/* Offers Display */}
+                    {(() => {
+                      const activeOffers = (p.offers || []).filter(o => {
+                        if (!o.showOffer) return false;
+                        if (o.validUntil) {
+                          const until = new Date(o.validUntil);
+                          until.setHours(23, 59, 59, 999);
+                          if (until < new Date()) return false;
+                        }
+                        return true;
+                      });
+                      
+                      if (activeOffers.length === 0) return null;
+
+                      return (
+                        <div className="mt-2 flex flex-col gap-1.5">
+                          {activeOffers.slice(0, 2).map((offer, idx) => (
+                            <div key={idx} className="flex flex-col items-start gap-0.5">
+                              <span className="text-[10px] font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+                                🎉 {offer.title}
+                              </span>
+                              {offer.validUntil && (
+                                <span className="text-[9px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
+                                  ⏳ Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4 shrink-0 self-stretch md:self-center border-t md:border-t-0 pt-3 md:pt-0 w-full md:w-auto justify-between md:justify-start mt-1 md:mt-0">
-                  <strong className="text-sm text-teal-700 font-bold shrink-0">{formatCurrency(p.price)}</strong>
+                  {(() => {
+                    const activeOffers = (p.offers || []).filter(o => {
+                      if (!o.showOffer) return false;
+                      if (o.validUntil) {
+                        const until = new Date(o.validUntil);
+                        until.setHours(23, 59, 59, 999);
+                        if (until < new Date()) return false;
+                      }
+                      return true;
+                    });
+                    
+                    let promoPrice = null;
+                    for (const offer of activeOffers) {
+                      if (offer.type === 'Flat Discount' && offer.value > 0) {
+                        const candidate = p.price - offer.value;
+                        if (candidate > 0 && (!promoPrice || candidate < promoPrice)) {
+                          promoPrice = candidate;
+                        }
+                      } else if (offer.type === 'Percentage Discount' && offer.value > 0) {
+                        const candidate = p.price - (p.price * (offer.value / 100));
+                        if (candidate > 0 && (!promoPrice || candidate < promoPrice)) {
+                          promoPrice = candidate;
+                        }
+                      }
+                    }
+
+                    return promoPrice ? (
+                      <div className="flex flex-col items-end shrink-0">
+                        <span className="text-[10px] text-slate-400 line-through decoration-rose-500 decoration-2 font-bold mb-0.5">{formatCurrency(p.price)}</span>
+                        <strong className="text-base text-rose-600 font-extrabold drop-shadow-sm scale-105 origin-right transition-transform">{formatCurrency(promoPrice)}</strong>
+                      </div>
+                    ) : (
+                      <strong className="text-sm text-teal-700 font-bold shrink-0">{formatCurrency(p.price)}</strong>
+                    );
+                  })()}
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => triggerEdit(p)}
@@ -335,7 +409,7 @@ const AdminProductsPage = () => {
         {/* Center Register/Add Modal Overlay */}
         <AnimatePresence>
           {showAddModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -523,6 +597,8 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
+                  <OfferManager offers={registerForm.offers} onChange={(offers) => updateRegister('offers', offers)} />
+
                   <div className="flex gap-3 pt-3 border-t border-slate-100">
                     <button
                       type="submit"
@@ -547,7 +623,7 @@ const AdminProductsPage = () => {
         {/* Center Edit Modal Overlay */}
         <AnimatePresence>
           {editingId && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -731,6 +807,8 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
+                  <OfferManager offers={editForm.offers} onChange={(offers) => updateEdit('offers', offers)} />
+
                   <div className="flex gap-3 pt-3 border-t border-slate-100">
                     <button
                       type="submit"
@@ -755,7 +833,7 @@ const AdminProductsPage = () => {
         {/* Delete Confirmation Modal Overlay */}
         <AnimatePresence>
           {deletingId && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
