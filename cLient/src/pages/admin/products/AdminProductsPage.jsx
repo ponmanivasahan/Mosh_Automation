@@ -17,6 +17,7 @@ import {
 import AppShell from '../../../components/AppShell';
 import { getProducts, addProduct, updateProduct, deleteProduct, getDbStatus } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
+import { API_URL } from '../../../utils/api';
 import './AdminProductsPage.css';
 
 const adminLinks = [
