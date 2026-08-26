@@ -33,8 +33,8 @@ const createReview = async (req, res) => {
     const commentVal = comment !== undefined ? comment : (message || '');
 
     const [result] = await pool.query(
-      'INSERT INTO reviews (id, customer_name, customer_phone, product_name, rating, comment, customer_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, name, phone, productName, rating, commentVal, req.user.id]
+      'INSERT INTO reviews (id, customer_name, customer_phone, product_name, rating, comment) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, name, phone, productName, rating, commentVal]
     );
 
     if (result.affectedRows === 0) {

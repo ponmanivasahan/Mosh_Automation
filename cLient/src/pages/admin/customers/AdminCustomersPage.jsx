@@ -270,7 +270,7 @@ const AdminCustomersPage = () => {
                         </span>
                       </td>
 
-                      {/* Metrics counts */}
+                      {/* Metrics counts & Actions */}
                       <td className="py-4 text-right pr-2">
                         <div className="flex items-center justify-end gap-3 text-[11px] font-bold">
                           <span className="flex items-center gap-1 bg-teal-50 text-teal-700 px-2 py-0.5 rounded" title="Orders placed">
@@ -285,6 +285,29 @@ const AdminCustomersPage = () => {
                             <MessageSquare size={11} className="text-rose-500" />
                             {cust.numReviews}
                           </span>
+                          <button
+                            onClick={async () => {
+                              if (window.confirm(`Are you sure you want to delete customer ${cust.name}?`)) {
+                                try {
+                                  const res = await fetch(`${API_URL}/api/auth/users/${cust.phone}`, {
+                                    method: 'DELETE',
+                                    credentials: 'include'
+                                  });
+                                  if (res.ok) {
+                                    fetchCustomers(true);
+                                  } else {
+                                    alert('Failed to delete customer');
+                                  }
+                                } catch (e) {
+                                  alert('Error deleting customer');
+                                }
+                              }
+                            }}
+                            className="bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-1 rounded border border-rose-200 ml-2 flex items-center transition"
+                            title="Delete Customer"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </td>
                     </tr>

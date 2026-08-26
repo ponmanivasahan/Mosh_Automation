@@ -445,7 +445,7 @@ const AdminProductsPage = () => {
                       <CustomSelect
                         value={registerForm.category}
                         onChange={(val) => updateRegister('category', val)}
-                        options={['Automation', 'Wireless Systems', 'Sensors & Plugs', 'Accessories']}
+                        options={['Wired Systems', 'Wireless Systems', 'Sensors & Float', 'Accessories']}
                       />
                     </div>
 

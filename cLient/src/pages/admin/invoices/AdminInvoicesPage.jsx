@@ -198,9 +198,9 @@ const AdminInvoicesPage = () => {
 
   const filteredInvoices = useMemo(() => {
     let filtered = invoices.filter(inv => 
-      inv.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      inv.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
       (inv.invoice_number && inv.invoice_number.toString().includes(searchQuery)) ||
-      (inv.customer_mobile && inv.customer_mobile.includes(searchQuery))
+      (inv.customer_mobile && inv.customer_mobile.toString().includes(searchQuery))
     );
     // basic date filter logic
     if (dateFilter === 'Today') {

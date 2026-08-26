@@ -269,8 +269,6 @@ const CustomerHelpCenterPage = () => {
                   <div>
                     <span className="contact-label">Email Support</span>
                     <span className="contact-val">moshautomation@gmail.com</span>
-                    <br></br>
-                    <span className="contact-val">admin@moshautomation.com</span>
                   </div>
                 </a>
                 
@@ -280,7 +278,9 @@ const CustomerHelpCenterPage = () => {
                   </div>
                   <div>
                     <span className="contact-label">Phone Support</span>
-                    <span className="contact-val">+91 98765 43210</span>
+                    <span className="contact-val">+91 7397103576</span>
+                    <br></br>
+                    <span className="contact-val">+91 9514714441</span>
                   </div>
                 </a>
 

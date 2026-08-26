@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     height: 'auto'
   },
   companyDetailsContainer: {
-    width: '75%',
+    width: '60%',
     textAlign: 'center',
     justifyContent: 'center',
     paddingRight: 10

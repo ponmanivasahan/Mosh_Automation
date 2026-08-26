@@ -31,6 +31,12 @@ const getProducts = async (req, res) => {
       description: p.description,
       price: Number(p.price),
       image: p.image,
+      category: p.category || 'Automation',
+      features: p.features || '',
+      stock: p.stock !== null ? Number(p.stock) : 10,
+      warranty: p.warranty || '1 Year Warranty',
+      specifications: p.specifications || '',
+      availability: p.availability || 'In Stock',
       floatFee: Number(p.float_fee),
       wire: {
         baseFee: Number(p.wire_base_fee),
@@ -47,7 +53,7 @@ const getProducts = async (req, res) => {
 
 const createProduct = async (req, res) => {
   try {
-    const { id, name, description, price, image, floatFee, wire, offers } = req.body;
+    const { id, name, description, price, image, category, features, stock, warranty, specifications, availability, floatFee, wire, offers } = req.body;
 
     if (!id || !name || !price || !image) {
       return res.status(400).json({ success: false, message: 'Please fill all required product fields.' });
@@ -58,8 +64,8 @@ const createProduct = async (req, res) => {
     const extraPerMeter = wire?.extraPerMeter || 0;
 
     await pool.query(
-      'INSERT INTO products (id, name, description, price, image, float_fee, wire_base_fee, wire_base_meters, wire_extra_per_meter) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, name, description, price, image, floatFee || 0, baseFee, baseMeters, extraPerMeter]
+      'INSERT INTO products (id, name, description, price, image, category, features, stock, warranty, specifications, availability, float_fee, wire_base_fee, wire_base_meters, wire_extra_per_meter) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, name, description, price, image, category || 'Automation', features || '', stock || 10, warranty || '1 Year Warranty', specifications || '', availability || 'In Stock', floatFee || 0, baseFee, baseMeters, extraPerMeter]
     );
     
     if (offers && Array.isArray(offers) && offers.length > 0) {
@@ -94,6 +100,12 @@ const createProduct = async (req, res) => {
       description: rows[0].description,
       price: Number(rows[0].price),
       image: rows[0].image,
+      category: rows[0].category || 'Automation',
+      features: rows[0].features || '',
+      stock: rows[0].stock !== null ? Number(rows[0].stock) : 10,
+      warranty: rows[0].warranty || '1 Year Warranty',
+      specifications: rows[0].specifications || '',
+      availability: rows[0].availability || 'In Stock',
       floatFee: Number(rows[0].float_fee),
       wire: {
         baseFee: Number(rows[0].wire_base_fee),
@@ -116,15 +128,15 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, image, floatFee, wire, offers } = req.body;
+    const { name, description, price, image, category, features, stock, warranty, specifications, availability, floatFee, wire, offers } = req.body;
 
     const baseFee = wire?.baseFee || 0;
     const baseMeters = wire?.baseMeters || 0;
     const extraPerMeter = wire?.extraPerMeter || 0;
 
     const [result] = await pool.query(
-      'UPDATE products SET name = ?, description = ?, price = ?, image = ?, float_fee = ?, wire_base_fee = ?, wire_base_meters = ?, wire_extra_per_meter = ? WHERE id = ?',
-      [name, description, price, image, floatFee || 0, baseFee, baseMeters, extraPerMeter, id]
+      'UPDATE products SET name = ?, description = ?, price = ?, image = ?, category = ?, features = ?, stock = ?, warranty = ?, specifications = ?, availability = ?, float_fee = ?, wire_base_fee = ?, wire_base_meters = ?, wire_extra_per_meter = ? WHERE id = ?',
+      [name, description, price, image, category || 'Automation', features || '', stock || 10, warranty || '1 Year Warranty', specifications || '', availability || 'In Stock', floatFee || 0, baseFee, baseMeters, extraPerMeter, id]
     );
 
     if (result.affectedRows === 0) {
@@ -165,6 +177,12 @@ const updateProduct = async (req, res) => {
       description: updated.description,
       price: Number(updated.price),
       image: updated.image,
+      category: updated.category || 'Automation',
+      features: updated.features || '',
+      stock: updated.stock !== null ? Number(updated.stock) : 10,
+      warranty: updated.warranty || '1 Year Warranty',
+      specifications: updated.specifications || '',
+      availability: updated.availability || 'In Stock',
       floatFee: Number(updated.float_fee),
       wire: {
         baseFee: Number(updated.wire_base_fee),

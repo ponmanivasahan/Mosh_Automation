@@ -91,15 +91,14 @@ const createEstimation = async (req, res) => {
     };
 
     await pool.query(
-      'INSERT INTO estimations (id, customer_name, customer_phone, selected_product_id, query_details, status, customer_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO estimations (id, customer_name, customer_phone, selected_product_id, query_details, status) VALUES (?, ?, ?, ?, ?, ?)',
       [
         id,
         finalCustomerName,
         finalCustomerPhone,
         productId,
         JSON.stringify(queryDetails),
-        finalStage,
-        req.user.id
+        finalStage
       ]
     );
 
