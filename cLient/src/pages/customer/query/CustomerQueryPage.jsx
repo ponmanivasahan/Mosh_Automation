@@ -60,6 +60,7 @@ const getProductFeatures = (productName) => {
 };
 
 import { useLocation } from 'react-router-dom';
+import { openPdfBase64 } from '../../../utils/pdfHelper';
 
 const CustomerQueryPage = () => {
   const { session } = useAuth();
@@ -91,14 +92,24 @@ const CustomerQueryPage = () => {
 
   // Load queries on mount
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const allQueries = getEstimations();
-      // Filter for current signed-in customer
-      const filtered = allQueries.filter((q) => q.customerPhone === session?.phone);
-      setQueries(filtered);
-      setLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
+    let isMounted = true;
+    const fetchQueries = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/estimations`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.estimations && isMounted) {
+            setQueries(data.estimations);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch queries from production database', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    fetchQueries();
+    return () => { isMounted = false; };
   }, [session]);
 
   // Toast dismissal helper
@@ -494,9 +505,9 @@ const CustomerQueryPage = () => {
                                 📄 Estimation.pdf
                               </span>
                               <div className="flex items-center gap-2">
-                                <a href={q.attachmentUrl} target="_blank" rel="noreferrer" className="text-[10px] bg-white border border-teal-200 text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition shadow-sm font-bold">
+                                <button onClick={(e) => { e.preventDefault(); openPdfBase64(q.attachmentUrl); }} className="text-[10px] bg-white border border-teal-200 text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition shadow-sm font-bold">
                                   View PDF
-                                </a>
+                                </button>
                                 <a href={q.attachmentUrl} download="Estimation.pdf" className="text-[10px] bg-teal-600 border border-teal-700 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition shadow-sm font-bold">
                                   Download PDF
                                 </a>

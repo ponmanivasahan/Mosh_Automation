@@ -4,6 +4,7 @@ import { Package, ShoppingCart, Star, TrendingUp, BarChart3, PieChart } from 'lu
 import AppShell from '../../../components/AppShell';
 import { getCart, getProducts, getOrders, getReviews, addReview } from '../../../utils/storage';
 import { formatCurrency } from '../../../utils/format';
+import { API_URL } from '../../../utils/api';
 import ReviewModal from '../../../components/reviews/ReviewModal';
 import { customerLinks } from '../../../utils/customerLinks';
 import './CustomerDashboardPage.css';
@@ -206,8 +207,8 @@ const BarChartSVG = ({ data }) => {
 const CustomerDashboardPage = () => {
   const [products, setProducts] = useState(() => getProducts());
   const [cartItems, setCartItems] = useState(() => getCart());
-  const [orders, setOrders] = useState(() => getOrders());
-  const [reviews, setReviews] = useState(() => getReviews());
+  const [orders, setOrders] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const scrollRef = useRef(null);
   const [hoveredProduct, setHoveredProduct] = useState(null);
   
@@ -216,24 +217,47 @@ const CustomerDashboardPage = () => {
   const [toast, setToast] = useState('');
 
   useEffect(() => {
-    const updateStats = () => {
+    let isMounted = true;
+    const updateStats = async () => {
       setProducts(getProducts());
       setCartItems(getCart());
-      setOrders(getOrders());
-      setReviews(getReviews());
+      
+      try {
+        const [ordersRes, reviewsRes] = await Promise.all([
+          fetch(`${API_URL}/api/orders`, { credentials: 'include' }),
+          fetch(`${API_URL}/api/reviews`, { credentials: 'include' })
+        ]);
+        
+        if (ordersRes.ok) {
+          const ordersData = await ordersRes.json();
+          if (ordersData.success && isMounted) setOrders(ordersData.orders);
+        }
+        if (reviewsRes.ok) {
+          const reviewsData = await reviewsRes.json();
+          if (reviewsData.success && isMounted) setReviews(reviewsData.reviews);
+        }
+      } catch (err) {
+        console.error('Failed to fetch stats from API', err);
+      }
     };
 
+    updateStats();
     // Live update interval
-    const interval = setInterval(updateStats, 1000);
+    const interval = setInterval(updateStats, 5000);
 
-    // Storage event listeners for immediate updates
-    window.addEventListener('storage', updateStats);
-    window.addEventListener('mosh_cart_updated', updateStats);
+    // Storage event listeners for immediate cart updates
+    const handleStorage = () => {
+      setProducts(getProducts());
+      setCartItems(getCart());
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('mosh_cart_updated', handleStorage);
 
     return () => {
+      isMounted = false;
       clearInterval(interval);
-      window.removeEventListener('storage', updateStats);
-      window.removeEventListener('mosh_cart_updated', updateStats);
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('mosh_cart_updated', handleStorage);
     };
   }, []);
 

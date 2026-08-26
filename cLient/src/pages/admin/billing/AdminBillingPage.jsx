@@ -2,8 +2,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { Package, HelpCircle, Check, AlertCircle, Edit, DollarSign, Clock, ListFilter } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import CustomSelect from '../../../components/CustomSelect';
-import { getProducts, getEstimations, getBillingSettings, setBillingSettings, updateEstimation } from '../../../utils/storage';
+import { getProducts, getBillingSettings, setBillingSettings, updateEstimation } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
+import { openPdfBase64 } from '../../../utils/pdfHelper';
 import { API_URL } from '../../../utils/api';
 import './AdminBillingPage.css';
 
@@ -19,8 +20,8 @@ const adminLinks = [
 ];
 
 const AdminBillingPage = () => {
-  const [products, setProducts] = useState(() => getProducts());
-  const [estimations, setEstimations] = useState(() => getEstimations());
+  const [products, setProducts] = useState([]);
+  const [estimations, setEstimations] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [toast, setToast] = useState(null);
 
@@ -255,14 +256,12 @@ const AdminBillingPage = () => {
                           {est.adminResponse && <p className="leading-relaxed font-semibold">"{est.adminResponse}"</p>}
                           {est.attachmentUrl && (
                             <div className="mt-2">
-                              <a
-                                href={est.attachmentUrl}
-                                target="_blank"
-                                rel="noreferrer"
+                              <button
+                                onClick={(e) => { e.preventDefault(); openPdfBase64(est.attachmentUrl); }}
                                 className="inline-flex items-center gap-1 bg-white border border-teal-200 text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition shadow-sm font-bold"
                               >
                                 📄 View Attached PDF
-                              </a>
+                              </button>
                             </div>
                           )}
                         </div>

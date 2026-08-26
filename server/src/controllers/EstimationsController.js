@@ -148,14 +148,12 @@ const updateEstimation = async (req, res) => {
     };
     
     // Status Logic
-    // If admin replies with text or attachment, set status to 'replied'
+    // If an adminResponse or attachmentUrl is provided, it must be a reply.
     let status = row.status;
     let attachmentUrl = req.body.attachmentUrl !== undefined ? req.body.attachmentUrl : row.attachment_url;
     
-    if (req.user.role === 'admin' && (
-       (req.body.adminResponse && req.body.adminResponse.trim().length > 0) ||
-       (req.body.attachmentUrl && req.body.attachmentUrl.trim().length > 0)
-    )) {
+    if ((req.body.adminResponse && req.body.adminResponse.trim().length > 0) ||
+        (req.body.attachmentUrl && req.body.attachmentUrl.trim().length > 0)) {
       status = 'replied';
       updatedDetails.stage = 'replied';
     }
