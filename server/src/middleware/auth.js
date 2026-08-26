@@ -20,7 +20,7 @@ const authenticate = async (req, res, next) => {
     req.user = decoded; // { id, name, phone, role }
     next();
   } catch (error) {
-    return res.status(403).json({ success: false, message: 'Invalid or expired authentication session.' });
+    return res.status(401).json({ success: false, message: 'Invalid or expired authentication session.' });
   }
 };
 

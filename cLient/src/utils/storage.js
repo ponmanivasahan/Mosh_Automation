@@ -119,20 +119,23 @@ export const ensureInitialData = async () => {
       write(KEYS.stories, storyData.stories);
     }
 
-    const revRes = await fetch(`${API_URL}/api/reviews`);
-    if (!revRes.ok) throw new Error('Reviews request failed');
-    const revData = await revRes.json();
-    if (revData.success && revData.reviews) {
-      write(KEYS.reviews, revData.reviews);
-    }
-
-    const invRes = await fetch(`${API_URL}/api/invoices`, { credentials: 'include' });
-    if (invRes.ok) {
-      const invData = await invRes.json();
-      if (invData.success && invData.invoices) {
-        write(KEYS.invoices, invData.invoices);
+      const revRes = await fetch(`${API_URL}/api/reviews`);
+      if (!revRes.ok) throw new Error('Reviews request failed');
+      const revData = await revRes.json();
+      if (revData.success && revData.reviews) {
+        write(KEYS.reviews, revData.reviews);
       }
-    }
+  
+      const session = getSession();
+      if (session && session.role === 'admin') {
+        const invRes = await fetch(`${API_URL}/api/invoices`, { credentials: 'include' });
+        if (invRes.ok) {
+          const invData = await invRes.json();
+          if (invData.success && invData.invoices) {
+            write(KEYS.invoices, invData.invoices);
+          }
+        }
+      }
 
     const orderRes = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
     if (orderRes.ok) {
@@ -154,7 +157,6 @@ export const ensureInitialData = async () => {
       throw new Error('Estimations request failed');
     }
 
-    const session = getSession();
     const isAdmin = session && session.role === 'admin';
     if (isAdmin) {
       const notifRes = await fetch(`${API_URL}/api/notifications`, { credentials: 'include' });

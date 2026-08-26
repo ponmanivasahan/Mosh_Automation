@@ -272,7 +272,7 @@ const getMe = async (req, res) => {
   try {
     const [rows] = await pool.query('SELECT id, name, phone, email, role, status, created_at FROM users WHERE id = ?', [req.user.id]);
     if (rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'User not found in database.' });
+      return res.status(401).json({ success: false, message: 'User not found in database. Session invalid.' });
     }
     const user = rows[0];
     return res.json({
