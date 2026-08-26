@@ -59,8 +59,11 @@ const getProductFeatures = (productName) => {
   ];
 };
 
+import { useLocation } from 'react-router-dom';
+
 const CustomerQueryPage = () => {
   const { session } = useAuth();
+  const location = useLocation();
   const products = getProducts();
 
   // Queries local state loaded from storage
@@ -69,7 +72,8 @@ const CustomerQueryPage = () => {
   const [activeTab, setActiveTab] = useState('All'); // All, Pending, Completed
 
   // Form State
-  const [selectedProductId, setSelectedProductId] = useState(products[0]?.id || '');
+  const initialProductId = location.state?.productId || (products[0]?.id || '');
+  const [selectedProductId, setSelectedProductId] = useState(initialProductId);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [queryDescription, setQueryDescription] = useState('');

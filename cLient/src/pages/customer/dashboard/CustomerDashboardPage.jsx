@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Package, ShoppingCart, Star, TrendingUp, BarChart3, PieChart } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import { getCart, getProducts, getOrders, getReviews } from '../../../utils/storage';
+import { getCart, getProducts, getOrders, getReviews, addReview } from '../../../utils/storage';
 import { formatCurrency } from '../../../utils/format';
+import ReviewModal from '../../../components/reviews/ReviewModal';
 import { customerLinks } from '../../../utils/customerLinks';
 import './CustomerDashboardPage.css';
 
@@ -209,6 +210,10 @@ const CustomerDashboardPage = () => {
   const [reviews, setReviews] = useState(() => getReviews());
   const scrollRef = useRef(null);
   const [hoveredProduct, setHoveredProduct] = useState(null);
+  
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewTargetProduct, setReviewTargetProduct] = useState(null);
+  const [toast, setToast] = useState('');
 
   useEffect(() => {
     const updateStats = () => {
@@ -231,6 +236,26 @@ const CustomerDashboardPage = () => {
       window.removeEventListener('mosh_cart_updated', updateStats);
     };
   }, []);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(''), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const handleSaveReview = async (reviewData) => {
+    try {
+      await addReview({
+        ...reviewData,
+        productName: reviewData.productName || reviewTargetProduct?.name || products[0]?.name
+      });
+      setReviewModalOpen(false);
+      setToast('Review submitted successfully!');
+    } catch (err) {
+      setToast(err.message || 'Failed to submit review.');
+    }
+  };
 
   const salesData = useMemo(() => getSalesData(products, orders), [products, orders]);
 
@@ -353,15 +378,15 @@ const CustomerDashboardPage = () => {
                     <span className="reliable-price">{formatCurrency(product.price)}</span>
                     <span className="reliable-sales">{product.sales} sold</span>
                   </div>
-                  <div className="reliable-rating-bar">
-                    <div className="reliable-stars">
+                  <div className="reliable-rating-bar" title="Click to write a review" style={{ cursor: 'pointer' }} onClick={() => { setReviewTargetProduct(product); setReviewModalOpen(true); }}>
+                    <div className="reliable-stars hover:scale-105 transition-transform">
                       {[1, 2, 3, 4, 5].map((s) => (
                         <span key={s} className={`star-icon ${s <= Math.round(product.rating) ? 'filled' : ''}`}>★</span>
                       ))}
                     </div>
                     <span className="reliable-rating-num">{product.rating}</span>
                   </div>
-                  <Link to="/customer/query-section" className="reliable-cta">
+                  <Link to="/customer/query-section" state={{ productId: product.id }} className="reliable-cta">
                     Get Estimate →
                   </Link>
                 </div>
@@ -419,6 +444,19 @@ const CustomerDashboardPage = () => {
           </div>
         </article>
       </section>
+      
+      {toast && (
+        <div className="fixed bottom-6 right-6 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-2xl font-bold z-50 animate-in fade-in slide-in-from-bottom-5">
+          {toast}
+        </div>
+      )}
+
+      <ReviewModal
+        open={reviewModalOpen}
+        onClose={() => { setReviewModalOpen(false); setReviewTargetProduct(null); }}
+        onSave={handleSaveReview}
+        initial={reviewTargetProduct ? { productName: reviewTargetProduct.name } : null}
+      />
     </AppShell>
   );
 };

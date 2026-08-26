@@ -83,7 +83,7 @@ const AdminBillingPage = () => {
   };
 
   const handleUpdateEstimation = async (estId) => {
-    const currentEsts = getEstimations();
+    const currentEsts = estimations;
     const updated = currentEsts.map(e => {
       if (e.id === estId) {
         return {

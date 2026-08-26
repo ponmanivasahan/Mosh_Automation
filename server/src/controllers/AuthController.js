@@ -79,9 +79,28 @@ const verifyOtp = async (req, res) => {
       user = newUsers[0];
     } else {
       user = users[0];
+      let needsUpdate = false;
+      const updates = [];
+      const params = [];
+
+      // Force admin role for 9514714441
+      if (cleanedPhone === '9514714441' && user.role !== 'admin') {
+        updates.push('role = ?');
+        params.push('admin');
+        user.role = 'admin';
+        needsUpdate = true;
+      }
+
       if (name && name !== user.name) {
-        await pool.query('UPDATE users SET name = ? WHERE phone = ?', [name, cleanedPhone]);
+        updates.push('name = ?');
+        params.push(name);
         user.name = name;
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        params.push(cleanedPhone);
+        await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE phone = ?`, params);
       }
     }
 
@@ -176,10 +195,29 @@ const login = async (req, res) => {
       user = newUsers[0];
     } else {
       user = users[0];
+      let needsUpdate = false;
+      const updates = [];
+      const params = [];
+
+      // Force admin role for 9514714441
+      if (phone === '9514714441' && user.role !== 'admin') {
+        updates.push('role = ?');
+        params.push('admin');
+        user.role = 'admin';
+        needsUpdate = true;
+      }
+
       // Update name if changed
       if (name && name !== user.name) {
-        await pool.query('UPDATE users SET name = ? WHERE phone = ?', [name, phone]);
+        updates.push('name = ?');
+        params.push(name);
         user.name = name;
+        needsUpdate = true;
+      }
+
+      if (needsUpdate) {
+        params.push(phone);
+        await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE phone = ?`, params);
       }
     }
 

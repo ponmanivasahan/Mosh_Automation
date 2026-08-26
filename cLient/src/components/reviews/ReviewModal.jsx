@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Star } from 'lucide-react';
 import CustomSelect from '../CustomSelect';
 import { getProducts } from '../../utils/storage';
 
@@ -69,12 +69,22 @@ const ReviewModal = ({ open, onClose, onSave, initial }) => {
           </div>
 
           <div className="block text-sm font-semibold text-slate-700">
-            <CustomSelect
-              label="Rating"
-              value={rating}
-              onChange={setRating}
-              options={[5, 4, 3, 2, 1].map(v => ({ value: v, label: `${v} stars` }))}
-            />
+            <span className="mb-2 block">Rating</span>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  className="focus:outline-none transition-transform hover:scale-110"
+                >
+                  <Star
+                    size={28}
+                    className={`${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300'}`}
+                  />
+                </button>
+              ))}
+            </div>
           </div>
 
           <label className="block text-sm font-semibold text-slate-700">
