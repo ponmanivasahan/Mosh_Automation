@@ -6,15 +6,27 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [session, setSessionState] = useState(getSession());
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     ensureInitialData();
+    
     // Validate session on mount
     fetch(`${API_URL}/api/auth/me`, { credentials: 'include' })
-      .then(res => res.json())
+      .then(res => {
+        if (res.status === 401 || res.status === 403) {
+          // Genuinely logged out or expired
+          clearSession();
+          setSessionState(null);
+          return null;
+        }
+        return res.json().catch(() => null);
+      })
       .then(data => {
-        if (data.success && data.user) {
+        if (data && data.success && data.user) {
+          const currentSession = getSession();
           const payload = {
+            ...currentSession, // keep token
             name: data.user.name,
             phone: data.user.phone,
             role: data.user.role,
@@ -22,14 +34,13 @@ export const AuthProvider = ({ children }) => {
           };
           setSession(payload);
           setSessionState(payload);
-        } else {
-          // If server says not authenticated, clear frontend session
-          clearSession();
-          setSessionState(null);
         }
       })
       .catch(() => {
-        // Fallback to offline session if server is unreachable
+        // Network or server error: do not clear local auth state
+      })
+      .finally(() => {
+        setAuthLoading(false);
       });
   }, []);
 
@@ -51,10 +62,11 @@ export const AuthProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       session,
+      authLoading,
       login,
       logout
     }),
-    [session]
+    [session, authLoading]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

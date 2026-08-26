@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, ShoppingCart, Info, Award } from 'lucide-react';
+import { Eye, ShoppingCart, Info, Award, Gift, Clock } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { getCart, getProducts, setCart, getDbStatus } from '../../../utils/storage';
 import { formatCurrency } from '../../../utils/format';
@@ -219,18 +219,18 @@ const CustomerProductsPage = () => {
                   
                   {activeOffers.length > 0 && (
                     <div className="mt-3 flex flex-col gap-1.5">
-                      {activeOffers.slice(0, 2).map((offer, idx) => (
-                        <div key={idx} className="flex flex-wrap items-center gap-2">
-                          <span className="text-[10px] font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded shadow-sm">
-                            🎉 {offer.title}
-                          </span>
-                          {offer.validUntil && (
-                            <span className="text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-100 px-2 py-0.5 rounded flex items-center gap-1">
-                              ⏳ Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        {activeOffers.map((offer, idx) => (
+                          <div key={idx} className="flex flex-col items-start gap-1">
+                            <span className="text-[10px] sm:text-xs font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-md shadow-sm animate-pulse flex items-center gap-1">
+                              <Gift size={12} /> {offer.title}
                             </span>
-                          )}
-                        </div>
-                      ))}
+                            {offer.validUntil && (
+                              <span className="text-[9px] sm:text-[10px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <Clock size={12} /> Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
+                        ))}
                     </div>
                   )}
                 </div>

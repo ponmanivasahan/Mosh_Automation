@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ShoppingCart, Star, Heart, ShieldAlert, Award, Layers } from 'lucide-react';
+import { X, ShoppingCart, Star, Heart, ShieldAlert, Award, Layers, Gift, Clock } from 'lucide-react';
 import { getReviews, getProducts } from '../../utils/storage';
 import { formatCurrency } from '../../utils/format';
 import { API_URL } from '../../utils/api';
@@ -178,17 +178,21 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
                   <Award size={14} /> Offers & Benefits
                 </h4>
                 <div className="space-y-3 relative z-10">
-                  {activeOffers.map((offer, idx) => (
-                    <div key={idx} className="flex flex-col text-xs bg-white/60 p-2 rounded-lg border border-[#fde68a]">
-                      <span className="font-extrabold text-[#92400e] text-sm animate-pulse">🎉 {offer.title}</span>
-                      {offer.description && <span className="text-[#92400e] font-semibold mt-1">{offer.description}</span>}
-                      {offer.validUntil && (
-                        <span className="text-[10px] text-rose-600 font-bold bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md flex items-center gap-1 w-fit mt-2">
-                          ⏳ Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {activeOffers.map((offer, idx) => (
+                      <div key={idx} className="flex flex-col gap-1 items-start bg-amber-50/50 p-2.5 rounded-lg border border-amber-100/50">
+                        <span className="font-extrabold text-[#92400e] text-sm animate-pulse flex items-center gap-1.5">
+                          <Gift size={14} /> {offer.title}
                         </span>
-                      )}
-                    </div>
-                  ))}
+                        {offer.validUntil && (
+                          <span className="text-[10px] text-amber-700 font-bold bg-amber-100/50 px-2 py-0.5 rounded-full flex items-center gap-1 mt-0.5">
+                            <Clock size={12} /> Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        )}
+                        {offer.description && (
+                          <p className="text-xs text-amber-900/70 font-semibold mt-1 leading-snug">{offer.description}</p>
+                        )}
+                      </div>
+                    ))}
                 </div>
               </div>
             )}

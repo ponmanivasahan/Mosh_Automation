@@ -66,7 +66,7 @@ const verifyOtp = async (req, res) => {
 
     if (users.length === 0) {
       const cleanedName = name || 'Customer';
-      const role = (cleanedPhone === '8888888888' || cleanedPhone === '0987654321') ? 'admin' : 'customer';
+      const role = (cleanedPhone === '8888888888' || cleanedPhone === '9514714441') ? 'admin' : 'customer';
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(cleanedPhone, salt);
 
@@ -104,6 +104,7 @@ const verifyOtp = async (req, res) => {
     return res.json({
       success: true,
       message: 'OTP verified successfully.',
+      token,
       user: {
         name: user.name,
         phone: user.phone,
@@ -134,7 +135,7 @@ const register = async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
     
     // Determine role (default to customer, restrict admin creation to active admin sessions or default phone)
-    const userRole = role === 'admin' && phone === '0987654321' ? 'admin' : 'customer';
+    const userRole = role === 'admin' && phone === '9514714441' ? 'admin' : 'customer';
 
     await pool.query(
       'INSERT INTO users (name, phone, password_hash, role) VALUES (?, ?, ?, ?)',
@@ -161,7 +162,7 @@ const login = async (req, res) => {
     if (users.length === 0) {
       // Auto-register user if not exists
       const cleanedName = name || 'Customer';
-      const role = phone === '0987654321' ? 'admin' : 'customer';
+      const role = phone === '9514714441' ? 'admin' : 'customer';
       // Default password hash
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(phone, salt);
@@ -204,6 +205,7 @@ const login = async (req, res) => {
     return res.json({
       success: true,
       message: 'Logged in successfully.',
+      token,
       user: {
         name: user.name,
         phone: user.phone,

@@ -50,3 +50,38 @@ const getApiUrl = () => {
 };
 
 export const API_URL = getApiUrl();
+
+// Automatically attach Bearer token to all requests heading to our API
+if (typeof window !== 'undefined') {
+  const originalFetch = window.fetch;
+  window.fetch = async function () {
+    let [resource, config] = arguments;
+    
+    // Only intercept requests to our API
+    if (typeof resource === 'string' && resource.startsWith(API_URL)) {
+      try {
+        const rawSession = localStorage.getItem('mosh_session');
+        if (rawSession) {
+          const session = JSON.parse(rawSession);
+          if (session && session.token) {
+            config = config || {};
+            
+            // Handle merging if headers is a Headers object
+            if (config.headers instanceof Headers) {
+              config.headers.set('Authorization', `Bearer ${session.token}`);
+            } else {
+              config.headers = {
+                ...config.headers,
+                'Authorization': `Bearer ${session.token}`
+              };
+            }
+          }
+        }
+      } catch (e) {
+        // Ignore JSON parse errors
+      }
+    }
+    
+    return originalFetch.call(this, resource, config);
+  };
+}

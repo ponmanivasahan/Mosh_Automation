@@ -4,6 +4,7 @@ import { Star, Trash2, CheckCircle, Reply, Check, AlertCircle, X } from 'lucide-
 import AppShell from '../../../components/AppShell';
 import { getReviews, updateReview, deleteReview } from '../../../utils/storage';
 import { formatDateTime } from '../../../utils/format';
+import { API_URL } from '../../../utils/api';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
@@ -25,15 +26,22 @@ const AdminReviewsPage = () => {
  
   // Live Syncing feed
   useEffect(() => {
-    const fetchLatest = () => {
-      setReviews(getReviews());
+    const fetchLatest = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/reviews`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.reviews) {
+            setReviews(data.reviews);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch reviews', err);
+      }
     };
-    const interval = setInterval(fetchLatest, 1500);
-    window.addEventListener('storage', fetchLatest);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', fetchLatest);
-    };
+    fetchLatest();
+    const interval = setInterval(fetchLatest, 5000); // polling every 5s for now
+    return () => clearInterval(interval);
   }, []);
  
   useEffect(() => {

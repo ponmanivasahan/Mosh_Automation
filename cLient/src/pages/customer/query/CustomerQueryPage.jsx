@@ -139,7 +139,7 @@ const CustomerQueryPage = () => {
   }, [queries, activeTab]);
 
   // Handle Query Submission
-  const handleSubmitQuery = (e) => {
+  const handleSubmitQuery = async (e) => {
     e.preventDefault();
 
     if (!selectedProduct) {
@@ -167,21 +167,25 @@ const CustomerQueryPage = () => {
       stage: 'requested' // Stage acts as status (requested = pending, processed = under_review / replied / closed)
     };
 
-    addEstimation(newQuery);
-    addNotification({
-      id: `not-${Date.now()}`,
-      title: 'New Customer Query',
-      message: `${session?.name || 'Customer'} submitted a query for ${selectedProduct.name}.`,
-      createdAt: new Date().toISOString(),
-      read: false,
-      estimationId: newQueryId
-    });
+    try {
+      await addEstimation(newQuery);
+      addNotification({
+        id: `not-${Date.now()}`,
+        title: 'New Customer Query',
+        message: `${session?.name || 'Customer'} submitted a query for ${selectedProduct.name}.`,
+        createdAt: new Date().toISOString(),
+        read: false,
+        estimationId: newQueryId
+      });
 
-    // Refresh query list
-    setQueries([newQuery, ...queries]);
-    setQueryDescription('');
-    setAttachmentName('');
-    setToast({ type: 'success', message: 'Your query has been submitted successfully.' });
+      // Refresh query list
+      setQueries([newQuery, ...queries]);
+      setQueryDescription('');
+      setAttachmentName('');
+      setToast({ type: 'success', message: 'Your query has been submitted successfully.' });
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to submit query. Please try again.' });
+    }
   };
 
   // Open Edit Modal
@@ -193,7 +197,7 @@ const CustomerQueryPage = () => {
   };
 
   // Save Edits
-  const handleUpdateQuery = () => {
+  const handleUpdateQuery = async () => {
     if (!editSelectedProduct) return;
     if (!editDescription.trim()) {
       setToast({ type: 'error', message: 'Query description cannot be empty.' });
@@ -208,12 +212,16 @@ const CustomerQueryPage = () => {
       requirement: editDescription.trim()
     };
 
-    updateEstimation(updated);
-    
-    // Refresh UI list
-    setQueries(queries.map((q) => (q.id === editingQuery.id ? updated : q)));
-    setEditingQuery(null);
-    setToast({ type: 'success', message: 'Query updated successfully.' });
+    try {
+      await updateEstimation(updated);
+      
+      // Refresh UI list
+      setQueries(queries.map((q) => (q.id === editingQuery.id ? updated : q)));
+      setEditingQuery(null);
+      setToast({ type: 'success', message: 'Query updated successfully.' });
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to update query. Please try again.' });
+    }
   };
 
   // Status mapping to Lucide/Colors

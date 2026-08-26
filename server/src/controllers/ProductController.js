@@ -134,14 +134,15 @@ const updateProduct = async (req, res) => {
     const baseMeters = wire?.baseMeters || 0;
     const extraPerMeter = wire?.extraPerMeter || 0;
 
-    const [result] = await pool.query(
+    const [existing] = await pool.query('SELECT id FROM products WHERE id = ?', [id]);
+    if (!existing.length) {
+      return res.status(404).json({ success: false, message: 'No product was found with the specified ID to update.' });
+    }
+
+    await pool.query(
       'UPDATE products SET name = ?, description = ?, price = ?, image = ?, category = ?, features = ?, stock = ?, warranty = ?, specifications = ?, availability = ?, float_fee = ?, wire_base_fee = ?, wire_base_meters = ?, wire_extra_per_meter = ? WHERE id = ?',
       [name, description, price, image, category || 'Automation', features || '', stock || 10, warranty || '1 Year Warranty', specifications || '', availability || 'In Stock', floatFee || 0, baseFee, baseMeters, extraPerMeter, id]
     );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'No product was found with the specified ID to update.' });
-    }
     
     if (offers && Array.isArray(offers)) {
       // For simplicity in updating, if offers array is provided, we can sync it (delete missing, insert new, update existing)

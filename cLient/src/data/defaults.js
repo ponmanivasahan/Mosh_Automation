@@ -194,7 +194,7 @@ export const defaultBillingSettings = {
 };
 
 export const loginPhones = {
-  admin: '0987654321'
+  admin: '951471441'
 };
 
 export const defaultStories = [

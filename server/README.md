@@ -46,7 +46,7 @@ This directory contains the secure Express and MySQL backend for Mosh Automation
 
 The database contains the following tables:
 
-1. **`users`**: Customer registry and admin credentials. Default administrator phone number `0987654321` (password: `adminpassword`).
+1. **`users`**: Customer registry and admin credentials. Default administrator phone number `9514714441` (password: `adminpassword`).
 2. **`products`**: Smart controller catalog data including descriptions, prices, image paths, float fee, and wire configurations.
 3. **`billing_settings`**: Baseline tax rates, sensor costs, and installation parameters.
 4. **`orders`**: Customer transactions header containing shipping details, status, and total amount.

@@ -138,7 +138,7 @@ const LoginPage = () => {
       const data = await response.json();
 
       if (data.success && data.user) {
-        completeUserLogin(data.user);
+        completeUserLogin(data.user, data.token);
       } else {
         setError(data.message || 'Login failed. Please try again.');
       }
@@ -148,11 +148,12 @@ const LoginPage = () => {
     }
   };
 
-  const completeUserLogin = (user) => {
+  const completeUserLogin = (user, token) => {
     const payload = {
       role: user.role,
       name: user.name,
       phone: user.phone,
+      token, // Save JWT token for requests
       loggedInAt: new Date().toISOString()
     };
 
@@ -218,7 +219,7 @@ const LoginPage = () => {
             {error && <p className="error-text">{error}</p>}
 
             <button type="submit" className="create-account-button flex items-center justify-center gap-2">
-              <Smartphone size={18} /> Create Account
+              <Smartphone size={18} /> Login
             </button>
           </form>
 

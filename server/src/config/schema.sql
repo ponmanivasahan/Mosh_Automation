@@ -156,10 +156,10 @@ CREATE TABLE IF NOT EXISTS product_offers (
 -- -- SEED DATA SECTION
 -- -- ==========================================
 
--- -- Seed Admin User (phone: '0987654321', password: 'adminpassword', role: 'admin')
+-- -- Seed Admin User (phone: '9514714441', password: 'adminpassword', role: 'admin')
 -- Bcrypt Hash of 'adminpassword': $2a$12$K.Fw6cEXQ1w7vQJ/M/gHbeVexYFqRscN06mKzF6i608JzWwW39pM2
 INSERT INTO users (name, phone, password_hash, role)
-VALUES ('System Admin', '0987654321', '$2a$12$K.Fw6cEXQ1w7vQJ/M/gHbeVexYFqRscN06mKzF6i608JzWwW39pM2', 'admin')
+VALUES ('System Admin', '9514714441', '$2a$12$K.Fw6cEXQ1w7vQJ/M/gHbeVexYFqRscN06mKzF6i608JzWwW39pM2', 'admin')
 ON DUPLICATE KEY UPDATE name=name;
 
 -- Seed Billing Defaults

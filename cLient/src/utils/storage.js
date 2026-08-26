@@ -298,34 +298,38 @@ export const setBillingSettings = async (settings) => {
 export const getEstimations = () => read(KEYS.estimations, []);
 
 export const addEstimation = async (estimation) => {
+  const res = await fetch(`${API_URL}/api/estimations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(estimation),
+    credentials: 'include'
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Failed to submit estimation inquiry. Please try again.');
+  }
+  
+  // Update local storage only if backend succeeds
   const estimations = getEstimations();
   write(KEYS.estimations, [estimation, ...estimations]);
-  try {
-    await fetch(`${API_URL}/api/estimations`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(estimation),
-      credentials: 'include'
-    });
-  } catch (error) {
-    console.error('Failed to sync estimation inquiry:', error);
-  }
 };
 
 export const updateEstimation = async (estimation) => {
+  const res = await fetch(`${API_URL}/api/estimations/${estimation.id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(estimation),
+    credentials: 'include'
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || 'Failed to update estimation inquiry. Please try again.');
+  }
+
+  // Update local storage only if backend succeeds
   const estimations = getEstimations();
   const next = estimations.map((e) => (e.id === estimation.id ? { ...e, ...estimation } : e));
   write(KEYS.estimations, next);
-  try {
-    await fetch(`${API_URL}/api/estimations/${estimation.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(estimation),
-      credentials: 'include'
-    });
-  } catch (error) {
-    console.error('Failed to sync estimation updates:', error);
-  }
   return next;
 };
 

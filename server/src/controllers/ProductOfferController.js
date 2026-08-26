@@ -53,14 +53,15 @@ const updateOffer = async (req, res) => {
     const isShow = show_offer !== undefined ? show_offer : true;
     const validUntil = valid_until || null;
 
-    const [result] = await pool.query(
+    const [existing] = await pool.query('SELECT id FROM product_offers WHERE id = ? AND product_id = ?', [offerId, productId]);
+    if (!existing.length) {
+      return res.status(404).json({ success: false, message: 'No offer was found to update.' });
+    }
+
+    await pool.query(
       'UPDATE product_offers SET title = ?, description = ?, offer_type = ?, offer_value = ?, valid_until = ?, show_offer = ? WHERE id = ? AND product_id = ?',
       [title, description, offer_type, value, validUntil, isShow, offerId, productId]
     );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'No offer was found to update.' });
-    }
 
     const [rows] = await pool.query('SELECT * FROM product_offers WHERE id = ?', [offerId]);
 

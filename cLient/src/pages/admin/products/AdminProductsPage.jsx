@@ -10,7 +10,9 @@ import {
   Search,
   Upload,
   X,
-  FileText
+  FileText,
+  Gift,
+  Clock
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { getProducts, addProduct, updateProduct, deleteProduct, getDbStatus } from '../../../utils/storage';
@@ -327,12 +329,12 @@ const AdminProductsPage = () => {
                         <div className="mt-2 flex flex-col gap-1.5">
                           {activeOffers.slice(0, 2).map((offer, idx) => (
                             <div key={idx} className="flex flex-col items-start gap-0.5">
-                              <span className="text-[10px] font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full shadow-sm animate-pulse">
-                                🎉 {offer.title}
+                              <span className="text-[10px] font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full shadow-sm animate-pulse flex items-center gap-1">
+                                <Gift size={10} /> {offer.title}
                               </span>
                               {offer.validUntil && (
                                 <span className="text-[9px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full flex items-center gap-1 w-fit">
-                                  ⏳ Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                  <Clock size={10} /> Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                                 </span>
                               )}
                             </div>

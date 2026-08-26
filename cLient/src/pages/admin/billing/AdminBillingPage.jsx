@@ -4,6 +4,7 @@ import AppShell from '../../../components/AppShell';
 import CustomSelect from '../../../components/CustomSelect';
 import { getProducts, getEstimations, getBillingSettings, setBillingSettings, updateEstimation } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
+import { API_URL } from '../../../utils/api';
 import './AdminBillingPage.css';
 
 const adminLinks = [
@@ -31,16 +32,24 @@ const AdminBillingPage = () => {
 
   // Live Syncing feed
   useEffect(() => {
-    const fetchLatest = () => {
+    const fetchLatest = async () => {
       setProducts(getProducts());
-      setEstimations(getEstimations());
+      
+      try {
+        const res = await fetch(`${API_URL}/api/estimations`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.estimations) {
+            setEstimations(data.estimations);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch estimations', err);
+      }
     };
-    const interval = setInterval(fetchLatest, 1500);
-    window.addEventListener('storage', fetchLatest);
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', fetchLatest);
-    };
+    fetchLatest();
+    const interval = setInterval(fetchLatest, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   // Show Toast Auto Dismiss
@@ -73,7 +82,7 @@ const AdminBillingPage = () => {
     setEditingEstId(null);
   };
 
-  const handleUpdateEstimation = (estId) => {
+  const handleUpdateEstimation = async (estId) => {
     const currentEsts = getEstimations();
     const updated = currentEsts.map(e => {
       if (e.id === estId) {
@@ -89,10 +98,14 @@ const AdminBillingPage = () => {
     });
 
     const targetEst = updated.find(e => e.id === estId);
-    updateEstimation(targetEst);
-    setEstimations(updated);
-    setEditingEstId(null);
-    setToast({ type: 'success', message: 'Estimation query updated successfully.' });
+    try {
+      await updateEstimation(targetEst);
+      setEstimations(updated);
+      setEditingEstId(null);
+      setToast({ type: 'success', message: 'Estimation query updated successfully.' });
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Failed to update estimation query.' });
+    }
   };
 
   return (
