@@ -266,6 +266,13 @@ const initDB = async () => {
         console.log("Migration INFO (estimations attachment_url column):", e.message);
       }
 
+      try {
+        await connection.query("ALTER TABLE estimations MODIFY COLUMN query_details LONGTEXT NOT NULL;");
+        console.log("Migration SUCCESS: Modified 'query_details' to LONGTEXT in estimations.");
+      } catch(e) {
+        console.log("Migration INFO (estimations query_details column):", e.message);
+      }
+
       // Add customer_id columns and foreign key constraints
       try {
         await connection.query("ALTER TABLE orders ADD COLUMN customer_id INT DEFAULT NULL;");

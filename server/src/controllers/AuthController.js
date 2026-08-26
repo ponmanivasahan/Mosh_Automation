@@ -66,7 +66,7 @@ const verifyOtp = async (req, res) => {
 
     if (users.length === 0) {
       const cleanedName = name || 'Customer';
-      const role = (cleanedPhone === '8888888888' || cleanedPhone === '9514714441') ? 'admin' : 'customer';
+      const role = (cleanedPhone === '9514714441') ? 'admin' : 'customer';
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(cleanedPhone, salt);
 
@@ -109,7 +109,7 @@ const verifyOtp = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, name: user.name, phone: user.phone, role: user.role },
       process.env.JWT_SECRET || 'mosh_secret_key_2026',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
     );
 
     const isProd = process.env.NODE_ENV === 'production';

@@ -14,8 +14,8 @@ export const AuthProvider = ({ children }) => {
     // Validate session on mount
     fetch(`${API_URL}/api/auth/me`, { credentials: 'include' })
       .then(res => {
-        if (res.status === 401 || res.status === 403) {
-          // Genuinely logged out or expired
+        if (res.status === 401 || res.status === 403 || res.status === 404) {
+          // Genuinely logged out, expired, or user deleted from database
           clearSession();
           setSessionState(null);
           return null;
