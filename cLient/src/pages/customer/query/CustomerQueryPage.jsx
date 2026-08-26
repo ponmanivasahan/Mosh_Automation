@@ -135,7 +135,7 @@ const CustomerQueryPage = () => {
 
   const filteredQueries = useMemo(() => {
     return queries.filter((q) => {
-      const isReplied = !!q.adminResponse || q.stage?.toLowerCase() === 'replied' || q.stage?.toLowerCase() === 'completed';
+      const isReplied = !!q.adminResponse || !!q.attachmentUrl || q.stage?.toLowerCase() === 'replied' || q.stage?.toLowerCase() === 'completed';
       if (activeTab === 'Pending') return !isReplied;
       if (activeTab === 'Completed') return isReplied;
       return true;
@@ -422,8 +422,8 @@ const CustomerQueryPage = () => {
               const count = tab === 'All'
                 ? queries.length
                 : tab === 'Pending'
-                ? queries.filter(q => !q.adminResponse && q.stage !== 'replied' && q.stage !== 'completed').length
-                : queries.filter(q => !!q.adminResponse || q.stage === 'replied' || q.stage === 'completed').length;
+                ? queries.filter(q => !q.adminResponse && !q.attachmentUrl && q.stage !== 'replied' && q.stage !== 'completed').length
+                : queries.filter(q => !!q.adminResponse || !!q.attachmentUrl || q.stage === 'replied' || q.stage === 'completed').length;
               
               return (
                 <button
@@ -451,9 +451,9 @@ const CustomerQueryPage = () => {
           ) : filteredQueries.length ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredQueries.map((q) => {
-                const statusInfo = getStatusConfig(q.adminResponse ? 'replied' : q.stage);
+                const statusInfo = getStatusConfig(q.adminResponse || q.attachmentUrl ? 'replied' : q.stage);
                 const StatusIcon = statusInfo.icon;
-                const isPending = (q.stage?.toLowerCase() === 'requested' || q.stage?.toLowerCase() === 'pending') && !q.seen && !q.adminResponse;
+                const isPending = (q.stage?.toLowerCase() === 'requested' || q.stage?.toLowerCase() === 'pending') && !q.seen && !q.adminResponse && !q.attachmentUrl;
 
                 return (
                   <article key={q.id} className="bg-white border-2 border-slate-100 rounded-xl p-6  flex flex-col justify-between gap-6  hover:border-slate-300 transition duration-300">
@@ -484,10 +484,25 @@ const CustomerQueryPage = () => {
                         <p className="text-slate-700 text-sm font-medium leading-relaxed">{q.requirement}</p>
                       </div>
 
-                      {q.adminResponse && (
+                      {(q.adminResponse || q.attachmentUrl) && (
                         <div className="rounded-2xl bg-teal-50/50 p-3 border border-teal-100/50 text-slate-800 text-xs">
                           <strong className="block text-teal-800 font-bold uppercase tracking-wider text-[9px] mb-1">Admin Response</strong>
-                          <p className="leading-relaxed font-semibold">{q.adminResponse}</p>
+                          {q.adminResponse && <p className="leading-relaxed font-semibold">{q.adminResponse}</p>}
+                          {q.attachmentUrl && (
+                            <div className="mt-3 flex items-center gap-3">
+                              <span className="text-teal-700 font-bold flex items-center gap-1.5">
+                                📄 Estimation.pdf
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <a href={q.attachmentUrl} target="_blank" rel="noreferrer" className="text-[10px] bg-white border border-teal-200 text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition shadow-sm font-bold">
+                                  View PDF
+                                </a>
+                                <a href={q.attachmentUrl} download="Estimation.pdf" className="text-[10px] bg-teal-600 border border-teal-700 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition shadow-sm font-bold">
+                                  Download PDF
+                                </a>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>

@@ -69,6 +69,11 @@ const normalizeProduct = (product) => {
     price: Number(product.price),
     image: img,
     category,
+    features: product.features || '',
+    stock: product.stock !== undefined ? Number(product.stock) : 10,
+    warranty: product.warranty || '1 Year Warranty',
+    specifications: product.specifications || '',
+    availability: product.availability || 'In Stock',
     floatFee: Number(product.float_fee || product.floatFee || 0),
     wire: {
       baseFee: Number(wire.baseFee || 0),

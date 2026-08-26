@@ -2,7 +2,8 @@ import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, MessageSquare, Plus, Edit2, Calendar, Award, Trash2, X, AlertTriangle } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import { addReview, getReviews, updateReview, deleteReview } from '../../../utils/storage';
+import { addReview, updateReview, deleteReview } from '../../../utils/storage';
+import { API_URL } from '../../../utils/api';
 import { useAuth } from '../../../utils/AuthContext';
 import { customerLinks } from '../../../utils/customerLinks';
 import ReviewModal from '../../../components/reviews/ReviewModal';
@@ -10,14 +11,33 @@ import './CustomerReviewsPage.css';
 
 const CustomerReviewsPage = () => {
   const { session } = useAuth();
-  const storedReviews = getReviews();
-  const [reviews, setReviews] = useState(storedReviews);
+  const [reviews, setReviews] = useState([]);
   const [feedback, setFeedback] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
   // Custom Modal Delete Confirmation state
   const [deleteTargetId, setDeleteTargetId] = useState(null);
+
+  // Live Syncing feed
+  useEffect(() => {
+    const fetchLatest = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/reviews`, { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.reviews) {
+            setReviews(data.reviews);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch reviews', err);
+      }
+    };
+    fetchLatest();
+    const interval = setInterval(fetchLatest, 5000); // polling every 5s
+    return () => clearInterval(interval);
+  }, []);
 
   // Auto dismiss toast feedback
   useEffect(() => {
@@ -159,18 +179,23 @@ const CustomerReviewsPage = () => {
             <h3 className="section-title">Recent Feedback ({reviews.length})</h3>
             <div className="reviews-scroll-list">
               {reviews.map((review) => {
-                const isAuthor = session?.name === review.name;
+                const isAuthor = session?.phone === (review.customerPhone || review.phone) || session?.name === (review.customerName || review.name);
+                const dispName = review.customerName || review.name || 'Customer';
+                const dispDate = review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : review.date;
                 return (
                   <article key={review.id} className="premium-review-card">
                     <div className="review-card-top">
                       <div className="author-info">
                         <div className="avatar-placeholder">
-                          {review.name?.[0]?.toUpperCase() || 'C'}
+                          {dispName[0]?.toUpperCase()}
                         </div>
                         <div>
-                          <h4>{review.name}</h4>
+                          <h4>{dispName}</h4>
+                          <span className="text-[10px] text-teal-600 font-bold tracking-wider uppercase block mb-1">
+                            {review.productName || 'General Feedback'}
+                          </span>
                           <span className="review-date">
-                            <Calendar size={11} /> {review.date}
+                            <Calendar size={11} /> {dispDate}
                           </span>
                         </div>
                       </div>
@@ -197,7 +222,7 @@ const CustomerReviewsPage = () => {
                         )}
                       </div>
                     </div>
-                    <p className="review-message-text">{review.message}</p>
+                    <p className="review-message-text">{review.comment || review.message}</p>
                   </article>
                 );
               })}

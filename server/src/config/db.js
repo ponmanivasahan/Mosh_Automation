@@ -259,6 +259,13 @@ const initDB = async () => {
         console.log("Migration INFO (cart_items table):", e.message);
       }
 
+      try {
+        await connection.query("ALTER TABLE estimations ADD COLUMN attachment_url LONGTEXT DEFAULT NULL;");
+        console.log("Migration SUCCESS: Added 'attachment_url' column to estimations.");
+      } catch(e){
+        console.log("Migration INFO (estimations attachment_url column):", e.message);
+      }
+
       // Add customer_id columns and foreign key constraints
       try {
         await connection.query("ALTER TABLE orders ADD COLUMN customer_id INT DEFAULT NULL;");

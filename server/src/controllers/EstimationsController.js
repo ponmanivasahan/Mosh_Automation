@@ -42,6 +42,7 @@ const getEstimations = async (req, res) => {
         complexity: details.complexity || 'medium',
         stage: r.status || details.stage || 'requested',
         adminResponse: details.adminResponse || null,
+        attachmentUrl: r.attachment_url || null,
         seen: Boolean(details.seen || false),
         createdAt: r.created_at
       };
@@ -76,7 +77,7 @@ const createEstimation = async (req, res) => {
 
     const finalCustomerName = name || 'Customer';
     const finalCustomerPhone = phone;
-    const finalStage = stage || 'requested';
+    const finalStage = 'requested';
 
     const queryDetails = {
       productName: productName || '',
@@ -141,16 +142,27 @@ const updateEstimation = async (req, res) => {
       total: req.body.total !== undefined ? req.body.total : (details.total || 0),
       quantity: req.body.quantity !== undefined ? req.body.quantity : (details.quantity || 1),
       complexity: req.body.complexity !== undefined ? req.body.complexity : (details.complexity || 'medium'),
-      stage: req.body.stage !== undefined ? req.body.stage : (row.status || details.stage || 'requested'),
+      stage: details.stage || 'requested',
       adminResponse: req.body.adminResponse !== undefined ? req.body.adminResponse : (details.adminResponse || null),
       seen: req.body.seen !== undefined ? req.body.seen : (details.seen || false)
     };
-
-    const status = req.body.stage || updatedDetails.stage;
+    
+    // Status Logic
+    // If admin replies with text or attachment, set status to 'replied'
+    let status = row.status;
+    let attachmentUrl = req.body.attachmentUrl !== undefined ? req.body.attachmentUrl : row.attachment_url;
+    
+    if (req.user.role === 'admin' && (
+       (req.body.adminResponse && req.body.adminResponse.trim().length > 0) ||
+       (req.body.attachmentUrl && req.body.attachmentUrl.trim().length > 0)
+    )) {
+      status = 'replied';
+      updatedDetails.stage = 'replied';
+    }
 
     await pool.query(
-      'UPDATE estimations SET query_details = ?, status = ? WHERE id = ?',
-      [JSON.stringify(updatedDetails), status, id]
+      'UPDATE estimations SET query_details = ?, status = ?, attachment_url = ? WHERE id = ?',
+      [JSON.stringify(updatedDetails), status, attachmentUrl, id]
     );
 
     return res.json({ success: true, message: 'Inquiry updated successfully.' });

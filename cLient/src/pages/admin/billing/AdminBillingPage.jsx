@@ -27,8 +27,9 @@ const AdminBillingPage = () => {
   // Estimation updating state
   const [editingEstId, setEditingEstId] = useState(null);
   const [editPrice, setEditPrice] = useState('');
-  const [editStage, setEditStage] = useState('');
   const [editResponse, setEditResponse] = useState('');
+  const [editAttachment, setEditAttachment] = useState(null);
+  const [editAttachmentName, setEditAttachmentName] = useState('');
 
   // Live Syncing feed
   useEffect(() => {
@@ -66,13 +67,12 @@ const AdminBillingPage = () => {
     return products.find(p => p.id === selectedProductId);
   }, [selectedProductId, products]);
 
-
-
   const handleStartEdit = (est) => {
     setEditingEstId(est.id);
     setEditPrice(String(est.total));
-    setEditStage(est.stage || 'requested');
     setEditResponse(est.adminResponse || '');
+    setEditAttachment(null);
+    setEditAttachmentName('');
     if (est.productId) {
       setSelectedProductId(est.productId);
     }
@@ -80,31 +80,73 @@ const AdminBillingPage = () => {
 
   const handleCancelEdit = () => {
     setEditingEstId(null);
+    setEditAttachment(null);
+    setEditAttachmentName('');
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      setToast({ type: 'error', message: 'Only PDF files are allowed.' });
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setToast({ type: 'error', message: 'PDF file exceeds the allowed size of 5MB.' });
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setEditAttachment(event.target.result);
+      setEditAttachmentName(file.name);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleUpdateEstimation = async (estId) => {
-    const currentEsts = estimations;
-    const updated = currentEsts.map(e => {
-      if (e.id === estId) {
-        return {
-          ...e,
-          total: Number(editPrice) || e.total,
-          stage: editStage,
-          adminResponse: editResponse.trim(),
-          seen: true // Mark seen when updating
-        };
-      }
-      return e;
-    });
+    if (!editResponse.trim() && !editAttachment) {
+      setToast({ type: 'error', message: 'Please enter a reply or attach a PDF.' });
+      return;
+    }
 
-    const targetEst = updated.find(e => e.id === estId);
+    const currentEsts = estimations;
+    const targetEst = currentEsts.find(e => e.id === estId);
+    if (!targetEst) return;
+
+    const updatedData = {
+      ...targetEst,
+      total: Number(editPrice) || targetEst.total,
+      adminResponse: editResponse.trim(),
+      attachmentUrl: editAttachment || targetEst.attachmentUrl || null,
+      seen: true
+    };
+
     try {
-      await updateEstimation(targetEst);
-      setEstimations(updated);
+      await updateEstimation(updatedData);
+      
+      // Update local state, noting that the backend will automatically set stage to 'replied'
+      const finalEstimations = estimations.map(e => {
+        if (e.id === estId) {
+          return {
+            ...updatedData,
+            stage: 'replied'
+          };
+        }
+        return e;
+      });
+      setEstimations(finalEstimations);
+      
       setEditingEstId(null);
-      setToast({ type: 'success', message: 'Estimation query updated successfully.' });
+      setEditAttachment(null);
+      setEditAttachmentName('');
+      setToast({ type: 'success', message: 'Reply sent successfully.' });
     } catch (err) {
-      setToast({ type: 'error', message: err.message || 'Failed to update estimation query.' });
+      setToast({ type: 'error', message: 'Unable to send reply. Please try again.' });
     }
   };
 
@@ -207,66 +249,76 @@ const AdminBillingPage = () => {
                       </div>
 
                       {/* Admin Response display if not editing */}
-                      {!isEditing && est.adminResponse && (
+                      {!isEditing && (est.adminResponse || est.attachmentUrl) && (
                         <div className="text-xs text-teal-800 bg-teal-50/50 p-3 rounded-lg border border-teal-100">
                           <strong className="block text-[9px] uppercase tracking-wider text-teal-700 mb-1">Admin Response Sent</strong>
-                          <p className="leading-relaxed font-semibold">"{est.adminResponse}"</p>
+                          {est.adminResponse && <p className="leading-relaxed font-semibold">"{est.adminResponse}"</p>}
+                          {est.attachmentUrl && (
+                            <div className="mt-2">
+                              <a
+                                href={est.attachmentUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 bg-white border border-teal-200 text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition shadow-sm font-bold"
+                              >
+                                📄 View Attached PDF
+                              </a>
+                            </div>
+                          )}
                         </div>
                       )}
 
                       {/* Display Edit Fields if in edit mode */}
                       {isEditing ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200 mt-3 space-y-3 md:space-y-0">
-                          <div className="space-y-3">
-                            <div className="form-field-group">
-                              <label className="text-xs font-bold text-slate-700">Estimated Price (₹)</label>
-                              <input
-                                type="number"
-                                value={editPrice}
-                                onChange={(e) => setEditPrice(e.target.value)}
-                                className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none mt-1 font-bold"
-                              />
-                            </div>
-                            <div className="form-field-group">
-                              <label className="text-xs font-bold text-slate-700">Stage Status</label>
-                              <CustomSelect
-                                value={editStage}
-                                onChange={setEditStage}
-                                options={[
-                                  { value: 'requested', label: 'Pending' },
-                                  { value: 'replied', label: 'Replied / Answered' },
-                                  { value: 'closed', label: 'Closed' }
-                                ]}
-                              />
-                            </div>
+                        <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 mt-3 space-y-4">
+                          <div className="form-field-group">
+                            <label className="text-xs font-bold text-slate-700">Estimated Price (₹)</label>
+                            <input
+                              type="number"
+                              value={editPrice}
+                              onChange={(e) => setEditPrice(e.target.value)}
+                              className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none mt-1 font-bold"
+                            />
                           </div>
 
-                          <div className="flex flex-col justify-between space-y-3">
-                            <div className="form-field-group flex-1">
-                              <label className="text-xs font-bold text-slate-700">Write Response Message</label>
-                              <textarea
-                                value={editResponse}
-                                onChange={(e) => setEditResponse(e.target.value)}
-                                placeholder="Write response details, estimate values, setup times..."
-                                className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none mt-1 h-[70px] resize-none font-bold"
-                              />
-                            </div>
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateEstimation(est.id)}
-                                className="flex-1 text-[11px] bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-lg transition"
-                              >
-                                Save Changes
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleCancelEdit}
-                                className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-lg transition border"
-                              >
-                                Cancel
-                              </button>
-                            </div>
+                          <div className="form-field-group">
+                            <label className="text-xs font-bold text-slate-700">Write Response Message</label>
+                            <textarea
+                              value={editResponse}
+                              onChange={(e) => setEditResponse(e.target.value)}
+                              placeholder="Write response details, estimate values, setup times..."
+                              className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none mt-1 h-[70px] resize-none font-bold"
+                            />
+                          </div>
+
+                          <div className="form-field-group">
+                            <label className="text-xs font-bold text-slate-700">Attach PDF (Optional)</label>
+                            <input
+                              type="file"
+                              accept="application/pdf"
+                              onChange={handleFileChange}
+                              className="w-full text-xs mt-1"
+                            />
+                            {editAttachmentName && (
+                              <p className="text-[10px] text-teal-600 font-bold mt-1">Selected: {editAttachmentName}</p>
+                            )}
+                          </div>
+
+                          <div className="flex gap-2 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateEstimation(est.id)}
+                              className="flex-1 text-[11px] bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-lg transition"
+                            >
+                              Send Reply
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelEdit}
+                              className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-lg transition border"
+                            >
+                              Cancel
+                            </button>
                           </div>
                         </div>
                       ) : (
