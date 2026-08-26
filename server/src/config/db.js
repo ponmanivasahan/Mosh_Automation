@@ -246,6 +246,25 @@ const initDB = async () => {
       } catch(e){
         console.log("Migration INFO (products image column):", e.message);
       }
+
+      // Add missing product columns for full Admin Update support
+      const newProductCols = [
+        "ADD COLUMN category VARCHAR(100) DEFAULT 'Automation'",
+        "ADD COLUMN features TEXT DEFAULT NULL",
+        "ADD COLUMN stock INT DEFAULT 10",
+        "ADD COLUMN warranty VARCHAR(100) DEFAULT '1 Year Warranty'",
+        "ADD COLUMN specifications TEXT DEFAULT NULL",
+        "ADD COLUMN availability VARCHAR(50) DEFAULT 'In Stock'"
+      ];
+      for (const col of newProductCols) {
+        try {
+          await connection.query(`ALTER TABLE products ${col};`);
+          console.log(`Migration SUCCESS: Added column to products: ${col}`);
+        } catch(e) {
+          console.log(`Migration INFO (products ${col}):`, e.message);
+        }
+      }
+
       try {
         await connection.query("CREATE TABLE IF NOT EXISTS cart (id INT AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL UNIQUE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
         console.log("Migration SUCCESS: Created 'cart' table.");

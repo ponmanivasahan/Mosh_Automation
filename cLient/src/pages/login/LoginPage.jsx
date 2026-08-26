@@ -85,7 +85,7 @@ const LoginPage = () => {
       if (existing) return existing.role;
     }
 
-    if (value === loginPhones.admin || value === '8888888888' || value === '9514714441') {
+    if (value === '9514714441') {
       return 'admin';
     }
 

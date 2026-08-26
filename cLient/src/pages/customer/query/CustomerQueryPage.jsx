@@ -500,14 +500,11 @@ const CustomerQueryPage = () => {
                           <strong className="block text-teal-800 font-bold uppercase tracking-wider text-[9px] mb-1">Admin Response</strong>
                           {q.adminResponse && <p className="leading-relaxed font-semibold">{q.adminResponse}</p>}
                           {q.attachmentUrl && (
-                            <div className="mt-3 flex items-center gap-3">
+                            <div className="mt-3 flex items-center justify-between bg-teal-50/50 p-2.5 rounded-lg border border-teal-100/50">
                               <span className="text-teal-700 font-bold flex items-center gap-1.5">
-                                📄 Estimation.pdf
+                                Estimation.pdf
                               </span>
                               <div className="flex items-center gap-2">
-                                <button onClick={(e) => { e.preventDefault(); openPdfBase64(q.attachmentUrl); }} className="text-[10px] bg-white border border-teal-200 text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition shadow-sm font-bold">
-                                  View PDF
-                                </button>
                                 <a href={q.attachmentUrl} download="Estimation.pdf" className="text-[10px] bg-teal-600 border border-teal-700 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition shadow-sm font-bold">
                                   Download PDF
                                 </a>

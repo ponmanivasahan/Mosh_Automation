@@ -40,7 +40,7 @@ const getEstimations = async (req, res) => {
         total: Number(details.total !== undefined ? details.total : (r.product_price || 0)),
         quantity: Number(details.quantity || 1),
         complexity: details.complexity || 'medium',
-        stage: r.status || details.stage || 'requested',
+        stage: (details.adminResponse || r.attachment_url) ? 'replied' : (r.status || details.stage || 'requested'),
         adminResponse: details.adminResponse || null,
         attachmentUrl: r.attachment_url || null,
         seen: Boolean(details.seen || false),

@@ -4,6 +4,7 @@ import { Eye, ShoppingCart, Info, Award, Gift, Clock } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { getCart, getProducts, setCart, getDbStatus } from '../../../utils/storage';
 import { formatCurrency } from '../../../utils/format';
+import { API_URL } from '../../../utils/api';
 import { customerLinks } from '../../../utils/customerLinks';
 import './CustomerProductsPage.css';
 import ProductsToolbar from '../../../components/products/ProductsToolbar';
@@ -11,21 +12,47 @@ import ProductModal from '../../../components/products/ProductModal';
 import CheckoutModal from '../../../components/products/CheckoutModal';
 
 const CustomerProductsPage = () => {
-  const [products, setProducts] = useState(() => getProducts());
+  const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState(getCart());
   const [message, setMessage] = useState('');
   const [dbConnected, setDbConnected] = useState(() => getDbStatus());
 
   useEffect(() => {
-    const syncProducts = () => {
-      setProducts(getProducts());
+    let isMounted = true;
+    const fetchLiveProducts = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/products`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && isMounted) {
+            setProducts(data.products || []);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch live products:', err);
+      }
+    };
+
+    fetchLiveProducts();
+
+    const syncCart = () => {
+      setCartItems(getCart());
       setDbConnected(getDbStatus());
     };
-    const interval = setInterval(syncProducts, 1000);
-    window.addEventListener('storage', syncProducts);
+
+    const interval = setInterval(() => {
+      syncCart();
+      fetchLiveProducts();
+    }, 5000);
+
+    window.addEventListener('storage', syncCart);
+    window.addEventListener('mosh_cart_updated', syncCart);
+    
     return () => {
+      isMounted = false;
       clearInterval(interval);
-      window.removeEventListener('storage', syncProducts);
+      window.removeEventListener('storage', syncCart);
+      window.removeEventListener('mosh_cart_updated', syncCart);
     };
   }, []);
   const [filters, setFilters] = useState({ q: '', category: '', sort: 'newest' });

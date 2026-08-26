@@ -51,7 +51,7 @@ const emptyForm = {
 };
 
 const AdminProductsPage = () => {
-  const [products, setProductsState] = useState(() => getProducts());
+  const [products, setProductsState] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [message, setMessage] = useState('');
   const [dbConnected, setDbConnected] = useState(() => getDbStatus());
@@ -68,14 +68,36 @@ const AdminProductsPage = () => {
   const [deletingId, setDeletingId] = useState('');
 
   // Live Syncing feed
+  const fetchLatestProducts = async (isMounted = true) => {
+    try {
+      const res = await fetch(`${API_URL}/api/products`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && isMounted) {
+          setProductsState(data.products || []);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch admin products:', err);
+    }
+  };
+
   useEffect(() => {
+    let isMounted = true;
+    fetchLatestProducts(isMounted);
+
     const fetchLatest = () => {
-      setProductsState(getProducts());
       setDbConnected(getDbStatus());
     };
-    const interval = setInterval(fetchLatest, 1500);
+    
+    const interval = setInterval(() => {
+      fetchLatest();
+      fetchLatestProducts(isMounted);
+    }, 5000);
+
     window.addEventListener('storage', fetchLatest);
     return () => {
+      isMounted = false;
       clearInterval(interval);
       window.removeEventListener('storage', fetchLatest);
     };
@@ -145,7 +167,7 @@ const AdminProductsPage = () => {
 
     try {
       await addProduct(payload);
-      setProductsState(getProducts());
+      await fetchLatestProducts();
       resetRegister();
       setMessage('Product published to catalog successfully!');
       setTimeout(() => setMessage(''), 3000);
@@ -186,7 +208,7 @@ const AdminProductsPage = () => {
 
     try {
       await updateProduct(editingId, payload);
-      setProductsState(getProducts());
+      await fetchLatestProducts();
       resetEdit();
       setMessage('Product changes saved successfully!');
       setTimeout(() => setMessage(''), 3000);
@@ -200,7 +222,7 @@ const AdminProductsPage = () => {
     if (!deletingId) return;
     try {
       await deleteProduct(deletingId);
-      setProductsState(getProducts());
+      await fetchLatestProducts();
       setDeletingId('');
       setMessage('Product removed from catalog.');
       setTimeout(() => setMessage(''), 3000);
