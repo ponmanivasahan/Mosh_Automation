@@ -125,6 +125,7 @@ const verifyOtp = async (req, res) => {
       message: 'OTP verified successfully.',
       token,
       user: {
+        id: user.id,
         name: user.name,
         phone: user.phone,
         role: user.role
@@ -174,24 +175,26 @@ const login = async (req, res) => {
     if (!phone) {
       return res.status(400).json({ success: false, message: 'Please provide phone number.' });
     }
+    
+    const cleanedPhone = (phone || '').replace(/\D/g, '');
 
-    let [users] = await pool.query('SELECT * FROM users WHERE phone = ?', [phone]);
+    let [users] = await pool.query('SELECT * FROM users WHERE phone = ?', [cleanedPhone]);
     let user;
 
     if (users.length === 0) {
       // Auto-register user if not exists
       const cleanedName = name || 'Customer';
-      const role = phone === '9514714441' ? 'admin' : 'customer';
+      const role = cleanedPhone === '9514714441' ? 'admin' : 'customer';
       // Default password hash
       const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(phone, salt);
+      const passwordHash = await bcrypt.hash(cleanedPhone, salt);
 
       const [result] = await pool.query(
         'INSERT INTO users (name, phone, password_hash, role) VALUES (?, ?, ?, ?)',
-        [cleanedName, phone, passwordHash, role]
+        [cleanedName, cleanedPhone, passwordHash, role]
       );
       
-      const [newUsers] = await pool.query('SELECT * FROM users WHERE phone = ?', [phone]);
+      const [newUsers] = await pool.query('SELECT * FROM users WHERE phone = ?', [cleanedPhone]);
       user = newUsers[0];
     } else {
       user = users[0];
@@ -200,7 +203,7 @@ const login = async (req, res) => {
       const params = [];
 
       // Force admin role for 9514714441
-      if (phone === '9514714441' && user.role !== 'admin') {
+      if (cleanedPhone === '9514714441' && user.role !== 'admin') {
         updates.push('role = ?');
         params.push('admin');
         user.role = 'admin';
@@ -216,13 +219,13 @@ const login = async (req, res) => {
       }
 
       if (needsUpdate) {
-        params.push(phone);
+        params.push(cleanedPhone);
         await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE phone = ?`, params);
       }
     }
 
     // Update login timestamp
-    await pool.query('UPDATE users SET logged_in_at = CURRENT_TIMESTAMP WHERE phone = ?', [phone]);
+    await pool.query('UPDATE users SET logged_in_at = CURRENT_TIMESTAMP WHERE phone = ?', [cleanedPhone]);
 
     // Sign JWT
     const token = jwt.sign(
@@ -245,6 +248,7 @@ const login = async (req, res) => {
       message: 'Logged in successfully.',
       token,
       user: {
+        id: user.id,
         name: user.name,
         phone: user.phone,
         role: user.role

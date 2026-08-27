@@ -2,7 +2,7 @@ const { pool } = require('../config/db');
 
 const getEstimations = async (req, res) => {
   try {
-    const { role, phone } = req.user;
+    const { role, id, phone } = req.user;
     let query = `
       SELECT e.*, 
              p.name AS product_name,
@@ -14,8 +14,9 @@ const getEstimations = async (req, res) => {
     const params = [];
 
     if (role !== 'admin') {
-      query += ' WHERE e.customer_phone = ?';
-      params.push(phone);
+      // Use customer_id as permanent identity per requirements, fallback to phone for legacy records
+      query += ' WHERE e.customer_id = ? OR (e.customer_id IS NULL AND e.customer_phone = ?)';
+      params.push(id, phone);
     }
 
     query += ' ORDER BY e.created_at DESC';
@@ -92,9 +93,10 @@ const createEstimation = async (req, res) => {
     };
 
     await pool.query(
-      'INSERT INTO estimations (id, customer_name, customer_phone, selected_product_id, query_details, status) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO estimations (id, customer_id, customer_name, customer_phone, selected_product_id, query_details, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
         id,
+        req.user.id,
         finalCustomerName,
         finalCustomerPhone,
         productId,

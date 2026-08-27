@@ -17,6 +17,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const queriesRoutes = require('./routes/queriesRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
+const customerRoutes = require('./routes/customerRoutes');
 
 const path = require('path');
 const app = express();
@@ -105,6 +106,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/queries', queriesRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/customers', customerRoutes);
 
 // Serve client static assets if present (built into ../public)
 // Prefer serving a server/public folder when deployed

@@ -2,7 +2,7 @@ const { pool } = require('../config/db');
 
 const getOrders = async (req, res) => {
   try {
-    const { role, phone } = req.user;
+    const { role, id, phone } = req.user;
     let query = `
       SELECT o.*, 
              JSON_ARRAYAGG(
@@ -22,8 +22,9 @@ const getOrders = async (req, res) => {
     const params = [];
 
     if (role !== 'admin') {
-      query += ' WHERE o.user_phone = ?';
-      params.push(phone);
+      // Use customer_id as permanent identity per requirements, fallback to phone for legacy records
+      query += ' WHERE o.customer_id = ? OR (o.customer_id IS NULL AND o.user_phone = ?)';
+      params.push(id, phone);
     }
 
     query += ' GROUP BY o.id ORDER BY o.created_at DESC';

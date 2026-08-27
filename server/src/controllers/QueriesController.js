@@ -29,9 +29,10 @@ const createQuery = async (req, res) => {
     };
 
     await pool.query(
-      'INSERT INTO estimations (id, customer_name, customer_phone, selected_product_id, query_details, status) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO estimations (id, customer_id, customer_name, customer_phone, selected_product_id, query_details, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
         id,
+        req.user.id,
         name || 'Customer',
         phone,
         product_id,

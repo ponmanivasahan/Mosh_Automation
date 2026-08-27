@@ -4,12 +4,17 @@ require('dotenv').config();
 // Verify JWT token from HTTP-only Cookie
 const authenticate = async (req, res, next) => {
   try {
-    let token = req.cookies.token;
-    if (!token && req.headers.authorization) {
+    let token = null;
+    if (req.headers.authorization) {
       const parts = req.headers.authorization.split(' ');
       if (parts.length === 2 && parts[0] === 'Bearer') {
         token = parts[1];
       }
+    }
+    
+    // Fallback to cookie if Bearer is missing
+    if (!token && req.cookies && req.cookies.token) {
+      token = req.cookies.token;
     }
 
     if (!token) {
