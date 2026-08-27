@@ -31,7 +31,7 @@ const authenticate = async (req, res, next) => {
 
 // Verify Admin privileges
 const authorizeAdmin = (req, res, next) => {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || !req.user.role || req.user.role.toString().toLowerCase() !== 'admin') {
     return res.status(403).json({ success: false, message: 'Forbidden. Administrative access required.' });
   }
   next();

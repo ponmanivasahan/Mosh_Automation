@@ -21,7 +21,7 @@ const getOrders = async (req, res) => {
     `;
     const params = [];
 
-    if (role !== 'admin') {
+    if (!role || role.toString().toLowerCase() !== 'admin') {
       // Use customer_id as permanent identity per requirements, fallback to phone for legacy records
       query += ' WHERE o.customer_id = ? OR (o.customer_id IS NULL AND o.user_phone = ?)';
       params.push(id, phone);

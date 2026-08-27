@@ -108,6 +108,9 @@ app.use('/api/queries', queriesRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/customers', customerRoutes);
 
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
 // Serve client static assets if present (built into ../public)
 // Prefer serving a server/public folder when deployed
 const staticDir = path.join(__dirname, '..', 'public');

@@ -13,7 +13,7 @@ const getEstimations = async (req, res) => {
     `;
     const params = [];
 
-    if (role !== 'admin') {
+    if (!role || role.toString().toLowerCase() !== 'admin') {
       // Use customer_id as permanent identity per requirements, fallback to phone for legacy records
       query += ' WHERE e.customer_id = ? OR (e.customer_id IS NULL AND e.customer_phone = ?)';
       params.push(id, phone);
@@ -152,10 +152,19 @@ const updateEstimation = async (req, res) => {
     // Status Logic
     // If an adminResponse or attachmentUrl is provided, it must be a reply.
     let status = row.status;
-    let attachmentUrl = req.body.attachmentUrl !== undefined ? req.body.attachmentUrl : row.attachment_url;
+    
+    let attachmentUrl = row.attachment_url;
+    if (req.file) {
+      // If a file was uploaded via multipart/form-data, use its path
+      const hostUrl = req.protocol + '://' + req.get('host');
+      attachmentUrl = `${hostUrl}/uploads/${req.file.filename}`;
+    } else if (req.body.attachmentUrl !== undefined) {
+      // Fallback if sent as string (e.g. from JSON payload if still used)
+      attachmentUrl = req.body.attachmentUrl;
+    }
     
     if ((req.body.adminResponse && req.body.adminResponse.trim().length > 0) ||
-        (req.body.attachmentUrl && req.body.attachmentUrl.trim().length > 0)) {
+        (attachmentUrl && attachmentUrl.trim().length > 0)) {
       status = 'replied';
       updatedDetails.stage = 'replied';
     }
@@ -165,7 +174,7 @@ const updateEstimation = async (req, res) => {
       [JSON.stringify(updatedDetails), status, attachmentUrl, id]
     );
 
-    return res.json({ success: true, message: 'Inquiry updated successfully.' });
+    return res.json({ success: true, message: 'Inquiry updated successfully.', attachmentUrl });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Failed to update inquiry.', error: error.message });
   }

@@ -327,10 +327,27 @@ export const addEstimation = async (estimation) => {
 };
 
 export const updateEstimation = async (estimation) => {
+  let body;
+  let headers = {};
+  
+  if (estimation.attachmentUrl instanceof File) {
+    body = new FormData();
+    body.append('attachmentUrl', estimation.attachmentUrl);
+    
+    Object.keys(estimation).forEach(key => {
+      if (key !== 'attachmentUrl') {
+        body.append(key, typeof estimation[key] === 'object' ? JSON.stringify(estimation[key]) : estimation[key]);
+      }
+    });
+  } else {
+    body = JSON.stringify(estimation);
+    headers['Content-Type'] = 'application/json';
+  }
+
   const res = await fetch(`${API_URL}/api/estimations/${estimation.id}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(estimation),
+    headers,
+    body,
     credentials: 'include'
   });
   const data = await res.json().catch(() => ({}));
@@ -339,8 +356,13 @@ export const updateEstimation = async (estimation) => {
   }
 
   // Update local storage only if backend succeeds
+  const updatedEstimation = { ...estimation };
+  if (data.attachmentUrl) {
+    updatedEstimation.attachmentUrl = data.attachmentUrl;
+  }
+  
   const estimations = getEstimations();
-  const next = estimations.map((e) => (e.id === estimation.id ? { ...e, ...estimation } : e));
+  const next = estimations.map((e) => (e.id === estimation.id ? { ...e, ...updatedEstimation } : e));
   write(KEYS.estimations, next);
   return next;
 };

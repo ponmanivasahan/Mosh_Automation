@@ -101,12 +101,8 @@ const AdminBillingPage = () => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setEditAttachment(event.target.result);
-      setEditAttachmentName(file.name);
-    };
-    reader.readAsDataURL(file);
+    setEditAttachment(file);
+    setEditAttachmentName(file.name);
   };
 
   const handleUpdateEstimation = async (estId) => {
