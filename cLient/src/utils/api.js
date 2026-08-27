@@ -119,8 +119,8 @@ if (typeof window !== 'undefined') {
       // Make the actual request
       const response = await originalFetch.call(this, resource, config);
 
-      // On 403, silently refresh the token and retry once
-      if (response.status === 403 && !_isRefreshing) {
+      // On 401 or 403, silently refresh the token and retry once
+      if ((response.status === 401 || response.status === 403) && !_isRefreshing) {
         const newToken = await _refreshToken();
         if (newToken) {
           // Retry with the fresh token
