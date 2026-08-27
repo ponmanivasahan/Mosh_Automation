@@ -109,7 +109,7 @@ const verifyOtp = async (req, res) => {
     const token = jwt.sign(
       { id: user.id, name: user.name, phone: user.phone, role: user.role },
       process.env.JWT_SECRET || 'mosh_secret_key_2026',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '1d' }
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
     );
 
     const isProd = process.env.NODE_ENV === 'production';
@@ -275,8 +275,26 @@ const getMe = async (req, res) => {
       return res.status(401).json({ success: false, message: 'User not found in database. Session invalid.' });
     }
     const user = rows[0];
+
+    // Issue a fresh token reflecting the current DB role (fixes stale JWTs with wrong role)
+    const freshToken = jwt.sign(
+      { id: user.id, name: user.name, phone: user.phone, role: user.role },
+      process.env.JWT_SECRET || 'mosh_secret_key_2026',
+      { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    );
+
+    // Refresh the cookie as well
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('token', freshToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
     return res.json({
       success: true,
+      token: freshToken,
       user: {
         id: user.id,
         name: user.name,

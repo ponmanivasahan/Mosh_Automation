@@ -24,6 +24,7 @@ import { useAuth } from '../../../utils/AuthContext';
 import { getProducts, getEstimations, addEstimation, updateEstimation, addNotification } from '../../../utils/storage';
 import { formatDateTime } from '../../../utils/format';
 import { customerLinks } from '../../../utils/customerLinks';
+import { API_URL } from '../../../utils/api';
 
 // Static feature list seed for products (Enterprise-level details)
 const getProductFeatures = (productName) => {
