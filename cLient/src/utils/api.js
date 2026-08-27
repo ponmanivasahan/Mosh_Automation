@@ -51,9 +51,44 @@ const getApiUrl = () => {
 
 export const API_URL = getApiUrl();
 
+// Flag to prevent infinite refresh loops
+let _isRefreshing = false;
+
+// Silently re-login to get a fresh JWT with the correct role from DB
+const _refreshToken = async () => {
+  if (_isRefreshing) return null;
+  _isRefreshing = true;
+  try {
+    const rawSession = localStorage.getItem('mosh_session');
+    if (!rawSession) return null;
+    const session = JSON.parse(rawSession);
+    if (!session || !session.phone) return null;
+
+    const res = await originalFetch.call(window, `${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: session.name || 'User', phone: session.phone }),
+      credentials: 'include'
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.success && data.token && data.user) {
+      const updated = { ...session, token: data.token, role: data.user.role };
+      localStorage.setItem('mosh_session', JSON.stringify(updated));
+      return data.token;
+    }
+    return null;
+  } catch {
+    return null;
+  } finally {
+    _isRefreshing = false;
+  }
+};
+
 // Automatically attach Bearer token to all requests heading to our API
+let originalFetch;
 if (typeof window !== 'undefined') {
-  const originalFetch = window.fetch;
+  originalFetch = window.fetch;
   window.fetch = async function () {
     let [resource, config] = arguments;
     
@@ -80,6 +115,31 @@ if (typeof window !== 'undefined') {
       } catch (e) {
         // Ignore JSON parse errors
       }
+
+      // Make the actual request
+      const response = await originalFetch.call(this, resource, config);
+
+      // On 403, silently refresh the token and retry once
+      if (response.status === 403 && !_isRefreshing) {
+        const newToken = await _refreshToken();
+        if (newToken) {
+          // Retry with the fresh token
+          try {
+            config = config || {};
+            if (config.headers instanceof Headers) {
+              config.headers.set('Authorization', `Bearer ${newToken}`);
+            } else {
+              config.headers = {
+                ...config.headers,
+                'Authorization': `Bearer ${newToken}`
+              };
+            }
+          } catch {}
+          return originalFetch.call(this, resource, config);
+        }
+      }
+
+      return response;
     }
     
     return originalFetch.call(this, resource, config);
