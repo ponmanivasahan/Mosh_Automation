@@ -91,6 +91,11 @@ export const getDbStatus = () => {
 
 let initialDataPromise = null;
 
+export const forceUserSync = async () => {
+  initialDataPromise = null; // Clear the cached promise
+  return ensureInitialData(); // Re-run the data fetch with the new auth token
+};
+
 export const ensureInitialData = async () => {
   if (initialDataPromise) return initialDataPromise;
 

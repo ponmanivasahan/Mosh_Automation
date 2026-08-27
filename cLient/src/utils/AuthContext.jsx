@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { clearSession, ensureInitialData, getSession, setSession } from './storage';
+import { clearSession, ensureInitialData, getSession, setSession, forceUserSync } from './storage';
 import { API_URL } from './api';
 
 const AuthContext = createContext(null);
@@ -65,6 +65,8 @@ export const AuthProvider = ({ children }) => {
   const login = async (payload) => {
     setSession(payload);
     setSessionState(payload);
+    // After logging in, force a re-fetch of user-specific data from the server
+    await forceUserSync().catch(err => console.warn('Failed to sync user data after login:', err));
   };
 
   const logout = async () => {
