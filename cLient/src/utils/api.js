@@ -51,13 +51,11 @@ const getApiUrl = () => {
 
 export const API_URL = getApiUrl();
 
-// Flag to prevent infinite refresh loops
-let _isRefreshing = false;
+// Shared promise for concurrent requests waiting on a token refresh
+let refreshPromise = null;
 
 // Silently re-login to get a fresh JWT with the correct role from DB
 const _refreshToken = async () => {
-  if (_isRefreshing) return null;
-  _isRefreshing = true;
   try {
     const rawSession = localStorage.getItem('mosh_session');
     if (!rawSession) return null;
@@ -80,8 +78,6 @@ const _refreshToken = async () => {
     return null;
   } catch {
     return null;
-  } finally {
-    _isRefreshing = false;
   }
 };
 
@@ -100,8 +96,6 @@ if (typeof window !== 'undefined') {
           const session = JSON.parse(rawSession);
           if (session && session.token) {
             config = config || {};
-            
-            // Handle merging if headers is a Headers object
             if (config.headers instanceof Headers) {
               config.headers.set('Authorization', `Bearer ${session.token}`);
             } else {
@@ -112,18 +106,19 @@ if (typeof window !== 'undefined') {
             }
           }
         }
-      } catch (e) {
-        // Ignore JSON parse errors
-      }
+      } catch (e) {}
 
-      // Make the actual request
-      const response = await originalFetch.call(this, resource, config);
+      let response = await originalFetch.call(this, resource, config);
 
-      // On 401 or 403, silently refresh the token and retry once
-      if ((response.status === 401 || response.status === 403) && !_isRefreshing) {
-        const newToken = await _refreshToken();
+      if (response.status === 401 || response.status === 403) {
+        if (!refreshPromise) {
+          refreshPromise = _refreshToken().finally(() => {
+            refreshPromise = null;
+          });
+        }
+        
+        const newToken = await refreshPromise;
         if (newToken) {
-          // Retry with the fresh token
           try {
             config = config || {};
             if (config.headers instanceof Headers) {
