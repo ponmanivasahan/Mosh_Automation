@@ -30,7 +30,6 @@ const createRazorpayOrder = async (req, res) => {
 
     const amountInPaise = Math.round(Number(order.total) * 100);
 
-    const razorpaySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY;
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: razorpaySecret,
