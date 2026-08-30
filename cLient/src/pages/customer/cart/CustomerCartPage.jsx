@@ -32,7 +32,8 @@ import {
   getOrders,
   setCart,
   updateOrder,
-  verifyPayment
+  verifyPayment,
+  forceUserSync
 } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import { customerLinks } from '../../../utils/customerLinks';
@@ -220,9 +221,31 @@ const CustomerCartPage = () => {
         key: data.keyId,
         amount: data.amount,
         currency: data.currency,
-        name: 'Mosh Automation',
+        name: 'MOSH Automation',
         description: `Order ${orderToPay.id}`,
         order_id: data.razorpayOrderId,
+        theme: {
+          color: '#0d9488', // Mosh teal
+          backdrop_color: 'rgba(0,0,0,0.6)'
+        },
+        config: {
+          display: {
+            blocks: {
+              qr_only: {
+                name: 'Scan & Pay via UPI',
+                instruments: [
+                  {
+                    method: 'upi'
+                  }
+                ]
+              }
+            },
+            sequence: ['block.qr_only'],
+            preferences: {
+              show_default_blocks: false // Hides cards, netbanking, wallets, etc.
+            }
+          }
+        },
         handler: async function (response) {
           try {
             setPaymentStatusState('verifying');
@@ -251,7 +274,14 @@ const CustomerCartPage = () => {
 
               clearCart();
               setCartItems([]);
-              // Fetch latest orders
+              
+              // Tell the global storage engine to fetch fresh data from MySQL 
+              // so the dashboard sees the new "Paid" status immediately.
+              if (typeof forceUserSync === 'function') {
+                await forceUserSync();
+              }
+              
+              // Update local component state
               const ordRes = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
               if (ordRes.ok) {
                 const ordData = await ordRes.json();
@@ -271,9 +301,6 @@ const CustomerCartPage = () => {
         prefill: {
           name: session?.name || shippingDetails.name,
           contact: session?.phone
-        },
-        theme: {
-          color: '#0d9488'
         },
         modal: {
           ondismiss: function() {
