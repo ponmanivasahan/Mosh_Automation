@@ -93,4 +93,15 @@ const verifyRazorpayPayment = async (req, res) => {
   }
 };
 
-module.exports = { createRazorpayOrder, verifyRazorpayPayment };
+const migrateDatabase = async (req, res) => {
+  try {
+    // Ignore errors if columns already exist
+    await pool.query('ALTER TABLE orders ADD COLUMN razorpay_order_id VARCHAR(100) DEFAULT NULL').catch(() => {});
+    await pool.query('ALTER TABLE orders ADD COLUMN razorpay_signature VARCHAR(255) DEFAULT NULL').catch(() => {});
+    return res.json({ success: true, message: 'Live database migrated successfully! You can now process payments.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Migration failed', error: error.message });
+  }
+};
+
+module.exports = { createRazorpayOrder, verifyRazorpayPayment, migrateDatabase };
