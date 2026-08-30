@@ -43,6 +43,14 @@ const createRazorpayOrder = async (req, res) => {
 
     const razorpayOrder = await razorpay.orders.create(options);
 
+    // Auto-migrate database on the fly if columns are missing
+    try {
+      await pool.query('ALTER TABLE orders ADD COLUMN razorpay_order_id VARCHAR(100) DEFAULT NULL');
+      await pool.query('ALTER TABLE orders ADD COLUMN razorpay_signature VARCHAR(255) DEFAULT NULL');
+    } catch (e) {
+      // Ignore if columns already exist
+    }
+
     await pool.query('UPDATE orders SET razorpay_order_id = ? WHERE id = ?', [razorpayOrder.id, order.id]);
 
     return res.json({
