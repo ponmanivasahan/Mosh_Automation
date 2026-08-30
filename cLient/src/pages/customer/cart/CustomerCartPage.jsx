@@ -261,11 +261,11 @@ const CustomerCartPage = () => {
               }
             } else {
               setPaymentStatusState('error');
-              setErrorMessage('Payment verification failed.');
+              setErrorMessage(verifyData.message || 'Payment verification failed.');
             }
           } catch (err) {
             setPaymentStatusState('error');
-            setErrorMessage('Payment verification error.');
+            setErrorMessage(`Payment verification error: ${err.message}`);
           }
         },
         prefill: {

@@ -7,9 +7,11 @@ const createRazorpayOrder = async (req, res) => {
     const { orderId } = req.body;
     const { id: customerId } = req.user;
 
-    const razorpaySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY;
+    const rawSecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY;
+    const razorpaySecret = (rawSecret || '').trim();
+    const keyId = (process.env.RAZORPAY_KEY_ID || '').trim();
 
-    if (!process.env.RAZORPAY_KEY_ID || !razorpaySecret) {
+    if (!keyId || !razorpaySecret) {
       return res.status(500).json({ success: false, message: 'Payment gateway not configured. Please contact support.' });
     }
 
@@ -31,7 +33,7 @@ const createRazorpayOrder = async (req, res) => {
     const amountInPaise = Math.round(Number(order.total) * 100);
 
     const razorpay = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
+      key_id: keyId,
       key_secret: razorpaySecret,
     });
 
@@ -39,6 +41,7 @@ const createRazorpayOrder = async (req, res) => {
       amount: amountInPaise,
       currency: 'INR',
       receipt: order.id,
+      payment_capture: 1
     };
 
     const razorpayOrder = await razorpay.orders.create(options);
@@ -55,7 +58,7 @@ const createRazorpayOrder = async (req, res) => {
 
     return res.json({
       success: true,
-      keyId: process.env.RAZORPAY_KEY_ID,
+      keyId: keyId,
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
@@ -74,13 +77,16 @@ const verifyRazorpayPayment = async (req, res) => {
     const { id: customerId } = req.user;
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
-    const razorpaySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY;
+    const rawSecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY;
+    const razorpaySecret = (rawSecret || '').trim();
+
     const expectedSignature = crypto
       .createHmac('sha256', razorpaySecret)
       .update(body.toString())
       .digest('hex');
 
     if (expectedSignature !== razorpay_signature) {
+      console.error('Signature mismatch:', { expectedSignature, razorpay_signature });
       return res.status(400).json({ success: false, message: 'Invalid payment signature' });
     }
 
@@ -91,6 +97,7 @@ const verifyRazorpayPayment = async (req, res) => {
     );
 
     if (result.affectedRows === 0) {
+      console.error('Verification update failed. No rows matched:', { razorpay_order_id, customerId });
       return res.status(404).json({ success: false, message: 'Order not found for verification' });
     }
 
