@@ -7,7 +7,9 @@ const createRazorpayOrder = async (req, res) => {
     const { orderId } = req.body;
     const { id: customerId } = req.user;
 
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    const razorpaySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY;
+
+    if (!process.env.RAZORPAY_KEY_ID || !razorpaySecret) {
       return res.status(500).json({ success: false, message: 'Payment gateway not configured. Please contact support.' });
     }
 
@@ -28,9 +30,10 @@ const createRazorpayOrder = async (req, res) => {
 
     const amountInPaise = Math.round(Number(order.total) * 100);
 
+    const razorpaySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY;
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
+      key_secret: razorpaySecret,
     });
 
     const options = {
@@ -64,8 +67,9 @@ const verifyRazorpayPayment = async (req, res) => {
     const { id: customerId } = req.user;
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
+    const razorpaySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY;
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .createHmac('sha256', razorpaySecret)
       .update(body.toString())
       .digest('hex');
 
