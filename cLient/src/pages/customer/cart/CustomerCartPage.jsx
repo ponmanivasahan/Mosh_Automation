@@ -848,7 +848,7 @@ const CustomerCartPage = () => {
                 <div>
                   <div className="flex items-center gap-2 bg-teal-50 border border-teal-100 rounded-2xl p-3 text-xs text-teal-800 font-semibold">
                     <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-                    Payment will be processed securely via <strong className="ml-1">Razorpay</strong> (UPI, Cards, NetBanking)
+                    Payment will be processed securely via <strong className="ml-1">Razorpay</strong> (UPI)
                   </div>
                 </div>
 
