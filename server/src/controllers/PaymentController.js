@@ -7,6 +7,10 @@ const createRazorpayOrder = async (req, res) => {
     const { orderId } = req.body;
     const { id: customerId } = req.user;
 
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      return res.status(500).json({ success: false, message: 'Payment gateway not configured. Please contact support.' });
+    }
+
     if (!orderId) {
       return res.status(400).json({ success: false, message: 'Order ID is required' });
     }
@@ -49,7 +53,8 @@ const createRazorpayOrder = async (req, res) => {
 
   } catch (error) {
     console.error('Create Razorpay Order Error:', error);
-    return res.status(500).json({ success: false, message: 'Failed to create payment order', error: error.message });
+    const errorDetail = error.error ? error.error.description : error.message;
+    return res.status(500).json({ success: false, message: `Failed to create payment order: ${errorDetail}`, error: errorDetail });
   }
 };
 
@@ -70,7 +75,7 @@ const verifyRazorpayPayment = async (req, res) => {
 
     // Signature valid, update database
     const [result] = await pool.query(
-      'UPDATE orders SET payment_status = ?, status = ?, transaction_id = ?, razorpay_signature = ?, payment_time = CURRENT_TIMESTAMP WHERE razorpay_order_id = ? AND customer_id = ?',
+      `UPDATE orders SET payment_status = ?, status = ?, transaction_id = ?, razorpay_signature = ?, payment_time = CURRENT_TIMESTAMP WHERE razorpay_order_id = ? AND customer_id = ?`,
       ['Paid', 'Paid', razorpay_payment_id, razorpay_signature, razorpay_order_id, customerId]
     );
 
