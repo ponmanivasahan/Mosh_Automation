@@ -36,6 +36,7 @@ import {
 } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import { customerLinks } from '../../../utils/customerLinks';
+import { API_URL } from '../../../utils/api';
 import './CustomerCartPage.css';
 
 const CustomerCartPage = () => {
@@ -216,7 +217,7 @@ const CustomerCartPage = () => {
       }
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Use Razorpay Key ID
+        key: data.keyId,
         amount: data.amount,
         currency: data.currency,
         name: 'Mosh Automation',
