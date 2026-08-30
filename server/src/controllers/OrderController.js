@@ -97,7 +97,7 @@ const createOrder = async (req, res) => {
       const unitPrice = item.unitPrice || (item.total / (item.quantity || 1));
       await connection.query(
         'INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)',
-        [id, item.id || item.productId, item.quantity || 1, unitPrice]
+        [id, item.productId || item.id, item.quantity || 1, unitPrice]
       );
     }
 

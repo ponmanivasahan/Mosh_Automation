@@ -641,7 +641,7 @@ const AdminDashboardPage = () => {
                             <strong className="block text-slate-800 text-xs font-bold mt-0.5">{selectedAdminOrder.paymentMethod || 'Google Pay'}</strong>
                           </div>
                           <div>
-                            <span className="text-[10px] text-slate-500 font-bold uppercase">UPI UTR Ref ID:</span>
+                            <span className="text-[10px] text-slate-500 font-bold uppercase">Payment Ref ID:</span>
                             <strong className="block font-mono text-slate-900 text-xs font-bold mt-0.5">
                               {isModalPaid ? (selectedAdminOrder.transactionId || 'Verified') : 'Not Provided Yet'}
                             </strong>

@@ -1,0 +1,87 @@
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
+const { pool } = require('../config/db');
+
+const createRazorpayOrder = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const { id: customerId } = req.user;
+
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: 'Order ID is required' });
+    }
+
+    // Fetch the order
+    const [orders] = await pool.query('SELECT * FROM orders WHERE id = ? AND customer_id = ?', [orderId, customerId]);
+    if (!orders.length) {
+      return res.status(404).json({ success: false, message: 'Order not found or unauthorized' });
+    }
+
+    const order = orders[0];
+    if (order.payment_status === 'Paid') {
+      return res.status(400).json({ success: false, message: 'Order already paid.' });
+    }
+
+    const amountInPaise = Math.round(Number(order.total) * 100);
+
+    const razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+
+    const options = {
+      amount: amountInPaise,
+      currency: 'INR',
+      receipt: order.id,
+    };
+
+    const razorpayOrder = await razorpay.orders.create(options);
+
+    await pool.query('UPDATE orders SET razorpay_order_id = ? WHERE id = ?', [razorpayOrder.id, order.id]);
+
+    return res.json({
+      success: true,
+      razorpayOrderId: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+    });
+
+  } catch (error) {
+    console.error('Create Razorpay Order Error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to create payment order', error: error.message });
+  }
+};
+
+const verifyRazorpayPayment = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const { id: customerId } = req.user;
+
+    const body = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest('hex');
+
+    if (expectedSignature !== razorpay_signature) {
+      return res.status(400).json({ success: false, message: 'Invalid payment signature' });
+    }
+
+    // Signature valid, update database
+    const [result] = await pool.query(
+      'UPDATE orders SET payment_status = ?, status = ?, transaction_id = ?, razorpay_signature = ?, payment_time = CURRENT_TIMESTAMP WHERE razorpay_order_id = ? AND customer_id = ?',
+      ['Paid', 'Paid', razorpay_payment_id, razorpay_signature, razorpay_order_id, customerId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Order not found for verification' });
+    }
+
+    return res.json({ success: true, message: 'Payment verified successfully' });
+  } catch (error) {
+    console.error('Verify Razorpay Error:', error);
+    return res.status(500).json({ success: false, message: 'Payment verification failed', error: error.message });
+  }
+};
+
+module.exports = { createRazorpayOrder, verifyRazorpayPayment };

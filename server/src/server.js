@@ -107,6 +107,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/queries', queriesRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/payments', require('./routes/paymentRoutes'));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));

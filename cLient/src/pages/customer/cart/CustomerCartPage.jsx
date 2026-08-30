@@ -94,7 +94,7 @@ const CustomerCartPage = () => {
     city: '',
     pincode: '',
     phone: session?.phone || '',
-    paymentMethod: 'Google Pay'
+    paymentMethod: 'Razorpay'
   });
 
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -198,6 +198,103 @@ const CustomerCartPage = () => {
     setShowCheckoutModal(true);
   };
 
+  const startRazorpayPayment = async (orderToPay) => {
+    try {
+      setPaymentStatusState('initializing');
+      setActivePaymentOrder(orderToPay);
+
+      const res = await fetch(`${API_URL}/api/payments/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: orderToPay.id }),
+        credentials: 'include'
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to initialize payment.');
+      }
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID, // Use Razorpay Key ID
+        amount: data.amount,
+        currency: data.currency,
+        name: 'Mosh Automation',
+        description: `Order ${orderToPay.id}`,
+        order_id: data.razorpayOrderId,
+        handler: async function (response) {
+          try {
+            setPaymentStatusState('verifying');
+            const verifyRes = await fetch(`${API_URL}/api/payments/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature
+              }),
+              credentials: 'include'
+            });
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              setPaymentStatusState('success');
+              
+              addNotification({
+                id: `not-${Date.now()}`,
+                title: 'Payment Received & Verified',
+                message: `${session?.name || 'Customer'} paid ${formatCurrency(orderToPay.total)} via Razorpay. Amount credited. Txn ID: ${response.razorpay_payment_id}`,
+                createdAt: new Date().toISOString(),
+                read: false,
+                orderId: orderToPay.id
+              });
+
+              clearCart();
+              setCartItems([]);
+              // Fetch latest orders
+              const ordRes = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
+              if (ordRes.ok) {
+                const ordData = await ordRes.json();
+                if (ordData.success) {
+                  setOrders(ordData.orders.filter((o) => o.customerPhone === session?.phone));
+                }
+              }
+            } else {
+              setPaymentStatusState('error');
+              setErrorMessage('Payment verification failed.');
+            }
+          } catch (err) {
+            setPaymentStatusState('error');
+            setErrorMessage('Payment verification error.');
+          }
+        },
+        prefill: {
+          name: session?.name || shippingDetails.name,
+          contact: session?.phone
+        },
+        theme: {
+          color: '#0d9488'
+        },
+        modal: {
+          ondismiss: function() {
+            setActivePaymentOrder(null);
+            setPaymentStatusState(null);
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response){
+        setPaymentStatusState('error');
+        setErrorMessage(response.error.description);
+      });
+      rzp.open();
+    } catch (err) {
+      setPaymentStatusState(null);
+      setActivePaymentOrder(null);
+      triggerAlert('Payment Error', err.message);
+    }
+  };
+
   const confirmOrder = async (e) => {
     e.preventDefault();
     if (!shippingDetails.name.trim() || !shippingDetails.address.trim() || !shippingDetails.city.trim() || !shippingDetails.pincode.trim()) {
@@ -226,11 +323,8 @@ const CustomerCartPage = () => {
     // Save order status as processing (pending payment)
     try {
       await addOrder(order);
-      setActivePaymentOrder(order);
-      setPaymentTimer(600);
-      setTransactionIdInput('');
-      setPaymentStatusState('paying');
       setShowCheckoutModal(false);
+      startRazorpayPayment(order);
     } catch (err) {
       triggerAlert('Order Failed', err.message || 'Unable to place order. Please try again.');
     }
@@ -514,16 +608,14 @@ const CustomerCartPage = () => {
                           {order.paymentStatus !== 'Paid' && order.status !== 'Paid' && order.status !== 'Cancelled' && order.status !== 'Completed' && (
                             <button
                               type="button"
+                              disabled={paymentStatusState === 'initializing'}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setActivePaymentOrder(order);
-                                setPaymentTimer(600);
-                                setTransactionIdInput('');
-                                setPaymentStatusState('paying');
+                                startRazorpayPayment(order);
                               }}
-                              className="bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold px-3.5 py-2 rounded-xl transition-all shadow-sm"
+                              className="bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold px-3.5 py-2 rounded-xl transition-all shadow-sm disabled:opacity-50"
                             >
-                              Pay Now (UPI)
+                              {paymentStatusState === 'initializing' && activePaymentOrder?.id === order.id ? 'Initializing...' : 'Pay Now'}
                             </button>
                           )}
                           {order.status === 'Dispatched' ? (
@@ -726,17 +818,10 @@ const CustomerCartPage = () => {
                 </div>
 
                 <div>
-                  <CustomSelect
-                    label="Payment Method"
-                    required
-                    value={shippingDetails.paymentMethod}
-                    onChange={(val) => setShippingDetails({ ...shippingDetails, paymentMethod: val })}
-                    options={[
-                      { value: 'Google Pay', label: 'GPay' },
-                      { value: 'PhonePe', label: 'PhonePe' }
-                    ]}
-                    placeholder="Select payment method..."
-                  />
+                  <div className="flex items-center gap-2 bg-teal-50 border border-teal-100 rounded-2xl p-3 text-xs text-teal-800 font-semibold">
+                    <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                    Payment will be processed securely via <strong className="ml-1">Razorpay</strong> (UPI, Cards, NetBanking)
+                  </div>
                 </div>
 
                 <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
@@ -793,6 +878,16 @@ const CustomerCartPage = () => {
                   <span>{formatTimer(paymentTimer)}</span>
                 </div>
               </div>
+
+              {paymentStatusState === 'initializing' && (
+                <div className="w-full flex flex-col items-center justify-center py-8 space-y-4 text-center">
+                  <div className="relative flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full border-4 border-slate-100 border-t-teal-600 animate-spin flex items-center justify-center" />
+                  </div>
+                  <h4 className="font-extrabold text-slate-800 text-lg">Initializing Payment...</h4>
+                  <p className="text-xs text-slate-500 max-w-[260px] leading-relaxed font-semibold">Please wait while we connect to Razorpay.</p>
+                </div>
+              )}
 
               {paymentStatusState === 'paying' && (
                 <div className="w-full flex flex-col items-center text-center space-y-4">
