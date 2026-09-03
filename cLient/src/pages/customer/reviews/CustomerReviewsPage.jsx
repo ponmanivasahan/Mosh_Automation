@@ -1,13 +1,17 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, MessageSquare, Plus, Edit2, Calendar, Award, Trash2, X, AlertTriangle } from 'lucide-react';
+import { Star, MessageSquare, Plus, Edit2, Calendar, Award, Trash2, X, AlertTriangle, Inbox } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { addReview, updateReview, deleteReview } from '../../../utils/storage';
 import { API_URL } from '../../../utils/api';
 import { useAuth } from '../../../utils/AuthContext';
 import { customerLinks } from '../../../utils/customerLinks';
 import ReviewModal from '../../../components/reviews/ReviewModal';
-import './CustomerReviewsPage.css';
+
+import Card from '../../../components/ui/Card';
+import Badge from '../../../components/ui/Badge';
+import Button from '../../../components/ui/Button';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const CustomerReviewsPage = () => {
   const { session } = useAuth();
@@ -16,10 +20,8 @@ const CustomerReviewsPage = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
 
-  // Custom Modal Delete Confirmation state
   const [deleteTargetId, setDeleteTargetId] = useState(null);
 
-  // Live Syncing feed
   useEffect(() => {
     const fetchLatest = async () => {
       try {
@@ -35,11 +37,10 @@ const CustomerReviewsPage = () => {
       }
     };
     fetchLatest();
-    const interval = setInterval(fetchLatest, 5000); // polling every 5s
+    const interval = setInterval(fetchLatest, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  // Auto dismiss toast feedback
   useEffect(() => {
     if (feedback) {
       const timer = setTimeout(() => setFeedback(''), 3000);
@@ -88,7 +89,7 @@ const CustomerReviewsPage = () => {
       alert(err.message || 'Failed to submit review.');
     }
   };
- 
+
   const confirmDelete = async () => {
     if (deleteTargetId) {
       try {
@@ -102,26 +103,22 @@ const CustomerReviewsPage = () => {
     }
   };
 
-  // Render stars helper
-  const renderStars = (rating) => {
-    return (
-      <div className="flex gap-0.5">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            size={14}
-            className={star <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}
-          />
-        ))}
-      </div>
-    );
-  };
+  const renderStars = (rating) => (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          size={16}
+          className={star <= rating ? 'fill-amber-400 text-amber-400' : 'text-neutral-200'}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <AppShell title="Rate & Reviews" links={customerLinks}>
-      <div className="reviews-page-container">
+      <div className="max-w-6xl mx-auto space-y-8 pb-16">
         
-        {/* Toast Alert Feedback */}
         <AnimatePresence>
           {feedback && (
             <motion.div
@@ -136,113 +133,114 @@ const CustomerReviewsPage = () => {
           )}
         </AnimatePresence>
 
-        {/* Page Hero */}
-        <div className="reviews-page-hero">
-          <div className="hero-content">
-            <span className="eyebrow-accent">Customer sentiment</span>
-            <h2>Trusted by teams across the region</h2>
-            <p>Read real experiences and share your feedback to help us continuously improve our automation solutions.</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 bg-neutral-900 rounded-3xl p-8 sm:p-10 text-white flex flex-col justify-between">
+            <div>
+              <span className="text-teal-400 text-sm font-bold tracking-wider uppercase mb-2 block">Customer sentiment</span>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4">Trusted by teams across the region</h2>
+              <p className="text-neutral-400 max-w-lg leading-relaxed mb-8">
+                Read real experiences and share your feedback to help us continuously improve our automation solutions.
+              </p>
+            </div>
+            <div>
+              <Button onClick={openNewReview} className="w-auto">
+                <Plus size={16} className="mr-2" /> Write a Review
+              </Button>
+            </div>
           </div>
           
-          {/* Summary Card with Rating Breakdown */}
-          <div className="review-stats-card">
-            <div className="stats-header">
-              <span className="avg-num">{averageRating}</span>
+          <Card className="p-8 flex flex-col justify-center">
+            <div className="flex items-center gap-4 mb-6">
+              <span className="text-5xl font-black text-neutral-900">{averageRating}</span>
               <div>
                 {renderStars(Math.round(averageRating))}
-                <span className="total-span">{reviews.length} customer reviews</span>
+                <span className="text-sm text-neutral-500 mt-1 block font-medium">{reviews.length} customer reviews</span>
               </div>
             </div>
-            <div className="breakdown-list">
+            <div className="space-y-3">
               {[5, 4, 3, 2, 1].map((stars) => {
                 const count = ratingCounts[stars] || 0;
                 const percentage = reviews.length ? (count / reviews.length) * 100 : 0;
                 return (
-                  <div key={stars} className="breakdown-row">
-                    <span className="star-label">{stars} ★</span>
-                    <div className="bar-track">
-                      <div className="bar-fill" style={{ width: `${percentage}%` }} />
+                  <div key={stars} className="flex items-center gap-3 text-sm font-medium text-neutral-600">
+                    <span className="w-8">{stars} ★</span>
+                    <div className="flex-1 h-2.5 bg-neutral-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-400 rounded-full" style={{ width: `${percentage}%` }} />
                     </div>
-                    <span className="count-label">{count}</span>
+                    <span className="w-8 text-right text-neutral-400">{count}</span>
                   </div>
                 );
               })}
             </div>
-          </div>
+          </Card>
         </div>
 
-        {/* Reviews Layout Grid */}
-        <div className="reviews-layout-grid">
-          
-          {/* Reviews List */}
-          <div className="reviews-list-section">
-            <h3 className="section-title">Recent Feedback ({reviews.length})</h3>
-            <div className="reviews-scroll-list">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-bold text-neutral-900">Recent Feedback</h3>
+            <Badge variant="primary">{reviews.length} Reviews</Badge>
+          </div>
+
+          {reviews.length === 0 ? (
+            <EmptyState 
+              icon={Inbox}
+              title="No Reviews Yet"
+              description="Be the first to share your experience with our products."
+              action={<Button onClick={openNewReview}>Write a Review</Button>}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {reviews.map((review) => {
                 const isAuthor = session?.phone === (review.customerPhone || review.phone) || session?.name === (review.customerName || review.name);
                 const dispName = review.customerName || review.name || 'Customer';
                 const dispDate = review.createdAt ? new Date(review.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : review.date;
                 return (
-                  <article key={review.id} className="premium-review-card">
-                    <div className="review-card-top">
-                      <div className="author-info">
-                        <div className="avatar-placeholder">
+                  <Card key={review.id} className="p-6 flex flex-col h-full" hover>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center font-bold text-lg">
                           {dispName[0]?.toUpperCase()}
                         </div>
                         <div>
-                          <h4>{dispName}</h4>
-                          <span className="text-[10px] text-teal-600 font-bold tracking-wider uppercase block mb-1">
-                            {review.productName || 'General Feedback'}
-                          </span>
-                          <span className="review-date">
-                            <Calendar size={11} /> {dispDate}
-                          </span>
+                          <h4 className="font-bold text-neutral-900 leading-tight">{dispName}</h4>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] text-teal-600 font-bold uppercase tracking-wider bg-teal-50 px-2 py-0.5 rounded-full">
+                              {review.productName || 'General'}
+                            </span>
+                            <span className="text-xs text-neutral-400 flex items-center gap-1">
+                              <Calendar size={10} /> {dispDate}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="rating-edit-row">
+                      <div className="flex flex-col items-end gap-2">
                         {renderStars(review.rating)}
                         {isAuthor && (
-                          <div className="flex gap-2">
+                          <div className="flex gap-1 mt-1">
                             <button
                               onClick={() => openEditReview(review)}
-                              className="btn-edit-review"
-                              title="Edit Review"
+                              className="p-1.5 text-neutral-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition"
+                              title="Edit"
                             >
-                              <Edit2 size={12} />
+                              <Edit2 size={14} />
                             </button>
                             <button
                               onClick={() => setDeleteTargetId(review.id)}
-                              className="btn-edit-review hover:bg-red-500 hover:text-white"
-                              style={{ transition: 'all 0.2s ease' }}
-                              title="Delete Review"
+                              className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                              title="Delete"
                             >
-                              <Trash2 size={12} />
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         )}
                       </div>
                     </div>
-                    <p className="review-message-text">{review.comment || review.message}</p>
-                  </article>
+                    <p className="text-neutral-600 text-sm leading-relaxed flex-1">{review.comment || review.message}</p>
+                  </Card>
                 );
               })}
             </div>
-          </div>
-
-          {/* Inline CTA card to leave review */}
-          <aside className="review-cta-card">
-            <div className="cta-icon-wrap">
-              <MessageSquare size={24} />
-            </div>
-            <h3>Share your experience</h3>
-            <p>
-              Your feedback helps shape the future of Mosh Automation products. Write a review to share your thoughts.
-            </p>
-            <button onClick={openNewReview} className="btn-write-review">
-              <Plus size={16} /> Write a Review
-            </button>
-          </aside>
-
+          )}
         </div>
 
         <ReviewModal
@@ -252,48 +250,40 @@ const CustomerReviewsPage = () => {
           onSave={handleSave}
         />
 
-        {/* Custom Confirmation Modal (No window.confirm popup) */}
         <AnimatePresence>
           {deleteTargetId && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full mx-4 p-6 shadow-2xl space-y-5 text-center relative"
+                className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-5 text-center relative"
               >
                 <button
                   onClick={() => setDeleteTargetId(null)}
-                  className="absolute top-4 right-4 p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 transition"
-                  aria-label="Close modal"
+                  className="absolute top-4 right-4 p-1.5 rounded-xl hover:bg-neutral-100 text-neutral-400 transition"
                 >
                   <X size={16} />
                 </button>
 
-                <div className="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+                <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-2">
                   <AlertTriangle size={24} />
                 </div>
 
-                <div className="space-y-2">
-                  <h3 className="text-lg font-bold text-slate-900">Delete Review?</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed px-4">
+                <div>
+                  <h3 className="text-lg font-bold text-neutral-900 mb-1">Delete Review?</h3>
+                  <p className="text-sm text-neutral-500">
                     Are you sure you want to delete this review? This action cannot be undone.
                   </p>
                 </div>
 
                 <div className="flex items-center gap-3 pt-2">
-                  <button
-                    onClick={() => setDeleteTargetId(null)}
-                    className="flex-1 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
-                  >
+                  <Button variant="secondary" onClick={() => setDeleteTargetId(null)} className="flex-1">
                     Cancel
-                  </button>
-                  <button
-                    onClick={confirmDelete}
-                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm shadow-red-600/10"
-                  >
+                  </Button>
+                  <Button variant="danger" onClick={confirmDelete} className="flex-1">
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </motion.div>
             </div>

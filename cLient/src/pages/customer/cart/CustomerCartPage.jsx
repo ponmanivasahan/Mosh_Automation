@@ -302,6 +302,10 @@ const CustomerCartPage = () => {
           name: session?.name || shippingDetails.name,
           contact: session?.phone
         },
+        hidden: {
+          contact: true,
+          email: true
+        },
         modal: {
           ondismiss: function() {
             setActivePaymentOrder(null);
