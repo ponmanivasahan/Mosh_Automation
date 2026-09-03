@@ -387,33 +387,34 @@ const AdminDashboardPage = () => {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                          <div className="grid grid-cols-2 gap-1.5">
-                            {order.status === 'Paid' ? (
+                          {(order.status !== 'Dispatched' && order.status !== 'Completed' && order.status !== 'Cancelled') && (
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {order.status === 'Paid' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleStatusChange(order.id, 'Dispatched')}
+                                  className="text-[9px] bg-teal-50 border border-teal-200 text-teal-700 py-1.5 rounded-xl font-bold hover:bg-teal-100"
+                                >
+                                  Dispatch
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => handleStatusChange(order.id, 'Processing')}
+                                  className="text-[9px] bg-emerald-600 text-white py-1.5 rounded-xl font-bold hover:bg-emerald-700 shadow-sm"
+                                >
+                                  Approve Order
+                                </button>
+                              )}
                               <button
                                 type="button"
-                                onClick={() => handleStatusChange(order.id, 'Processing')}
-                                className="text-[9px] bg-emerald-600 text-white py-1.5 rounded-xl font-bold hover:bg-emerald-700 shadow-sm"
+                                onClick={() => handleStatusChange(order.id, 'Cancelled')}
+                                className="text-[9px] bg-rose-50 border border-rose-200 text-rose-700 py-1.5 rounded-xl font-bold hover:bg-rose-100"
                               >
-                                Approve Order
+                                Reject / Cancel
                               </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleStatusChange(order.id, 'Dispatched')}
-                                disabled={order.status === 'Dispatched' || order.status === 'Completed'}
-                                className="text-[9px] bg-teal-50 border border-teal-200 text-teal-700 py-1.5 rounded-xl font-bold hover:bg-teal-100 disabled:opacity-50"
-                              >
-                                Dispatch
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleStatusChange(order.id, 'Cancelled')}
-                              className="text-[9px] bg-rose-50 border border-rose-200 text-rose-700 py-1.5 rounded-xl font-bold hover:bg-rose-100"
-                            >
-                              Reject / Cancel
-                            </button>
-                          </div>
+                            </div>
+                          )}
 
                           <button
                             type="button"

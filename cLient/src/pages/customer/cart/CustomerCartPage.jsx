@@ -1253,7 +1253,7 @@ const CustomerCartPage = () => {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={confirmModal.onConfirm}
-                className="flex-1 rounded-2xl bg-teal-650 px-4 py-3 text-xs font-bold text-white hover:bg-teal-700 shadow-md shadow-teal-600/10 transition"
+                className="flex-1 rounded-2xl bg-teal-700 px-4 py-3 text-xs font-bold text-white hover:bg-teal-700 shadow-md shadow-teal-600/10 transition"
               >
                 OK
               </button>
