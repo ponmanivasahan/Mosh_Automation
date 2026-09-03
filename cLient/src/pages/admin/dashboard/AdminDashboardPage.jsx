@@ -596,7 +596,7 @@ const AdminDashboardPage = () => {
 
                 <div className="space-y-4 text-xs font-semibold text-slate-600">
                   {/* Customer info */}
-                  <div className="grid grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
                     <div>
                       <p className="text-[10px] text-slate-400 uppercase font-bold">Customer</p>
                       <p className="text-slate-800 font-bold text-sm mt-0.5">{selectedAdminOrder.customerName}</p>
@@ -627,7 +627,7 @@ const AdminDashboardPage = () => {
                           <CreditCard size={12} className={isModalPaid ? 'text-emerald-600' : 'text-amber-600'} />
                           {isModalPaid ? 'Bank Settlement & Payment Telemetry (Paid)' : 'Payment Telemetry Status (Pending / Unpaid)'}
                         </h4>
-                        <div className="grid grid-cols-2 gap-y-2 text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 sm:gap-y-2 text-xs">
                           <div>
                             <span className="text-[10px] text-slate-500 font-bold uppercase">Payment Status:</span>
                             <strong className={`block text-xs uppercase font-extrabold mt-0.5 flex items-center gap-1 ${

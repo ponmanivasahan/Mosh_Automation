@@ -464,7 +464,7 @@ const AdminProductsPage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Category *</label>
                       <CustomSelect
@@ -484,7 +484,7 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Base Price *</label>
                       <input
@@ -511,7 +511,7 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Stock Count *</label>
                       <input
@@ -524,7 +524,7 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
                     <div className="form-field-group col-span-2">
                       <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider">Estimation Points</h4>
                     </div>
@@ -677,7 +677,7 @@ const AdminProductsPage = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Category *</label>
                       <CustomSelect
@@ -697,7 +697,7 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Base Price *</label>
                       <input
@@ -722,7 +722,7 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Stock Count *</label>
                       <input
@@ -735,7 +735,7 @@ const AdminProductsPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
                     <div className="form-field-group col-span-2">
                       <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider">Estimation Points</h4>
                     </div>

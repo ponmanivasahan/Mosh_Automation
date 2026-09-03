@@ -15,16 +15,18 @@ const ProductsToolbar = ({ filters, onChange, categories }) => {
         />
       </div>
 
-      <CustomSelect
-        value={filters.category}
-        onChange={(val) => onChange({ ...filters, category: val })}
-        placeholder="All Categories"
-        options={[
-          { value: '', label: 'All Categories' },
-          ...categories.map(c => ({ value: c, label: c }))
-        ]}
-        searchable={categories.length > 5}
-      />
+      <div className="w-48 min-w-[180px]">
+        <CustomSelect
+          value={filters.category}
+          onChange={(val) => onChange({ ...filters, category: val })}
+          placeholder="All Categories"
+          options={[
+            { value: '', label: 'All Categories' },
+            ...categories.map(c => ({ value: c, label: c }))
+          ]}
+          searchable={categories.length > 5}
+        />
+      </div>
 
       <button
         onClick={() => onChange({ q: '', category: '', sort: 'newest' })}

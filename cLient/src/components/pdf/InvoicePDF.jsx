@@ -231,6 +231,7 @@ const styles = StyleSheet.create({
 });
 
 const InvoicePDF = ({ invoice }) => {
+  const stampUrl = typeof window !== 'undefined' ? `${window.location.origin}/mosh_stamp.png` : '/mosh_stamp.png';
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -390,8 +391,7 @@ const InvoicePDF = ({ invoice }) => {
               <Text style={styles.bold}>Receiver's Signature</Text>
             </View>
             <View style={styles.sigRight}>
-              <Text style={{textAlign: 'right'}}>For <Text style={styles.bold}>Mosh Automation</Text></Text>
-              <Text style={{textAlign: 'right', marginTop: 30}}>Authorised Signatory</Text>
+              <Image src={stampUrl} style={{ width: 60, height: 60, alignSelf: 'flex-end' }} />
             </View>
           </View>
 

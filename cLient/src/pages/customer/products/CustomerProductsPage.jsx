@@ -1,15 +1,20 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { Eye, ShoppingCart, Info, Award, Gift, Clock } from 'lucide-react';
+import { Eye, ShoppingCart, Info, Award, Gift, Clock, CheckCircle } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import { getCart, getProducts, setCart, getDbStatus } from '../../../utils/storage';
 import { formatCurrency } from '../../../utils/format';
 import { API_URL } from '../../../utils/api';
 import { customerLinks } from '../../../utils/customerLinks';
-import './CustomerProductsPage.css';
 import ProductsToolbar from '../../../components/products/ProductsToolbar';
 import ProductModal from '../../../components/products/ProductModal';
 import CheckoutModal from '../../../components/products/CheckoutModal';
+
+import Card from '../../../components/ui/Card';
+import Badge from '../../../components/ui/Badge';
+import Button from '../../../components/ui/Button';
+import Skeleton from '../../../components/ui/Skeleton';
+import EmptyState from '../../../components/ui/EmptyState';
 
 const CustomerProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -60,6 +65,18 @@ const CustomerProductsPage = () => {
   const [checkoutProduct, setCheckoutProduct] = useState(null);
   const [addedToCart, setAddedToCart] = useState(null);
   const [loading] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.selectedProduct && products.length > 0 && !viewProduct) {
+      const p = products.find(x => x.id === location.state.selectedProduct);
+      if (p) {
+        setViewProduct(p);
+        // Clear state so it doesn't reopen if they refresh
+        window.history.replaceState({}, document.title);
+      }
+    }
+  }, [location.state, products, viewProduct]);
 
   useEffect(() => {
     if (viewProduct) {
@@ -111,6 +128,8 @@ const CustomerProductsPage = () => {
     setCart(nextCart);
     setCartItems(nextCart);
     setMessage(`Added ${product.name} to cart successfully.`);
+    setAddedToCart(product.id);
+    setTimeout(() => setAddedToCart(null), 2000);
   };
 
   const categories = useMemo(() => {
@@ -152,30 +171,32 @@ const CustomerProductsPage = () => {
   return (
     <AppShell title="Products & Solutions" links={customerLinks}>
       {!dbConnected ? (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-rose-50 border border-rose-100 rounded-2xl m-4">
-          <p className="text-sm font-bold text-rose-600">Unable to load data from server. Please try again.</p>
-        </div>
+        <EmptyState 
+          icon={Award}
+          title="Connection Error"
+          description="Unable to load data from server. Please try again."
+        />
       ) : (
-        <div className="customer-products-container">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page header with kicker */}
-        <div className="products-page-header">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
           <div>
-            <p className="eyebrow">Explore solutions</p>
-            <h2>Automation Catalog</h2>
-            <p>Select and order state-of-the-art water level controller solutions tailored for your requirements.</p>
+            <p className="text-teal-600 font-bold uppercase tracking-wider text-sm mb-2">Explore solutions</p>
+            <h2 className="text-3xl font-extrabold text-neutral-900 mb-3">Automation Catalog</h2>
+            <p className="text-neutral-500 max-w-2xl">Select and order state-of-the-art water level controller solutions tailored for your requirements.</p>
           </div>
           <ProductsToolbar filters={filters} onChange={setFilters} categories={categories} />
         </div>
 
         {/* Loading state / Grid state */}
         {loading ? (
-          <div className="new-products-grid">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-80 bg-slate-100 animate-pulse rounded-2xl" />
+              <Skeleton key={i} className="h-96 w-full" variant="rectangular" />
             ))}
           </div>
         ) : filtered.length ? (
-          <div className="new-products-grid">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map((product) => {
               const activeOffers = (product.offers || []).filter(o => {
                 if (!o.showOffer) return false;
@@ -208,52 +229,51 @@ const CustomerProductsPage = () => {
               }
 
               return (
-              <article key={product.id} className="premium-product-card relative flex flex-col h-full bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 overflow-hidden">
-                <div className="card-img-container relative bg-slate-50 overflow-hidden cursor-pointer group" onClick={() => setViewProduct(product)}>
+              <Card key={product.id} hover className="flex flex-col h-full group">
+                <div className="relative bg-neutral-50 overflow-hidden cursor-pointer" onClick={() => setViewProduct(product)}>
                   {/* Overlay Badges */}
                   <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10 pointer-events-none">
-                    <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-teal-700 text-[10px] font-bold rounded-full shadow-sm uppercase tracking-wider border border-teal-100">
+                    <Badge variant="primary" className="shadow-sm">
                       {product.category || 'Automation'}
-                    </span>
+                    </Badge>
                     {activeOffers.length > 0 && (
-                      <span className="px-2.5 py-1 bg-amber-400 text-amber-950 text-[10px] font-bold rounded-full shadow-sm uppercase tracking-wider flex items-center gap-1">
+                      <Badge variant="warning" className="shadow-sm flex items-center gap-1">
                         <Award size={12} /> {activeOffers.length} Offer{activeOffers.length > 1 ? 's' : ''}
-                      </span>
+                      </Badge>
                     )}
                   </div>
                   
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="w-full h-56 object-contain p-6 mix-blend-multiply group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-56 object-contain p-6 mix-blend-multiply group-hover:scale-105 transition-transform duration-500 ease-out"
                     onError={(e) => {
                       e.target.style.display = 'none';
-                      e.target.parentElement.classList.add('card-img-fallback');
                     }}
                   />
                   
                   {/* Hover Quick View */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="bg-white text-slate-800 px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-lg">
+                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="bg-white/90 backdrop-blur-sm text-neutral-800 px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-md">
                       <Eye size={16} /> Quick View
                     </span>
                   </div>
                 </div>
 
-                <div className="card-info flex-1 flex flex-col p-5">
-                  <h3 className="card-title text-lg font-bold text-slate-800 line-clamp-1 group-hover:text-teal-600 transition-colors">{product.name}</h3>
-                  <p className="card-desc text-sm text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">{product.description}</p>
+                <div className="flex-1 flex flex-col p-5">
+                  <h3 className="text-lg font-bold text-neutral-900 line-clamp-1 group-hover:text-teal-700 transition-colors">{product.name}</h3>
+                  <p className="text-sm text-neutral-500 mt-2 line-clamp-2 leading-relaxed">{product.description}</p>
                   
                   {activeOffers.length > 0 && (
-                    <div className="mt-3 flex flex-col gap-1.5">
+                    <div className="mt-4 flex flex-col gap-2">
                         {activeOffers.map((offer, idx) => (
                           <div key={idx} className="flex flex-col items-start gap-1">
-                            <span className="text-[10px] sm:text-xs font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-md shadow-sm animate-pulse flex items-center gap-1">
+                            <span className="text-xs font-semibold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-teal-100">
                               <Gift size={12} /> {offer.title}
                             </span>
                             {offer.validUntil && (
-                              <span className="text-[9px] sm:text-[10px] text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-md flex items-center gap-1">
-                                <Clock size={12} /> Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              <span className="text-[10px] text-red-600 font-medium bg-red-50 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <Clock size={10} /> Ends: {new Date(offer.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                               </span>
                             )}
                           </div>
@@ -262,77 +282,73 @@ const CustomerProductsPage = () => {
                   )}
                 </div>
 
-                <div className="card-footer p-5 pt-0 mt-auto border-t border-slate-100/60">
-                  <div className="card-price-row flex flex-wrap items-baseline gap-2 pt-4 mb-4">
+                <div className="p-5 pt-0 mt-auto border-t border-neutral-100">
+                  <div className="flex flex-wrap items-baseline gap-2 pt-4 mb-5">
                     {promoPrice ? (
                       <>
-                        <span className="text-2xl font-black text-teal-600 tracking-tight">
+                        <span className="text-2xl font-black text-teal-700 tracking-tight">
                           {formatCurrency(promoPrice)}
                         </span>
-                        <span className="text-sm text-slate-400 line-through decoration-rose-500 decoration-2 font-bold">
+                        <span className="text-sm text-neutral-400 line-through decoration-red-400 decoration-2 font-semibold">
                           {formatCurrency(product.price)}
                         </span>
                         {discountOffer && (
-                          <span className="text-[10px] font-bold text-rose-500 bg-rose-50 border border-rose-100 px-1.5 py-0.5 rounded ml-auto">
+                          <span className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-1 rounded-md ml-auto">
                             {discountOffer.type === 'Percentage Discount' ? `${discountOffer.value}% OFF` : `FLAT ${formatCurrency(discountOffer.value)} OFF`}
                           </span>
                         )}
                       </>
                     ) : (
-                      <span className="text-2xl font-black text-teal-600 tracking-tight">
+                      <span className="text-2xl font-black text-teal-700 tracking-tight">
                         {formatCurrency(product.price)}
                       </span>
                     )}
                   </div>
 
-                  <div className="card-btn-group flex gap-2">
-                    <button
+                  <div className="flex gap-3">
+                    <Button
+                      variant="secondary"
                       onClick={() => setViewProduct(product)}
-                      className="flex-1 py-2.5 px-3 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold rounded-xl border border-slate-200 transition-colors text-sm flex items-center justify-center gap-1.5"
-                      type="button"
+                      className="flex-1"
                     >
-                      <Eye size={16} /> Details
-                    </button>
-                    <button
+                      <Eye size={16} className="mr-1.5" /> Details
+                    </Button>
+                    <Button
+                      variant={addedToCart === product.id ? "secondary" : "primary"}
                       onClick={() => addToCart(product)}
                       disabled={addedToCart === product.id}
-                      className={`flex-1 py-2.5 px-3 font-semibold rounded-xl transition-all duration-300 text-sm flex items-center justify-center gap-1.5 ${
-                        addedToCart === product.id
-                          ? 'bg-green-500 text-white shadow-lg shadow-green-500/30'
-                          : 'bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20'
-                      }`}
-                      type="button"
+                      className={addedToCart === product.id ? "flex-1 !bg-green-600 !text-white !border-transparent hover:!bg-green-700" : "flex-1"}
                     >
                       {addedToCart === product.id ? (
-                        <><CheckCircle size={16} /> Added</>
+                        <><CheckCircle size={16} className="mr-1.5" /> Added</>
                       ) : (
-                        <><ShoppingCart size={16} /> Add to Cart</>
+                        <><ShoppingCart size={16} className="mr-1.5" /> Add</>
                       )}
-                    </button>
+                    </Button>
                   </div>
                 </div>
-              </article>
+              </Card>
               );
             })}
           </div>
         ) : (
-          <div className="text-center py-20 bg-white border border-slate-100 rounded-3xl p-8">
-            <h3 className="text-xl font-bold text-slate-800">No Products Found</h3>
-            <p className="mt-2 text-slate-500">We couldn't find matches for current filters.</p>
-            <button
-              onClick={() => setFilters({ q: '', category: '', sort: 'newest' })}
-              className="mt-6 btn btn-outline"
-            >
-              Reset Filters
-            </button>
-          </div>
+          <EmptyState 
+            icon={Info}
+            title="No Products Found"
+            description="We couldn't find matches for current filters."
+            action={
+              <Button variant="secondary" onClick={() => setFilters({ q: '', category: '', sort: 'newest' })}>
+                Reset Filters
+              </Button>
+            }
+          />
         )}
 
         {/* Alert Notification Toast */}
         {message && (
-          <div className="toast-alert">
-            <Award size={18} />
-            <span>{message}</span>
+          <div className="fixed bottom-6 right-6 bg-teal-800 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5">
+            <Award size={20} className="text-teal-200" />
+            <span className="font-medium text-sm">{message}</span>
           </div>
         )}
 

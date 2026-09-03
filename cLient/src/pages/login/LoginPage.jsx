@@ -194,7 +194,12 @@ const LoginPage = () => {
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (/^[a-zA-Z\s]*$/.test(val)) {
+                    setName(val);
+                  }
+                }}
                 placeholder="Enter your user name"
                 autoComplete="name"
                 required

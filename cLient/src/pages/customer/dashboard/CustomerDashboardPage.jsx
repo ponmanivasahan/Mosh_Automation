@@ -1,486 +1,343 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Package, ShoppingCart, Star, TrendingUp, BarChart3, PieChart } from 'lucide-react';
-import AppShell from '../../../components/AppShell';
-import { getCart, getProducts, getOrders, getReviews, addReview } from '../../../utils/storage';
-import { formatCurrency } from '../../../utils/format';
-import { API_URL } from '../../../utils/api';
-import ReviewModal from '../../../components/reviews/ReviewModal';
-import { customerLinks } from '../../../utils/customerLinks';
-import './CustomerDashboardPage.css';
+import React, { useEffect, useState, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { Package, ShoppingCart, TrendingUp, HelpCircle, ChevronRight, Clock, Star, Award } from "lucide-react";
+import AppShell from "../../../components/AppShell";
+import { getOrders, getReviews } from "../../../utils/storage";
+import { formatCurrency } from "../../../utils/format";
+import { API_URL } from "../../../utils/api";
+import Card from "../../../components/ui/Card";
+import Badge from "../../../components/ui/Badge";
+import Skeleton from "../../../components/ui/Skeleton";
+import { customerLinks } from "../../../utils/customerLinks";
+import { useAuth } from "../../../utils/AuthContext";
 
-/* ── Simulated sales data per product (seeded from price to feel realistic) ── */
-const getSalesData = (products, orders) => {
-  const salesMap = {};
-  orders
-    .filter(o => o.status !== 'Cancelled')
-    .forEach(o => {
-      if (Array.isArray(o.items)) {
-        o.items.forEach(item => {
-          const pId = item.productId;
-          if (pId) {
-            salesMap[pId] = (salesMap[pId] || 0) + Number(item.quantity || 1);
-          }
-        });
-      }
-    });
-
-  return products.map((p, i) => {
-    const baseOverallSales = Math.max(8, Math.round((p.price / 200) + (i % 5) * 7 + ((i * 17) % 13)));
-    const liveSales = salesMap[p.id] || 0;
-    return {
-      id: p.id,
-      name: p.name,
-      shortName: p.name.length > 18 ? p.name.slice(0, 16) + '…' : p.name,
-      image: p.image,
-      price: p.price,
-      description: p.description,
-      sales: baseOverallSales + liveSales,
-      rating: (4.2 + ((i * 3) % 8) * 0.1).toFixed(1),
-    };
-  });
-};
-
-/* ── Colour palette for pie chart slices ── */
-const PIE_COLORS = [
-  'teal',
-  'deepskyblue',
-  'blueviolet',
-  'orange',
-  'crimson',
-  'limegreen',
-  'hotpink',
-  'dodgerblue',
-  'tomato',
-  'gold',
-  'mediumpurple',
-  'turquoise',
-  'coral'
-];
-
-/* ── Pure SVG Pie Chart ── */
-const PieChartSVG = ({ data }) => {
-  const total = data.reduce((s, d) => s + d.sales, 0);
-  const size = 220;
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = 85;
-
-  if (total === 0) {
-    return (
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="mx-auto">
-        <circle cx={cx} cy={cy} r={r} fill="#f1f5f9" stroke="#e2e8f0" strokeWidth="2" />
-        <circle cx={cx} cy={cy} r={r - 30} fill="#ffffff" />
-        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold fill-slate-400">
-          No Sales Yet
-        </text>
-      </svg>
-    );
-  }
-
-  let cumulative = 0;
-
-  const slices = data.map((d, i) => {
-    const fraction = d.sales / total;
-    const startAngle = cumulative * 2 * Math.PI - Math.PI / 2;
-    cumulative += fraction;
-    const endAngle = cumulative * 2 * Math.PI - Math.PI / 2;
-
-    const largeArc = fraction > 0.5 ? 1 : 0;
-    const x1 = cx + r * Math.cos(startAngle);
-    const y1 = cy + r * Math.sin(startAngle);
-    const x2 = cx + r * Math.cos(endAngle);
-    const y2 = cy + r * Math.sin(endAngle);
-
-    const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-
-    return (
-      <path
-        key={d.id}
-        d={path}
-        fill={PIE_COLORS[i % PIE_COLORS.length]}
-        stroke="#ffffff"
-        strokeWidth="2"
-        className="pie-slice"
-      >
-        <title>{d.shortName}: {d.sales} units ({(fraction * 100).toFixed(1)}%)</title>
-      </path>
-    );
-  });
-
-  return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="pie-svg">
-      {slices}
-      <circle cx={cx} cy={cy} r="42" fill="white" />
-      <text x={cx} y={cy - 6} textAnchor="middle" className="pie-center-label">
-        {total}
-      </text>
-      <text x={cx} y={cy + 12} textAnchor="middle" className="pie-center-sub">
-        Total Units
-      </text>
-    </svg>
-  );
-};
-
-/* ── Pure SVG Bar Chart ── */
-const BarChartSVG = ({ data }) => {
-  const maxSales = Math.max(...data.map((d) => d.sales));
-  const barWidth = 36;
-  const gap = 16;
-  const chartHeight = 200;
-  const chartWidth = data.length * (barWidth + gap) + gap;
-  const labelHeight = 60;
-
-  return (
-    <svg
-      viewBox={`0 0 ${chartWidth} ${chartHeight + labelHeight + 10}`}
-      className="bar-svg"
-      preserveAspectRatio="xMidYMid meet"
-    >
-      {/* Grid lines */}
-      {[0.25, 0.5, 0.75, 1].map((frac) => (
-        <line
-          key={frac}
-          x1={0}
-          x2={chartWidth}
-          y1={chartHeight - chartHeight * frac}
-          y2={chartHeight - chartHeight * frac}
-          stroke="rgba(15,23,42,0.06)"
-          strokeDasharray="4 4"
+/* ─── Star Rating component ─── */
+const StarRating = ({ rating, count }) => (
+  <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <Star
+          key={s}
+          size={13}
+          className={s <= Math.round(rating) ? "text-amber-400 fill-amber-400" : "text-neutral-200 fill-neutral-200"}
         />
       ))}
+    </div>
+    <span className="text-xs text-neutral-500 font-medium">{Number(rating).toFixed(1)}</span>
+    {count > 0 && <span className="text-xs text-neutral-400">({count})</span>}
+  </div>
+);
 
-      {data.map((d, i) => {
-        const barHeight = (d.sales / maxSales) * (chartHeight - 20);
-        const x = gap + i * (barWidth + gap);
-        const y = chartHeight - barHeight;
-
-        return (
-          <g key={d.id} className="bar-group">
-            {/* Gradient bar */}
-            <defs>
-              <linearGradient id={`bar-grad-${i}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor={PIE_COLORS[i % PIE_COLORS.length]} />
-                <stop offset="100%" stopColor={PIE_COLORS[i % PIE_COLORS.length]} stopOpacity="0.6" />
-              </linearGradient>
-            </defs>
-            <rect
-              x={x}
-              y={y}
-              width={barWidth}
-              height={barHeight}
-              rx="6"
-              fill={`url(#bar-grad-${i})`}
-              className="bar-rect"
-            >
-              <title>{d.shortName}: {d.sales} units</title>
-            </rect>
-
-            {/* Sales count on top of bar */}
-            <text
-              x={x + barWidth / 2}
-              y={y - 6}
-              textAnchor="middle"
-              className="bar-value"
-            >
-              {d.sales}
-            </text>
-
-            {/* Product name label (rotated) */}
-            <text
-              x={x + barWidth / 2}
-              y={chartHeight + 12}
-              textAnchor="end"
-              transform={`rotate(-45, ${x + barWidth / 2}, ${chartHeight + 12})`}
-              className="bar-label"
-            >
-              {d.name.length > 14 ? d.name.slice(0, 12) + '…' : d.name}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
-  );
-};
-
-/* ──────── Main Dashboard Component ──────── */
 const CustomerDashboardPage = () => {
-  const [products, setProducts] = useState(() => getProducts());
-  const [cartItems, setCartItems] = useState(() => getCart());
+  const { session } = useAuth();
   const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const scrollRef = useRef(null);
-  const [hoveredProduct, setHoveredProduct] = useState(null);
-  
-  const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [reviewTargetProduct, setReviewTargetProduct] = useState(null);
-  const [toast, setToast] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-    const updateStats = async () => {
-      setProducts(getProducts());
-      setCartItems(getCart());
-      
+    const fetchData = async () => {
       try {
-        const [ordersRes, reviewsRes] = await Promise.all([
-          fetch(`${API_URL}/api/orders`, { credentials: 'include' }),
-          fetch(`${API_URL}/api/reviews`, { credentials: 'include' })
-        ]);
-        
-        if (ordersRes.ok) {
-          const ordersData = await ordersRes.json();
-          if (ordersData.success && isMounted) setOrders(ordersData.orders);
-        }
-        if (reviewsRes.ok) {
-          const reviewsData = await reviewsRes.json();
-          if (reviewsData.success && isMounted) setReviews(reviewsData.reviews);
+        const res = await fetch(`${API_URL}/api/products`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) setProducts(data.products || []);
         }
       } catch (err) {
-        console.error('Failed to fetch stats from API', err);
+        console.error("Failed to fetch products:", err);
       }
+      const allReviews = getReviews();
+      setReviews(allReviews);
+      const allOrders = getOrders();
+      const userOrders = allOrders.filter((o) => o.customerPhone === session?.phone);
+      setOrders(userOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      setIsLoading(false);
     };
+    fetchData();
+  }, [session]);
 
-    updateStats();
-    // Live update interval
-    const interval = setInterval(updateStats, 5000);
+  const stats = useMemo(() => {
+    const active = orders.filter((o) => ["Pending", "Processing"].includes(o.status));
+    const totalSpent = orders
+      .filter((o) => o.paymentStatus === "Paid")
+      .reduce((acc, curr) => acc + Number(curr.total), 0);
+    return [
+      { label: "Total Orders", value: orders.length, icon: ShoppingCart, bg: "bg-teal-50", color: "text-teal-700" },
+      { label: "Active Orders", value: active.length, icon: Clock, bg: "bg-amber-50", color: "text-amber-600" },
+      { label: "Total Spent", value: formatCurrency(totalSpent), icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
+    ];
+  }, [orders]);
 
-    // Storage event listeners for immediate cart updates
-    const handleStorage = () => {
-      setProducts(getProducts());
-      setCartItems(getCart());
-    };
-    window.addEventListener('storage', handleStorage);
-    window.addEventListener('mosh_cart_updated', handleStorage);
+  const recentOrders = orders.slice(0, 4);
 
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorage);
-      window.removeEventListener('mosh_cart_updated', handleStorage);
-    };
+  /* Build sold count from all orders */
+  const salesMap = useMemo(() => {
+    const map = {};
+    getOrders()
+      .filter((o) => o.status !== "Cancelled")
+      .forEach((o) => {
+        (o.items || []).forEach((item) => {
+          if (item.productId) map[item.productId] = (map[item.productId] || 0) + Number(item.quantity || 1);
+        });
+      });
+    return map;
   }, []);
 
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(''), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
-
-  const handleSaveReview = async (reviewData) => {
-    try {
-      await addReview({
-        ...reviewData,
-        productName: reviewData.productName || reviewTargetProduct?.name || products[0]?.name
-      });
-      setReviewModalOpen(false);
-      setToast('Review submitted successfully!');
-    } catch (err) {
-      setToast(err.message || 'Failed to submit review.');
-    }
-  };
-
-  const salesData = useMemo(() => getSalesData(products, orders), [products, orders]);
-
-  const cartCount = useMemo(
-    () => cartItems.reduce((total, item) => total + Number(item.quantity || 1), 0),
-    [cartItems]
-  );
-
-  const cartTotal = useMemo(
-    () => cartItems.reduce((sum, item) => sum + Number(item.total || 0), 0),
-    [cartItems]
-  );
-
-  const totalRevenue = useMemo(
-    () => orders.reduce((acc, o) => acc + Number(o.total || 0), 0),
-    [orders]
-  );
-
-  const avgRating = useMemo(() => {
-    if (!reviews.length) return '4.8';
-    const sum = reviews.reduce((a, r) => a + Number(r.rating || 0), 0);
-    return (sum / reviews.length).toFixed(1);
+  /* Build rating map from reviews (match by product name) */
+  const ratingMap = useMemo(() => {
+    const map = {};
+    reviews.forEach((r) => {
+      const key = (r.productName || "").toLowerCase().trim();
+      if (!map[key]) map[key] = { sum: 0, count: 0 };
+      map[key].sum += Number(r.rating || 0);
+      map[key].count += 1;
+    });
+    return map;
   }, [reviews]);
 
-  /* Sorted by sales desc for "most reliable" */
-  const reliableProducts = useMemo(
-    () => [...salesData].sort((a, b) => b.sales - a.sales),
-    [salesData]
-  );
-
-  /* Horizontal scroll helpers */
-  const scroll = (dir) => {
-    if (!scrollRef.current) return;
-    const amount = 320;
-    scrollRef.current.scrollBy({ left: dir === 'right' ? amount : -amount, behavior: 'smooth' });
+  const getRating = (productName) => {
+    const key = (productName || "").toLowerCase().trim();
+    const entry = ratingMap[key];
+    if (!entry || entry.count === 0) return null;
+    return { avg: entry.sum / entry.count, count: entry.count };
   };
 
-  /* Take top 8 for charts to keep them readable */
-  const chartData = reliableProducts.slice(0, 8);
+  /* Sort all products by sales */
+  const topSellingProducts = useMemo(() =>
+    [...products]
+      .sort((a, b) => (salesMap[b.id] || 0) - (salesMap[a.id] || 0)),
+    [products, salesMap]
+  );
+
+  /* Offer info using correct field names */
+  const getOfferInfo = (product) => {
+    const activeOffers = (product.offers || []).filter((o) => o.showOffer);
+    const offerCount = activeOffers.length;
+    for (const offer of activeOffers) {
+      if (offer.type === "Percentage Discount" && Number(offer.value) > 0) {
+        const dp = Math.round(product.price - product.price * (Number(offer.value) / 100));
+        if (dp > 0) return { discountOffer: offer, discountedPrice: dp, badgeText: `${offer.value}% OFF`, offerCount };
+      } else if (offer.type === "Flat Discount" && Number(offer.value) > 0) {
+        const dp = Math.round(product.price - Number(offer.value));
+        if (dp > 0) return { discountOffer: offer, discountedPrice: dp, badgeText: `FLAT ${formatCurrency(offer.value)} OFF`, offerCount };
+      }
+    }
+    return { discountOffer: null, discountedPrice: null, badgeText: null, offerCount };
+  };
+
+  const statusVariant = (s) =>
+    s === "Completed" || s === "Paid" ? "success" : s === "Pending" ? "warning" : "default";
 
   return (
-    <AppShell title="Customer Dashboard" links={customerLinks}>
-      {/* ── Stat Cards Row ── */}
-      <section className="dash-stats-row">
-        <article className="dash-stat-card dash-stat-products">
-          <div className="dash-stat-icon">
-            <Package size={22} />
-          </div>
-          <div>
-            <p className="dash-stat-label">Total Products</p>
-            <h3 className="dash-stat-value">{products.length}</h3>
-          </div>
-        </article>
-        <article className="dash-stat-card dash-stat-cart">
-          <div className="dash-stat-icon">
-            <ShoppingCart size={22} />
-          </div>
-          <div>
-            <p className="dash-stat-label">Cart Items</p>
-            <h3 className="dash-stat-value">{cartCount}</h3>
-            <span className="dash-stat-sub">{formatCurrency(cartTotal)}</span>
-          </div>
-        </article>
-        <article className="dash-stat-card dash-stat-rating">
-          <div className="dash-stat-icon">
-            <Star size={22} />
-          </div>
-          <div>
-            <p className="dash-stat-label">Avg. Rating</p>
-            <h3 className="dash-stat-value">{avgRating}<span className="dash-stat-out-of"> / 5</span></h3>
-            <span className="dash-stat-sub">{reviews.length || 128} reviews</span>
-          </div>
-        </article>
-        <article className="dash-stat-card dash-stat-revenue">
-          <div className="dash-stat-icon">
-            <TrendingUp size={22} />
-          </div>
-          <div>
-            <p className="dash-stat-label">Total Revenue</p>
-            <h3 className="dash-stat-value">{formatCurrency(totalRevenue || 48600)}</h3>
-            <span className="dash-stat-sub pill-green">+18% this month</span>
-          </div>
-        </article>
-      </section>
+    <AppShell title="Dashboard" links={customerLinks}>
+      <div className="space-y-6 animate-fade-in">
 
-      {/* ── Most Reliable Products — Horizontal Scroll ── */}
-      <section className="dash-section">
-        <div className="dash-section-head">
+        {/* Welcome */}
+        <div className="flex items-center justify-between">
           <div>
-            <p className="eyebrow">Most Reliable Products</p>
-            <h2>Top Selling Automation Solutions</h2>
+            <h2 className="text-xl font-bold text-neutral-900">
+              Welcome back, {session?.name || "Customer"} <span className="inline-block animate-wave origin-[70%_70%]">👋</span>
+            </h2>
+            <p className="text-sm text-neutral-500 mt-0.5">Here is your account overview.</p>
           </div>
-          <div className="scroll-controls">
-            <button className="scroll-btn" onClick={() => scroll('left')} aria-label="Scroll left">
-              ‹
-            </button>
-            <button className="scroll-btn" onClick={() => scroll('right')} aria-label="Scroll right">
-              ›
-            </button>
-          </div>
+          <Link
+            to="/customer/products"
+            className="hidden sm:inline-flex items-center gap-1.5 bg-teal-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-teal-800 transition-colors shadow-sm"
+          >
+            <ShoppingCart size={15} /> Shop Now
+          </Link>
         </div>
 
-        <div className="product-scroll-wrapper" ref={scrollRef}>
-          <div className="product-scroll-track">
-            {reliableProducts.map((product, idx) => (
-              <article
-                key={product.id}
-                className={`reliable-card ${hoveredProduct === product.id ? 'hovered' : ''}`}
-                onMouseEnter={() => setHoveredProduct(product.id)}
-                onMouseLeave={() => setHoveredProduct(null)}
-              >
-                <div className="reliable-rank">#{idx + 1}</div>
-                <div className="reliable-img-wrap">
-                  <img src={product.image} alt={product.name} className="reliable-img" />
-                </div>
-                <div className="reliable-info">
-                  <h4 className="reliable-name">{product.name}</h4>
-                  <p className="reliable-desc">{product.description}</p>
-                  <div className="reliable-meta">
-                    <span className="reliable-price">{formatCurrency(product.price)}</span>
-                    <span className="reliable-sales">{product.sales} sold</span>
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {isLoading
+            ? Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-24" />)
+            : stats.map((s, i) => (
+                <Card key={i} hover className="p-5 flex items-center gap-4">
+                  <div className={`p-3 rounded-2xl ${s.bg} ${s.color} shrink-0`}><s.icon size={22} /></div>
+                  <div>
+                    <p className="text-xs text-neutral-500 font-medium">{s.label}</p>
+                    <p className="text-2xl font-bold text-neutral-900 leading-tight">{s.value}</p>
                   </div>
-                  <div className="reliable-rating-bar" title="Click to write a review" style={{ cursor: 'pointer' }} onClick={() => { setReviewTargetProduct(product); setReviewModalOpen(true); }}>
-                    <div className="reliable-stars hover:scale-105 transition-transform">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <span key={s} className={`star-icon ${s <= Math.round(product.rating) ? 'filled' : ''}`}>★</span>
-                      ))}
-                    </div>
-                    <span className="reliable-rating-num">{product.rating}</span>
-                  </div>
-                  <Link to="/customer/query-section" state={{ productId: product.id }} className="reliable-cta">
-                    Get Estimate →
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Charts Section: Bar Graph + Pie Chart Side by Side ── */}
-      <section className="dash-charts-row">
-        {/* Bar Chart */}
-        <article className="dash-chart-card">
-          <div className="dash-chart-head">
-            <div className="dash-chart-icon bar-icon">
-              <BarChart3 size={20} />
-            </div>
-            <div>
-              <p className="eyebrow">Product Sales</p>
-              <h3>Sales Bar Chart</h3>
-            </div>
-          </div>
-          <div className="bar-chart-container">
-            <BarChartSVG data={chartData} />
-          </div>
-        </article>
-
-        {/* Pie Chart */}
-        <article className="dash-chart-card">
-          <div className="dash-chart-head">
-            <div className="dash-chart-icon pie-icon">
-              <PieChart size={20} />
-            </div>
-            <div>
-              <p className="eyebrow">Market Share</p>
-              <h3>Sales Distribution</h3>
-            </div>
-          </div>
-          <div className="pie-chart-container">
-            <div className="pie-chart-wrap">
-              <PieChartSVG data={chartData} />
-            </div>
-            <div className="pie-legend">
-              {chartData.map((d, i) => (
-                <div key={d.id} className="pie-legend-item">
-                  <span
-                    className="pie-legend-dot"
-                    style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
-                  />
-                  <span className="pie-legend-label">{d.shortName}</span>
-                  <strong className="pie-legend-val">{d.sales}</strong>
-                </div>
+                </Card>
               ))}
+        </div>
+
+        {/* Orders + Support */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-base font-semibold text-neutral-900">Recent Orders</h3>
+              <Link to="/customer/cart" className="text-xs font-medium text-teal-700 hover:text-teal-900 flex items-center gap-0.5">
+                View all <ChevronRight size={13} />
+              </Link>
+            </div>
+            <Card className="p-0 overflow-hidden">
+              {isLoading ? (
+                <div className="divide-y divide-neutral-100">
+                  {Array(3).fill(0).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 p-4">
+                      <Skeleton className="h-10 w-10 rounded-xl" />
+                      <div className="flex-1 space-y-2"><Skeleton className="h-3 w-32" /><Skeleton className="h-3 w-20" /></div>
+                      <Skeleton className="h-5 w-16" />
+                    </div>
+                  ))}
+                </div>
+              ) : recentOrders.length > 0 ? (
+                <div className="divide-y divide-neutral-100">
+                  {recentOrders.map((order) => (
+                    <div key={order.id} className="flex items-center gap-3 p-4 hover:bg-neutral-50 transition-colors">
+                      <div className="h-10 w-10 bg-teal-50 text-teal-700 flex items-center justify-center rounded-xl shrink-0">
+                        <Package size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-neutral-900">Order #{order.id?.slice(-6)}</p>
+                        <p className="text-xs text-neutral-400">{new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-bold text-neutral-900">{formatCurrency(order.total)}</p>
+                        <Badge variant={statusVariant(order.status)}>{order.status}</Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-center px-6">
+                  <div className="w-14 h-14 bg-neutral-100 rounded-full flex items-center justify-center text-neutral-400 mb-3">
+                    <ShoppingCart size={26} strokeWidth={1.5} />
+                  </div>
+                  <p className="text-sm font-semibold text-neutral-700 mb-1">No orders yet</p>
+                  <p className="text-xs text-neutral-400 mb-4">Your orders will appear here after your first purchase.</p>
+                  <Link to="/customer/products" className="text-xs font-semibold text-teal-700 bg-teal-50 px-4 py-2 rounded-lg hover:bg-teal-100 transition-colors">Browse Products</Link>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* Help Card */}
+          <div>
+            <h3 className="text-base font-semibold text-neutral-900 mb-3">Support</h3>
+            <div className="rounded-2xl shadow-sm border border-teal-800 p-6 bg-teal-700 text-white overflow-hidden relative">
+              <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
+              <div className="absolute -bottom-8 -left-6 w-20 h-20 rounded-full bg-white/5 pointer-events-none" />
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+                  <HelpCircle size={22} className="text-white" />
+                </div>
+                <h4 className="text-base font-bold mb-1">Need Technical Support?</h4>
+                <p className="text-teal-100 text-xs leading-relaxed mb-5">Questions about installation, wiring, or need a custom estimation for your setup?</p>
+                <Link to="/customer/query-section" className="flex items-center justify-center w-full py-2.5 bg-white text-teal-700 text-sm font-bold rounded-xl hover:bg-teal-50 transition-colors">Ask a Query</Link>
+              </div>
             </div>
           </div>
-        </article>
-      </section>
-      
-      {toast && (
-        <div className="fixed bottom-6 right-6 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-2xl font-bold z-50 animate-in fade-in slide-in-from-bottom-5">
-          {toast}
         </div>
-      )}
 
-      <ReviewModal
-        open={reviewModalOpen}
-        onClose={() => { setReviewModalOpen(false); setReviewTargetProduct(null); }}
-        onSave={handleSaveReview}
-        initial={reviewTargetProduct ? { productName: reviewTargetProduct.name } : null}
-      />
+        {/* ─── Top Selling Products — card style like reference image ─── */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-base font-semibold text-neutral-900 flex items-center gap-2">
+                <Star size={16} className="text-amber-400 fill-amber-400" />
+                Top Selling Automation Solutions
+              </h3>
+              <p className="text-xs text-neutral-400 mt-0.5">Most popular products from our catalog</p>
+            </div>
+            <Link to="/customer/products" className="text-xs font-medium text-teal-700 hover:text-teal-900 flex items-center gap-0.5">
+              View all <ChevronRight size={13} />
+            </Link>
+          </div>
+
+          <div className="flex overflow-x-auto snap-x snap-mandatory gap-5 pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+            {isLoading
+              ? Array(4).fill(0).map((_, i) => <Skeleton key={i} className="min-w-[280px] sm:min-w-[320px] h-96 rounded-2xl shrink-0" />)
+              : topSellingProducts.map((product, idx) => {
+                  const { discountOffer, discountedPrice, badgeText, offerCount } = getOfferInfo(product);
+                  const ratingInfo = getRating(product.name);
+                  const soldCount = salesMap[product.id] || 0;
+                  return (
+                    <Card key={product.id} hover className="p-0 overflow-hidden flex flex-col shrink-0 w-[280px] sm:w-[320px] snap-start">
+                      {/* Image */}
+                      <div className="relative bg-neutral-50 overflow-hidden" style={{ height: 200 }}>
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+                        />
+                        {/* Rank badge */}
+                        <span className="absolute top-3 left-3 bg-teal-700 text-white text-[11px] font-bold px-2 py-0.5 rounded-lg shadow">
+                          #{idx + 1}
+                        </span>
+                        {/* Offer badge */}
+                        {badgeText && (
+                          <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow whitespace-nowrap">
+                            {badgeText}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="p-4 flex flex-col flex-1">
+                        {/* Name */}
+                        <h4 className="font-bold text-sm text-neutral-900 uppercase leading-snug line-clamp-2 mb-2">
+                          {product.name}
+                        </h4>
+
+                        {/* Description */}
+                        {product.description && (
+                          <p className="text-xs text-neutral-500 leading-relaxed line-clamp-3 mb-3">
+                            {product.description}
+                          </p>
+                        )}
+
+                        {/* Price + Sold count */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-baseline gap-1.5">
+                            <span className="font-bold text-lg text-teal-700">
+                              {formatCurrency(discountedPrice ?? product.price)}
+                            </span>
+                            {discountedPrice && (
+                              <span className="text-xs text-neutral-400 line-through decoration-red-500 decoration-2">
+                                {formatCurrency(product.price)}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {offerCount > 0 && (
+                              <span className="inline-flex items-center gap-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                                <Award size={10} strokeWidth={2.5} /> {offerCount} OFFER{offerCount > 1 ? 'S' : ''}
+                              </span>
+                            )}
+                            {soldCount > 0 && (
+                              <span className="text-xs text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full font-medium">
+                                {soldCount} sold
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {/* Star Rating */}
+                        {ratingInfo && (
+                          <div className="mb-3">
+                            <StarRating rating={ratingInfo.avg} count={ratingInfo.count} />
+                          </div>
+                        )}
+
+                        <div className="mt-auto">
+                          <Link
+                            to="/customer/query-section"
+                            state={{ productId: product.id }}
+                            className="flex items-center justify-center w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
+                          >
+                            Get Estimate →
+                          </Link>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+          </div>
+        </div>
+
+      </div>
     </AppShell>
   );
 };

@@ -122,7 +122,7 @@ const OfferManager = ({ offers, onChange }) => {
               rows={2}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="form-field-group">
               <label className="text-xs font-bold text-slate-700">Offer Type *</label>
               <CustomSelect
@@ -133,7 +133,7 @@ const OfferManager = ({ offers, onChange }) => {
             </div>
             {renderValueField()}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="form-field-group">
               <label className="text-xs font-bold text-slate-700">Valid Until (Optional)</label>
               <input
@@ -203,7 +203,7 @@ const OfferManager = ({ offers, onChange }) => {
               </div>
               {offer.description && <p className="text-xs text-slate-600 mb-3">{offer.description}</p>}
               
-              <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-500 mb-4 bg-slate-50 p-2 rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-semibold text-slate-500 mb-4 bg-slate-50 p-2 rounded-lg">
                 <div>Type: <span className="text-slate-800">{offer.type}</span></div>
                 {offer.value > 0 && <div>Value: <span className="text-slate-800">{offer.type === 'Percentage Discount' ? `${offer.value}%` : `₹${offer.value}`}</span></div>}
                 {offer.validUntil && <div className="col-span-2">Valid Until: <span className="text-slate-800">{new Date(offer.validUntil).toLocaleDateString()}</span></div>}

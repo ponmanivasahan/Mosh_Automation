@@ -128,6 +128,7 @@ const SystemEstimatePDF = ({ estimation }) => {
   
   // React-PDF Image component requires a valid source. Since we're running in client, window.location.origin is available.
   const logoUrl = typeof window !== 'undefined' ? `${window.location.origin}/logo%20background.png` : logoPath;
+  const stampUrl = typeof window !== 'undefined' ? `${window.location.origin}/mosh_stamp.png` : '/mosh_stamp.png';
   const productImgUrl = selectedProduct?.image?.startsWith('data:') 
     ? selectedProduct.image 
     : typeof window !== 'undefined' && selectedProduct.image
@@ -284,9 +285,8 @@ const SystemEstimatePDF = ({ estimation }) => {
         {/* BOTTOM SECTION & SIGNATURE */}
         <View style={[styles.bottomRow, { justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 40 }]}>
           
-          <View style={[styles.sigBlock, { paddingBottom: 10 }]}>
-            <Text style={[styles.bold, { fontSize: 11, marginBottom: 15 }]}>For MOSH AUTOMATION</Text>
-            <Text style={styles.sigLine}>Authorised Signatory</Text>
+          <View style={[styles.sigBlock, { paddingBottom: 10, alignItems: 'center' }]}>
+            <Image src={stampUrl} style={{ width: 60, height: 60 }} />
           </View>
 
           <View style={styles.totalsBox}>
