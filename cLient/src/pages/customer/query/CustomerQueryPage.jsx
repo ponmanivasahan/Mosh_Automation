@@ -25,13 +25,8 @@ import { getProducts, getEstimations, addEstimation, updateEstimation, addNotifi
 import { formatDateTime } from '../../../utils/format';
 import { customerLinks } from '../../../utils/customerLinks';
 import { API_URL } from '../../../utils/api';
-import { useLocation } from 'react-router-dom';
 
-import Card from '../../../components/ui/Card';
-import Badge from '../../../components/ui/Badge';
-import Button from '../../../components/ui/Button';
-import EmptyState from '../../../components/ui/EmptyState';
-
+// Static feature list seed for products (Enterprise-level details)
 const getProductFeatures = (productName) => {
   if (productName.includes('Wireless')) {
     return [
@@ -65,28 +60,38 @@ const getProductFeatures = (productName) => {
   ];
 };
 
+import { useLocation } from 'react-router-dom';
+import { openPdfBase64 } from '../../../utils/pdfHelper';
+
 const CustomerQueryPage = () => {
   const { session } = useAuth();
   const location = useLocation();
   const products = getProducts();
 
+  // Queries local state loaded from storage
   const [queries, setQueries] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('All');
+  const [activeTab, setActiveTab] = useState('All'); // All, Pending, Completed
 
+  // Form State
   const initialProductId = location.state?.productId || (products[0]?.id || '');
   const [selectedProductId, setSelectedProductId] = useState(initialProductId);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [queryDescription, setQueryDescription] = useState('');
   const [attachmentName, setAttachmentName] = useState('');
 
+  // Editing Modal State
   const [editingQuery, setEditingQuery] = useState(null);
   const [editProductId, setEditProductId] = useState('');
   const [editDescription, setEditDescription] = useState('');
+  const [editDropdownOpen, setEditDropdownOpen] = useState(false);
   const [editSearchQuery, setEditSearchQuery] = useState('');
 
+  // Toast / Messages
   const [toast, setToast] = useState(null);
 
+  // Load queries on mount
   useEffect(() => {
     let isMounted = true;
     const fetchQueries = async () => {
@@ -99,7 +104,7 @@ const CustomerQueryPage = () => {
           }
         }
       } catch (err) {
-        console.error('Failed to fetch queries', err);
+        console.error('Failed to fetch queries from production database', err);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -108,6 +113,7 @@ const CustomerQueryPage = () => {
     return () => { isMounted = false; };
   }, [session]);
 
+  // Toast dismissal helper
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 4000);
@@ -115,14 +121,25 @@ const CustomerQueryPage = () => {
     }
   }, [toast]);
 
+  // Search filter for product list
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [products, searchQuery]);
+
   const selectedProduct = useMemo(() => {
     return products.find((p) => p.id === selectedProductId) || products[0];
   }, [products, selectedProductId]);
 
+  // Product selection preview info
   const productFeatures = useMemo(() => {
     if (!selectedProduct) return [];
     return getProductFeatures(selectedProduct.name);
   }, [selectedProduct]);
+
+  // Search filter for editing dropdown
+  const editFilteredProducts = useMemo(() => {
+    return products.filter((p) => p.name.toLowerCase().includes(editSearchQuery.toLowerCase()));
+  }, [products, editSearchQuery]);
 
   const editSelectedProduct = useMemo(() => {
     return products.find((p) => p.id === editProductId);
@@ -137,10 +154,12 @@ const CustomerQueryPage = () => {
     });
   }, [queries, activeTab]);
 
+  // Handle Query Submission
   const handleSubmitQuery = async (e) => {
     e.preventDefault();
+
     if (!selectedProduct) {
-      setToast({ type: 'error', message: 'Please select a product.' });
+      setToast({ type: 'error', message: 'Please select a wanted product.' });
       return;
     }
     if (!queryDescription.trim()) {
@@ -157,11 +176,11 @@ const CustomerQueryPage = () => {
       productName: selectedProduct.name,
       productImage: selectedProduct.image,
       requirement: queryDescription.trim(),
-      total: selectedProduct.price,
+      total: selectedProduct.price, // Fallback price
       quantity: 1,
       complexity: 'medium',
       createdAt: new Date().toISOString(),
-      stage: 'requested'
+      stage: 'requested' // Stage acts as status (requested = pending, processed = under_review / replied / closed)
     };
 
     try {
@@ -174,21 +193,26 @@ const CustomerQueryPage = () => {
         read: false,
         estimationId: newQueryId
       });
+
+      // Refresh query list
       setQueries([newQuery, ...queries]);
       setQueryDescription('');
       setAttachmentName('');
       setToast({ type: 'success', message: 'Your query has been submitted successfully.' });
     } catch (err) {
-      setToast({ type: 'error', message: err.message || 'Failed to submit query.' });
+      setToast({ type: 'error', message: err.message || 'Failed to submit query. Please try again.' });
     }
   };
 
+  // Open Edit Modal
   const handleOpenEdit = (query) => {
     setEditingQuery(query);
     setEditProductId(query.productId);
     setEditDescription(query.requirement);
+    setEditSearchQuery('');
   };
 
+  // Save Edits
   const handleUpdateQuery = async () => {
     if (!editSelectedProduct) return;
     if (!editDescription.trim()) {
@@ -206,50 +230,32 @@ const CustomerQueryPage = () => {
 
     try {
       await updateEstimation(updated);
+      
+      // Refresh UI list
       setQueries(queries.map((q) => (q.id === editingQuery.id ? updated : q)));
       setEditingQuery(null);
       setToast({ type: 'success', message: 'Query updated successfully.' });
     } catch (err) {
-      setToast({ type: 'error', message: err.message || 'Failed to update query.' });
+      setToast({ type: 'error', message: err.message || 'Failed to update query. Please try again.' });
     }
   };
 
-  const getStatusVariant = (stage) => {
+  // Status mapping to Lucide/Colors
+  const getStatusConfig = (stage) => {
     switch (stage?.toLowerCase()) {
       case 'requested':
-      case 'pending': return 'warning';
+      case 'pending':
+        return { label: 'Pending', colorClass: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock };
       case 'under review':
-      case 'review': return 'info';
+      case 'review':
+        return { label: 'Under Review', colorClass: 'bg-blue-50 text-blue-700 border-blue-200', icon: Search };
       case 'replied':
-      case 'processed': return 'success';
-      case 'closed': return 'default';
-      default: return 'warning';
-    }
-  };
-
-  const getStatusLabel = (stage) => {
-    switch (stage?.toLowerCase()) {
-      case 'requested':
-      case 'pending': return 'Pending';
-      case 'under review':
-      case 'review': return 'Under Review';
-      case 'replied':
-      case 'processed': return 'Replied';
-      case 'closed': return 'Closed';
-      default: return 'Pending';
-    }
-  };
-
-  const getStatusIcon = (stage) => {
-    switch (stage?.toLowerCase()) {
-      case 'requested':
-      case 'pending': return Clock;
-      case 'under review':
-      case 'review': return Search;
-      case 'replied':
-      case 'processed': return MessageSquare;
-      case 'closed': return CheckCircle;
-      default: return Clock;
+      case 'processed':
+        return { label: 'Replied', colorClass: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: MessageSquare };
+      case 'closed':
+        return { label: 'Closed', colorClass: 'bg-slate-100 text-slate-600 border-slate-200', icon: CheckCircle };
+      default:
+        return { label: 'Pending', colorClass: 'bg-amber-50 text-amber-700 border-amber-200', icon: Clock };
     }
   };
 
@@ -257,13 +263,14 @@ const CustomerQueryPage = () => {
     <AppShell title="Customer Query" links={customerLinks}>
       <div className="max-w-6xl mx-auto space-y-12 pb-16">
         
+        {/* Toast alert */}
         <AnimatePresence>
           {toast && (
             <motion.div
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl border backdrop-blur-xl ${
+              className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl  border backdrop-blur-xl ${
                 toast.type === 'success' ? 'bg-teal-600 text-white border-teal-500' : 'bg-rose-600 text-white border-rose-500'
               }`}
             >
@@ -273,6 +280,7 @@ const CustomerQueryPage = () => {
           )}
         </AnimatePresence>
 
+        {/* Page Hero */}
         <div className="bg-gradient-to-br from-teal-700/10 via-sky-600/5 to-transparent border border-slate-200/80 p-8 sm:p-10 rounded-3xl space-y-4">
           <div className="inline-flex p-3 rounded-2xl bg-teal-600/10 text-teal-700">
             <HelpCircle size={28} />
@@ -285,9 +293,13 @@ const CustomerQueryPage = () => {
           </div>
         </div>
 
+        {/* Dynamic Submission Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          <Card className="lg:col-span-7 p-6 sm:p-8 space-y-6">
+          {/* Main submission card form */}
+          <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8  space-y-6">
+            
+            {/* Searchable Product dropdown trigger */}
             <CustomSelect
               label="Select Product"
               value={selectedProductId}
@@ -302,6 +314,7 @@ const CustomerQueryPage = () => {
               placeholder="Select Product..."
             />
 
+            {/* Query Entry Textarea */}
             <div className="space-y-2">
               <label className="block text-sm font-semibold text-slate-800">Describe Your Requirement</label>
               <textarea
@@ -318,6 +331,7 @@ const CustomerQueryPage = () => {
               </div>
             </div>
 
+            {/* Optional Attachment (UI only) */}
             <div className="space-y-2">
               <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Attachment (Optional)</span>
               <div className="flex items-center gap-4">
@@ -338,67 +352,74 @@ const CustomerQueryPage = () => {
               </div>
             </div>
 
-            <Button onClick={handleSubmitQuery} className="w-full" size="lg">
+            {/* Submit CTA */}
+            <button
+              onClick={handleSubmitQuery}
+              className="w-full flex items-center justify-center py-3.5 bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-700 hover:to-sky-700 text-white rounded-2xl font-bold text-sm transition-all duration-300 "
+            >
               Submit Query
-            </Button>
-          </Card>
+            </button>
+          </div>
 
+          {/* Selected Product Information Card */}
           <div className="lg:col-span-5">
             {selectedProduct && (
               <motion.div
                 key={selectedProduct.id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
+                className="bg-white border border-slate-200/80 rounded-3xl overflow-hidden "
               >
-                <Card className="overflow-hidden">
-                  <div className="h-48 bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-6 border-b border-slate-100">
-                    <img
-                      src={selectedProduct.image}
-                      alt={selectedProduct.name}
-                      className="max-h-full max-w-full object-contain transition-transform hover:scale-105 duration-300"
-                    />
+                <div className="h-48 bg-gradient-to-b from-slate-50 to-white flex items-center justify-center p-6 border-b border-slate-100">
+                  <img
+                    src={selectedProduct.image}
+                    alt={selectedProduct.name}
+                    className="max-h-full max-w-full object-contain transition-transform hover:scale-105 duration-300"
+                  />
+                </div>
+                
+                <div className="p-6 space-y-6">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide bg-teal-50 text-teal-700 rounded-full">
+                        {selectedProduct.category || 'Automation'}
+                      </span>
+                      <span className="text-xs text-emerald-600 font-bold flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                        In Stock
+                      </span>
+                    </div>
+                    <h3 className="mt-3 text-lg font-bold text-slate-800 leading-snug">{selectedProduct.name}</h3>
+                    <p className="mt-2 text-slate-500 text-xs leading-relaxed">{selectedProduct.description}</p>
                   </div>
-                  
-                  <div className="p-6 space-y-6">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <Badge variant="primary" className="uppercase tracking-wide">
-                          {selectedProduct.category || 'Automation'}
-                        </Badge>
-                        <span className="text-xs text-emerald-600 font-bold flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                          In Stock
-                        </span>
-                      </div>
-                      <h3 className="mt-3 text-lg font-bold text-slate-800 leading-snug">{selectedProduct.name}</h3>
-                      <p className="mt-2 text-slate-500 text-xs leading-relaxed">{selectedProduct.description}</p>
-                    </div>
 
-                    <div className="space-y-2">
-                      <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Features</span>
-                      <ul className="space-y-1.5">
-                        {productFeatures.map((f, i) => (
-                          <li key={i} className="flex items-start gap-2.5 text-xs text-slate-600">
-                            <Check className="text-teal-600 mt-0.5 flex-shrink-0" size={12} />
-                            <span>{f}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  {/* Bulleted Features */}
+                  <div className="space-y-2">
+                    <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Features</span>
+                    <ul className="space-y-1.5">
+                      {productFeatures.map((f, i) => (
+                        <li key={i} className="flex items-start gap-2.5 text-xs text-slate-600">
+                          <Check className="text-teal-600 mt-0.5 flex-shrink-0" size={12} />
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
-                    <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
-                      <div className="flex items-center gap-2 text-slate-500">
-                        <ShieldCheck size={16} className="text-teal-600" />
-                        <span className="text-xs font-semibold">1 Year Warranty Included</span>
-                      </div>
+                  {/* Warranty and Trust row */}
+                  <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center gap-2 text-slate-500">
+                      <ShieldCheck size={16} className="text-teal-600" />
+                      <span className="text-xs font-semibold">1 Year Warranty Included</span>
                     </div>
                   </div>
-                </Card>
+                </div>
               </motion.div>
             )}
           </div>
         </div>
 
+        {/* Submitted Queries Section */}
         <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="flex p-2 rounded-xl bg-slate-100 text-slate-700">
@@ -407,6 +428,7 @@ const CustomerQueryPage = () => {
             <h3 className="text-xl font-bold text-slate-800">My Submitted Queries</h3>
           </div>
 
+          {/* Tabs Filter Bar */}
           <div className="flex gap-2 border-b border-slate-200 pb-3">
             {['All', 'Pending', 'Completed'].map((tab) => {
               const count = tab === 'All'
@@ -439,63 +461,63 @@ const CustomerQueryPage = () => {
               ))}
             </div>
           ) : filteredQueries.length ? (
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredQueries.map((q) => {
-                const effectiveStage = q.adminResponse || q.attachmentUrl ? 'replied' : q.stage;
-                const variant = getStatusVariant(effectiveStage);
-                const label = getStatusLabel(effectiveStage);
-                const Icon = getStatusIcon(effectiveStage);
+                const statusInfo = getStatusConfig(q.adminResponse || q.attachmentUrl ? 'replied' : q.stage);
+                const StatusIcon = statusInfo.icon;
                 const isPending = (q.stage?.toLowerCase() === 'requested' || q.stage?.toLowerCase() === 'pending') && !q.seen && !q.adminResponse && !q.attachmentUrl;
 
                 return (
-                  <Card hover key={q.id} className="p-6 flex flex-col gap-6">
-                    <div className="space-y-6">
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                        <div className="flex items-center gap-4">
-                          <span className="text-xs font-bold text-slate-400 tracking-wider">#{q.id}</span>
-                          <div className="flex items-center gap-3">
-                            <img src={q.productImage || '/logo background.png'} alt={q.productName} className="w-8 h-8 object-contain bg-slate-50 rounded p-1 border border-slate-100" />
-                            <div>
-                              <h4 className="text-xs font-bold text-slate-800">{q.productName}</h4>
-                              <span className="text-[10px] text-slate-400 font-semibold">{formatDateTime(q.createdAt)}</span>
-                            </div>
-                          </div>
+                  <article key={q.id} className="bg-white border-2 border-slate-100 rounded-xl p-6  flex flex-col justify-between gap-6  hover:border-slate-300 transition duration-300">
+                    <div className="space-y-4">
+                      {/* Query ID, Status and Date header */}
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <span className="text-xs font-bold text-slate-400 tracking-wider">#{q.id}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 border rounded-full text-xs font-bold ${statusInfo.colorClass}`}>
+                            <StatusIcon size={12} />
+                            {statusInfo.label}
+                          </span>
                         </div>
-                        <Badge variant={variant} className="gap-1.5 px-3 py-1 text-xs">
-                          <Icon size={12} /> {label}
-                        </Badge>
                       </div>
 
-                      <div className="space-y-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                        <div className="flex flex-col gap-1 items-end">
-                          <span className="text-[10px] text-slate-400 font-bold px-1">You</span>
-                          <div className="bg-teal-600 text-white p-3 rounded-2xl rounded-tr-sm text-sm shadow-sm max-w-[90%]">
-                            {q.requirement}
-                          </div>
+                      {/* Product display info */}
+                      <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-100 rounded-2xl">
+                        <img src={q.productImage || '/logo background.png'} alt={q.productName} className="w-10 h-10 object-contain rounded-lg bg-white p-1 border border-slate-100" />
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-800">{q.productName}</h4>
+                          <span className="text-[10px] text-slate-400 font-semibold">{formatDateTime(q.createdAt)}</span>
                         </div>
-                        
-                        {(q.adminResponse || q.attachmentUrl) && (
-                          <div className="flex flex-col gap-1 items-start mt-2">
-                            <span className="text-[10px] text-slate-400 font-bold px-1">Support Team</span>
-                            <div className="bg-white border border-slate-200 p-3 rounded-2xl rounded-tl-sm text-sm text-slate-700 shadow-sm max-w-[90%]">
-                              {q.adminResponse && <p className="leading-relaxed font-medium">{q.adminResponse}</p>}
-                              {q.attachmentUrl && (
-                                <div className="mt-3 flex items-center justify-between bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                                  <span className="text-slate-600 font-bold text-xs flex items-center gap-1.5">
-                                    <FileText size={14}/> Estimation.pdf
-                                  </span>
-                                  <a href={q.attachmentUrl} download="Estimation.pdf" className="text-[10px] bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-md transition shadow-sm font-bold">
-                                    Download PDF
-                                  </a>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
                       </div>
+
+                      {/* Question details */}
+                      <div className="space-y-1">
+                        <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Your Question / Inquiry</span>
+                        <p className="text-slate-700 text-sm font-medium leading-relaxed">{q.requirement}</p>
+                      </div>
+
+                      {(q.adminResponse || q.attachmentUrl) && (
+                        <div className="rounded-2xl bg-teal-50/50 p-3 border border-teal-100/50 text-slate-800 text-xs">
+                          <strong className="block text-teal-800 font-bold uppercase tracking-wider text-[9px] mb-1">Admin Response</strong>
+                          {q.adminResponse && <p className="leading-relaxed font-semibold">{q.adminResponse}</p>}
+                          {q.attachmentUrl && (
+                            <div className="mt-3 flex items-center justify-between bg-teal-50/50 p-2.5 rounded-lg border border-teal-100/50">
+                              <span className="text-teal-700 font-bold flex items-center gap-1.5">
+                                Estimation.pdf
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <a href={q.attachmentUrl} download="Estimation.pdf" className="text-[10px] bg-teal-600 border border-teal-700 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition shadow-sm font-bold">
+                                  Download PDF
+                                </a>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    <div className="pt-2">
+                    {/* Edit Option with Guard Message */}
+                    <div className="pt-4 border-t border-slate-100">
                       {isPending ? (
                         <button
                           onClick={() => handleOpenEdit(q)}
@@ -504,7 +526,7 @@ const CustomerQueryPage = () => {
                           <Edit2 size={13} /> Edit Query
                         </button>
                       ) : (
-                        <div className="flex items-start gap-2 text-slate-400 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <div className="flex items-start gap-2 text-slate-400">
                           <XCircle size={14} className="mt-0.5 flex-shrink-0" />
                           <span className="text-[11px] font-medium leading-normal">
                             This query can no longer be edited because it is currently being processed by our support team.
@@ -512,77 +534,93 @@ const CustomerQueryPage = () => {
                         </div>
                       )}
                     </div>
-                  </Card>
+                  </article>
                 );
               })}
             </div>
           ) : (
-            <EmptyState 
-              icon={Inbox}
-              title="No Queries Submitted"
-              description="You haven't submitted any questions or custom requirements yet. Choose a product above to start a direct query with support."
-            />
+            <div className="text-center py-16 bg-white border border-slate-200/80 rounded-3xl flex flex-col items-center justify-center p-6 space-y-4">
+              <div className="p-4 rounded-full bg-slate-50 text-slate-400 border border-slate-100">
+                <Inbox size={42} />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-slate-800">No Queries Submitted</h4>
+                <p className="mt-1 text-sm text-slate-500 max-w-sm">
+                  You haven't submitted any questions or custom requirements yet. Choose a product above to start a direct query with support.
+                </p>
+              </div>
+            </div>
           )}
         </div>
 
       </div>
 
+      {/* Editing Dialog Modal */}
       <AnimatePresence>
         {editingQuery && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white border border-slate-200/80 rounded-3xl max-w-lg w-full mx-4 p-6 sm:p-8  relative space-y-6"
             >
-              <Card className="max-w-lg w-full p-6 sm:p-8 space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                    <Edit2 size={18} className="text-teal-600" />
-                    Modify Query
-                  </h3>
-                  <button
-                    onClick={() => setEditingQuery(null)}
-                    className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
-                  >
-                    <X size={18} />
-                  </button>
-                </div>
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Edit2 size={18} className="text-teal-600" />
+                  Modify Query
+                </h3>
+                <button
+                  onClick={() => setEditingQuery(null)}
+                  className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
+                >
+                  <X size={18} />
+                </button>
+              </div>
 
-                <CustomSelect
-                  label="Associated Product"
-                  value={editProductId}
-                  onChange={setEditProductId}
-                  options={products.map(p => ({
-                    value: p.id,
-                    label: p.name,
-                    image: p.image,
-                    description: p.description
-                  }))}
-                  searchable={true}
-                  placeholder="Select Product..."
+              {/* Product Selection drop inside modal */}
+              <CustomSelect
+                label="Associated Product"
+                value={editProductId}
+                onChange={setEditProductId}
+                options={products.map(p => ({
+                  value: p.id,
+                  label: p.name,
+                  image: p.image,
+                  description: p.description
+                }))}
+                searchable={true}
+                placeholder="Select Product..."
+              />
+
+              {/* Requirement Edit details */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Query Description</label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  maxLength={1000}
+                  rows={5}
+                  className="w-full p-3.5 border border-slate-200 rounded-xl outline-none focus:border-teal-600 transition text-xs font-medium text-slate-800"
                 />
+              </div>
 
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">Query Description</label>
-                  <textarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    maxLength={1000}
-                    rows={5}
-                    className="w-full p-3.5 border border-slate-200 rounded-xl outline-none focus:border-teal-600 transition text-xs font-medium text-slate-800"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
-                  <Button variant="secondary" onClick={() => setEditingQuery(null)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleUpdateQuery}>
-                    Update Query
-                  </Button>
-                </div>
-              </Card>
+              {/* Action submit modal CTAs */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  onClick={() => setEditingQuery(null)}
+                  className="px-4 py-2 border rounded-xl hover:bg-slate-50 transition text-xs font-bold text-slate-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateQuery}
+                  className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition text-xs font-bold"
+                >
+                  Update Query
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

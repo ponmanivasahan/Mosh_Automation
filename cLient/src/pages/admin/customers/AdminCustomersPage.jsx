@@ -10,14 +10,9 @@ import {
   ClipboardList, 
   MessageSquare, 
   CheckCircle,
-  Hash,
-  AlertCircle
+  Hash
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import Card from '../../../components/ui/Card';
-import Badge from '../../../components/ui/Badge';
-import Button from '../../../components/ui/Button';
-import EmptyState from '../../../components/ui/EmptyState';
 import { API_URL } from '../../../utils/api';
 import { formatDateTime } from '../../../utils/format';
 
@@ -115,67 +110,66 @@ const AdminCustomersPage = () => {
 
   return (
     <AppShell title="Customers Database" links={adminLinks}>
-      <div className="space-y-6">
+      <div className="admin-customers-page space-y-6">
         {/* Top Control Panel */}
-        <Card className="flex flex-col md:flex-row justify-between items-start md:items-center p-6 gap-4 bg-slate-50">
+        <header className="panel flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-100 p-6 rounded-lg border border-slate-200 gap-4">
           <div>
-            <p className="text-primary uppercase tracking-wider text-[10px] font-bold">Mosh Systems HQ</p>
+            <p className="text-teal-700 uppercase tracking-wider text-[10px] font-bold">Mosh Systems HQ</p>
             <h2 className="text-2xl font-bold text-slate-800">Customer Accounts & Sync</h2>
             <p className="text-xs text-slate-500 mt-1">
               Active directory of customer records populated directly from the central MySQL database.
             </p>
           </div>
-          <Button
-            variant="secondary"
+          <button
             onClick={() => fetchCustomers(true)}
-            isLoading={syncing}
+            className="flex items-center gap-2 bg-white text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl border shadow-sm text-xs font-bold transition duration-300"
           >
-            {!syncing && <RefreshCw size={16} className="mr-2 text-slate-500" />}
-            <span>Sync Now</span>
-          </Button>
-        </Card>
+            <RefreshCw size={14} className={syncing ? 'animate-spin text-teal-600' : 'text-slate-500'} />
+            <span>{syncing ? 'Syncing...' : 'Sync Now'}</span>
+          </button>
+        </header>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Card className="p-5">
+          <div className="bg-white border rounded-2xl p-5 shadow-sm">
             <p className="text-[10px] uppercase font-bold text-slate-400">Total Customers</p>
             <h3 className="text-2xl font-extrabold text-slate-800 mt-2 flex items-center gap-2">
               <Users size={20} className="text-indigo-500" />
               {customers.length}
             </h3>
-          </Card>
-          <Card className="p-5">
+          </div>
+          <div className="bg-white border rounded-2xl p-5 shadow-sm">
             <p className="text-[10px] uppercase font-bold text-slate-400">Active Status</p>
             <h3 className="text-2xl font-extrabold text-emerald-600 mt-2 flex items-center gap-2">
               <CheckCircle size={20} className="text-emerald-500" />
               {stats.activeCustomers}
             </h3>
-          </Card>
-          <Card className="p-5">
+          </div>
+          <div className="bg-white border rounded-2xl p-5 shadow-sm">
             <p className="text-[10px] uppercase font-bold text-slate-400">Total Orders</p>
             <h3 className="text-2xl font-extrabold text-teal-600 mt-2 flex items-center gap-2">
               <ShoppingCart size={20} className="text-teal-500" />
               {stats.totalOrders}
             </h3>
-          </Card>
-          <Card className="p-5">
+          </div>
+          <div className="bg-white border rounded-2xl p-5 shadow-sm">
             <p className="text-[10px] uppercase font-bold text-slate-400">Total Queries</p>
             <h3 className="text-2xl font-extrabold text-amber-600 mt-2 flex items-center gap-2">
               <ClipboardList size={20} className="text-amber-500" />
               {stats.totalQueries}
             </h3>
-          </Card>
-          <Card className="p-5 col-span-2 md:col-span-1">
+          </div>
+          <div className="bg-white border rounded-2xl p-5 shadow-sm col-span-2 md:col-span-1">
             <p className="text-[10px] uppercase font-bold text-slate-400">Total Reviews</p>
             <h3 className="text-2xl font-extrabold text-rose-600 mt-2 flex items-center gap-2">
               <MessageSquare size={20} className="text-rose-500" />
               {stats.totalReviews}
             </h3>
-          </Card>
+          </div>
         </div>
 
         {/* Search bar */}
-        <Card className="flex items-center p-2">
+        <div className="relative bg-white rounded-2xl border p-2 flex items-center shadow-sm">
           <Search size={18} className="text-slate-400 ml-3" />
           <input
             type="text"
@@ -185,41 +179,37 @@ const AdminCustomersPage = () => {
             className="w-full bg-transparent px-3 py-2 text-sm focus:outline-none font-medium text-slate-800"
           />
           {searchQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => setSearchQuery('')}
-              className="mr-2"
+              className="text-xs text-slate-400 hover:text-slate-600 font-semibold px-3 py-1 rounded-xl hover:bg-slate-100 transition mr-2"
             >
               Clear
-            </Button>
+            </button>
           )}
-        </Card>
+        </div>
 
         {/* Customer List Panel */}
-        <Card className="p-5 md:p-6">
+        <section className="bg-white border rounded-2xl p-5 md:p-6 shadow-sm">
           {loading ? (
             <div className="text-center py-20">
-              <RefreshCw size={24} className="animate-spin text-primary mx-auto" />
+              <RefreshCw size={24} className="animate-spin text-teal-600 mx-auto" />
               <p className="text-xs text-slate-500 mt-3 font-semibold">Connecting to live MySQL database...</p>
             </div>
           ) : error ? (
-            <EmptyState
-              icon={AlertCircle}
-              title="Connection Error"
-              description={error}
-              action={
-                <Button variant="danger" onClick={() => fetchCustomers(true)}>
-                  Retry Connection
-                </Button>
-              }
-            />
+            <div className="text-center py-16 bg-rose-50 border border-rose-100 rounded-xl p-6">
+              <p className="text-sm text-rose-600 font-bold">{error}</p>
+              <button 
+                onClick={() => fetchCustomers(true)}
+                className="mt-4 px-4 py-2 bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 rounded-xl text-xs font-bold"
+              >
+                Retry Connection
+              </button>
+            </div>
           ) : !filteredCustomers.length ? (
-            <EmptyState
-              icon={Users}
-              title="No customers found"
-              description="No customers found matching search criteria."
-            />
+            <div className="text-center py-16">
+              <Users size={32} className="text-slate-350 mx-auto mb-2" />
+              <p className="text-sm text-slate-450 italic">No customers found matching search criteria.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
@@ -252,12 +242,12 @@ const AdminCustomersPage = () => {
                       {/* Contact details */}
                       <td className="py-4 font-semibold text-slate-600">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-slate-800">
-                            <Phone size={12} className="text-primary" />
+                          <div className="flex items-center gap-1 text-slate-850">
+                            <Phone size={12} className="text-teal-600" />
                             <span>{cust.phone}</span>
                           </div>
                           <div className="flex items-center gap-1 text-[11px] text-slate-400">
-                            <Mail size={12} className="text-slate-400" />
+                            <Mail size={12} className="text-slate-350" />
                             <span>{cust.email}</span>
                           </div>
                         </div>
@@ -273,27 +263,29 @@ const AdminCustomersPage = () => {
 
                       {/* Status */}
                       <td className="py-4 text-center">
-                        <Badge variant={cust.status === 'Active' ? 'success' : 'default'}>
+                        <span className={`inline-block text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
+                          cust.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
+                        }`}>
                           {cust.status}
-                        </Badge>
+                        </span>
                       </td>
 
                       {/* Metrics counts & Actions */}
                       <td className="py-4 text-right pr-2">
                         <div className="flex items-center justify-end gap-3 text-[11px] font-bold">
-                          <Badge variant="primary" className="gap-1 px-2">
-                            <ShoppingCart size={11} /> {cust.numOrders}
-                          </Badge>
-                          <Badge variant="warning" className="gap-1 px-2">
-                            <ClipboardList size={11} /> {cust.numQueries}
-                          </Badge>
-                          <Badge variant="info" className="gap-1 px-2">
-                            <MessageSquare size={11} /> {cust.numReviews}
-                          </Badge>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            className="ml-2"
+                          <span className="flex items-center gap-1 bg-teal-50 text-teal-700 px-2 py-0.5 rounded" title="Orders placed">
+                            <ShoppingCart size={11} className="text-teal-600" />
+                            {cust.numOrders}
+                          </span>
+                          <span className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded" title=" Queries submitted">
+                            <ClipboardList size={11} className="text-amber-500" />
+                            {cust.numQueries}
+                          </span>
+                          <span className="flex items-center gap-1 bg-rose-50 text-rose-700 px-2 py-0.5 rounded" title="Reviews written">
+                            <MessageSquare size={11} className="text-rose-500" />
+                            {cust.numReviews}
+                          </span>
+                          <button
                             onClick={async () => {
                               if (window.confirm(`Are you sure you want to delete customer ${cust.name}?`)) {
                                 try {
@@ -311,9 +303,11 @@ const AdminCustomersPage = () => {
                                 }
                               }
                             }}
+                            className="bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-1 rounded border border-rose-200 ml-2 flex items-center transition"
+                            title="Delete Customer"
                           >
                             Delete
-                          </Button>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -322,7 +316,7 @@ const AdminCustomersPage = () => {
               </table>
             </div>
           )}
-        </Card>
+        </section>
       </div>
     </AppShell>
   );

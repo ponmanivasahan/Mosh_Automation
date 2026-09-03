@@ -1,334 +1,486 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Truck, IndianRupee, Heart, Headset, Eye, ChevronRight, Search, Bell, Package, Check, ShoppingCart, MessageSquare } from 'lucide-react';
+import { Package, ShoppingCart, Star, TrendingUp, BarChart3, PieChart } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import { getOrders, getProducts } from '../../../utils/storage';
-import { formatCurrency, formatDateTime } from '../../../utils/format';
-import Card from '../../../components/ui/Card';
-import Badge from '../../../components/ui/Badge';
-import Skeleton from '../../../components/ui/Skeleton';
-import EmptyState from '../../../components/ui/EmptyState';
+import { getCart, getProducts, getOrders, getReviews, addReview } from '../../../utils/storage';
+import { formatCurrency } from '../../../utils/format';
+import { API_URL } from '../../../utils/api';
+import ReviewModal from '../../../components/reviews/ReviewModal';
 import { customerLinks } from '../../../utils/customerLinks';
-import { useAuth } from '../../../utils/AuthContext';
+import './CustomerDashboardPage.css';
 
-const CustomerDashboardPage = () => {
-  const { session } = useAuth();
-  const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+/* ── Simulated sales data per product (seeded from price to feel realistic) ── */
+const getSalesData = (products, orders) => {
+  const salesMap = {};
+  orders
+    .filter(o => o.status !== 'Cancelled')
+    .forEach(o => {
+      if (Array.isArray(o.items)) {
+        o.items.forEach(item => {
+          const pId = item.productId;
+          if (pId) {
+            salesMap[pId] = (salesMap[pId] || 0) + Number(item.quantity || 1);
+          }
+        });
+      }
+    });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const allOrders = getOrders();
-      const userOrders = allOrders.filter((o) => o.customerPhone === session?.phone);
-      
-      setOrders(userOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-      setProducts(getProducts());
-      setIsLoading(false);
+  return products.map((p, i) => {
+    const baseOverallSales = Math.max(8, Math.round((p.price / 200) + (i % 5) * 7 + ((i * 17) % 13)));
+    const liveSales = salesMap[p.id] || 0;
+    return {
+      id: p.id,
+      name: p.name,
+      shortName: p.name.length > 18 ? p.name.slice(0, 16) + '…' : p.name,
+      image: p.image,
+      price: p.price,
+      description: p.description,
+      sales: baseOverallSales + liveSales,
+      rating: (4.2 + ((i * 3) % 8) * 0.1).toFixed(1),
     };
-    fetchData();
-  }, [session]);
+  });
+};
 
-  const stats = useMemo(() => {
-    const active = orders.filter((o) => ['Pending', 'Processing'].includes(o.status));
-    const totalSpent = orders.filter((o) => o.paymentStatus === 'Paid').reduce((acc, curr) => acc + Number(curr.total), 0);
-    
-    return [
-      { label: 'Total Orders', value: orders.length, subtext: 'All time orders', icon: ShoppingBag, color: 'text-green-700', bg: 'bg-green-100', trend: '+12%', trendColor: 'text-green-600' },
-      { label: 'Active Orders', value: active.length, subtext: 'In progress', icon: Truck, color: 'text-blue-700', bg: 'bg-blue-100', trend: '+8%', trendColor: 'text-blue-600' },
-      { label: 'Total Spent', value: formatCurrency(totalSpent), subtext: 'All time amount', icon: IndianRupee, color: 'text-orange-700', bg: 'bg-orange-100', trend: '+15%', trendColor: 'text-orange-600' },
-      { label: 'Saved Products', value: '8', subtext: 'In wishlist', icon: Heart, color: 'text-purple-700', bg: 'bg-purple-100', trend: '+4%', trendColor: 'text-purple-600' }
-    ];
-  }, [orders]);
+/* ── Colour palette for pie chart slices ── */
+const PIE_COLORS = [
+  'teal',
+  'deepskyblue',
+  'blueviolet',
+  'orange',
+  'crimson',
+  'limegreen',
+  'hotpink',
+  'dodgerblue',
+  'tomato',
+  'gold',
+  'mediumpurple',
+  'turquoise',
+  'coral'
+];
 
-  const recentOrders = orders.slice(0, 4);
-  const recommendedProducts = products.slice(0, 4);
+/* ── Pure SVG Pie Chart ── */
+const PieChartSVG = ({ data }) => {
+  const total = data.reduce((s, d) => s + d.sales, 0);
+  const size = 220;
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = 85;
 
-  // Helper to get time-based greeting
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  };
+  if (total === 0) {
+    return (
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="mx-auto">
+        <circle cx={cx} cy={cy} r={r} fill="#f1f5f9" stroke="#e2e8f0" strokeWidth="2" />
+        <circle cx={cx} cy={cy} r={r - 30} fill="#ffffff" />
+        <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle" className="text-xs font-bold fill-slate-400">
+          No Sales Yet
+        </text>
+      </svg>
+    );
+  }
+
+  let cumulative = 0;
+
+  const slices = data.map((d, i) => {
+    const fraction = d.sales / total;
+    const startAngle = cumulative * 2 * Math.PI - Math.PI / 2;
+    cumulative += fraction;
+    const endAngle = cumulative * 2 * Math.PI - Math.PI / 2;
+
+    const largeArc = fraction > 0.5 ? 1 : 0;
+    const x1 = cx + r * Math.cos(startAngle);
+    const y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle);
+    const y2 = cy + r * Math.sin(endAngle);
+
+    const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+
+    return (
+      <path
+        key={d.id}
+        d={path}
+        fill={PIE_COLORS[i % PIE_COLORS.length]}
+        stroke="#ffffff"
+        strokeWidth="2"
+        className="pie-slice"
+      >
+        <title>{d.shortName}: {d.sales} units ({(fraction * 100).toFixed(1)}%)</title>
+      </path>
+    );
+  });
 
   return (
-    <AppShell title="Dashboard" links={customerLinks}>
-      <div className="animate-fade-in space-y-6 -mt-4">
+    <svg viewBox={`0 0 ${size} ${size}`} className="pie-svg">
+      {slices}
+      <circle cx={cx} cy={cy} r="42" fill="white" />
+      <text x={cx} y={cy - 6} textAnchor="middle" className="pie-center-label">
+        {total}
+      </text>
+      <text x={cx} y={cy + 12} textAnchor="middle" className="pie-center-sub">
+        Total Units
+      </text>
+    </svg>
+  );
+};
+
+/* ── Pure SVG Bar Chart ── */
+const BarChartSVG = ({ data }) => {
+  const maxSales = Math.max(...data.map((d) => d.sales));
+  const barWidth = 36;
+  const gap = 16;
+  const chartHeight = 200;
+  const chartWidth = data.length * (barWidth + gap) + gap;
+  const labelHeight = 60;
+
+  return (
+    <svg
+      viewBox={`0 0 ${chartWidth} ${chartHeight + labelHeight + 10}`}
+      className="bar-svg"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      {/* Grid lines */}
+      {[0.25, 0.5, 0.75, 1].map((frac) => (
+        <line
+          key={frac}
+          x1={0}
+          x2={chartWidth}
+          y1={chartHeight - chartHeight * frac}
+          y2={chartHeight - chartHeight * frac}
+          stroke="rgba(15,23,42,0.06)"
+          strokeDasharray="4 4"
+        />
+      ))}
+
+      {data.map((d, i) => {
+        const barHeight = (d.sales / maxSales) * (chartHeight - 20);
+        const x = gap + i * (barWidth + gap);
+        const y = chartHeight - barHeight;
+
+        return (
+          <g key={d.id} className="bar-group">
+            {/* Gradient bar */}
+            <defs>
+              <linearGradient id={`bar-grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={PIE_COLORS[i % PIE_COLORS.length]} />
+                <stop offset="100%" stopColor={PIE_COLORS[i % PIE_COLORS.length]} stopOpacity="0.6" />
+              </linearGradient>
+            </defs>
+            <rect
+              x={x}
+              y={y}
+              width={barWidth}
+              height={barHeight}
+              rx="6"
+              fill={`url(#bar-grad-${i})`}
+              className="bar-rect"
+            >
+              <title>{d.shortName}: {d.sales} units</title>
+            </rect>
+
+            {/* Sales count on top of bar */}
+            <text
+              x={x + barWidth / 2}
+              y={y - 6}
+              textAnchor="middle"
+              className="bar-value"
+            >
+              {d.sales}
+            </text>
+
+            {/* Product name label (rotated) */}
+            <text
+              x={x + barWidth / 2}
+              y={chartHeight + 12}
+              textAnchor="end"
+              transform={`rotate(-45, ${x + barWidth / 2}, ${chartHeight + 12})`}
+              className="bar-label"
+            >
+              {d.name.length > 14 ? d.name.slice(0, 12) + '…' : d.name}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+/* ──────── Main Dashboard Component ──────── */
+const CustomerDashboardPage = () => {
+  const [products, setProducts] = useState(() => getProducts());
+  const [cartItems, setCartItems] = useState(() => getCart());
+  const [orders, setOrders] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const scrollRef = useRef(null);
+  const [hoveredProduct, setHoveredProduct] = useState(null);
+  
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewTargetProduct, setReviewTargetProduct] = useState(null);
+  const [toast, setToast] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+    const updateStats = async () => {
+      setProducts(getProducts());
+      setCartItems(getCart());
+      
+      try {
+        const [ordersRes, reviewsRes] = await Promise.all([
+          fetch(`${API_URL}/api/orders`, { credentials: 'include' }),
+          fetch(`${API_URL}/api/reviews`, { credentials: 'include' })
+        ]);
         
-        {/* Top Header Match Mockup (Optional inner header for search/profile) */}
-        <div className="hidden md:flex items-center justify-between pb-4 border-b border-neutral-100">
-          <div className="relative w-96">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search products, categories..." 
-              className="w-full pl-10 pr-4 py-2 bg-white border border-neutral-200 rounded-full text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-            />
+        if (ordersRes.ok) {
+          const ordersData = await ordersRes.json();
+          if (ordersData.success && isMounted) setOrders(ordersData.orders);
+        }
+        if (reviewsRes.ok) {
+          const reviewsData = await reviewsRes.json();
+          if (reviewsData.success && isMounted) setReviews(reviewsData.reviews);
+        }
+      } catch (err) {
+        console.error('Failed to fetch stats from API', err);
+      }
+    };
+
+    updateStats();
+    // Live update interval
+    const interval = setInterval(updateStats, 5000);
+
+    // Storage event listeners for immediate cart updates
+    const handleStorage = () => {
+      setProducts(getProducts());
+      setCartItems(getCart());
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('mosh_cart_updated', handleStorage);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('mosh_cart_updated', handleStorage);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(''), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  const handleSaveReview = async (reviewData) => {
+    try {
+      await addReview({
+        ...reviewData,
+        productName: reviewData.productName || reviewTargetProduct?.name || products[0]?.name
+      });
+      setReviewModalOpen(false);
+      setToast('Review submitted successfully!');
+    } catch (err) {
+      setToast(err.message || 'Failed to submit review.');
+    }
+  };
+
+  const salesData = useMemo(() => getSalesData(products, orders), [products, orders]);
+
+  const cartCount = useMemo(
+    () => cartItems.reduce((total, item) => total + Number(item.quantity || 1), 0),
+    [cartItems]
+  );
+
+  const cartTotal = useMemo(
+    () => cartItems.reduce((sum, item) => sum + Number(item.total || 0), 0),
+    [cartItems]
+  );
+
+  const totalRevenue = useMemo(
+    () => orders.reduce((acc, o) => acc + Number(o.total || 0), 0),
+    [orders]
+  );
+
+  const avgRating = useMemo(() => {
+    if (!reviews.length) return '4.8';
+    const sum = reviews.reduce((a, r) => a + Number(r.rating || 0), 0);
+    return (sum / reviews.length).toFixed(1);
+  }, [reviews]);
+
+  /* Sorted by sales desc for "most reliable" */
+  const reliableProducts = useMemo(
+    () => [...salesData].sort((a, b) => b.sales - a.sales),
+    [salesData]
+  );
+
+  /* Horizontal scroll helpers */
+  const scroll = (dir) => {
+    if (!scrollRef.current) return;
+    const amount = 320;
+    scrollRef.current.scrollBy({ left: dir === 'right' ? amount : -amount, behavior: 'smooth' });
+  };
+
+  /* Take top 8 for charts to keep them readable */
+  const chartData = reliableProducts.slice(0, 8);
+
+  return (
+    <AppShell title="Customer Dashboard" links={customerLinks}>
+      {/* ── Stat Cards Row ── */}
+      <section className="dash-stats-row">
+        <article className="dash-stat-card dash-stat-products">
+          <div className="dash-stat-icon">
+            <Package size={22} />
           </div>
-          <div className="flex items-center gap-4">
-            <button className="relative p-2 text-neutral-600 hover:bg-neutral-100 rounded-full">
-              <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white"></span>
+          <div>
+            <p className="dash-stat-label">Total Products</p>
+            <h3 className="dash-stat-value">{products.length}</h3>
+          </div>
+        </article>
+        <article className="dash-stat-card dash-stat-cart">
+          <div className="dash-stat-icon">
+            <ShoppingCart size={22} />
+          </div>
+          <div>
+            <p className="dash-stat-label">Cart Items</p>
+            <h3 className="dash-stat-value">{cartCount}</h3>
+            <span className="dash-stat-sub">{formatCurrency(cartTotal)}</span>
+          </div>
+        </article>
+        <article className="dash-stat-card dash-stat-rating">
+          <div className="dash-stat-icon">
+            <Star size={22} />
+          </div>
+          <div>
+            <p className="dash-stat-label">Avg. Rating</p>
+            <h3 className="dash-stat-value">{avgRating}<span className="dash-stat-out-of"> / 5</span></h3>
+            <span className="dash-stat-sub">{reviews.length || 128} reviews</span>
+          </div>
+        </article>
+        <article className="dash-stat-card dash-stat-revenue">
+          <div className="dash-stat-icon">
+            <TrendingUp size={22} />
+          </div>
+          <div>
+            <p className="dash-stat-label">Total Revenue</p>
+            <h3 className="dash-stat-value">{formatCurrency(totalRevenue || 48600)}</h3>
+            <span className="dash-stat-sub pill-green">+18% this month</span>
+          </div>
+        </article>
+      </section>
+
+      {/* ── Most Reliable Products — Horizontal Scroll ── */}
+      <section className="dash-section">
+        <div className="dash-section-head">
+          <div>
+            <p className="eyebrow">Most Reliable Products</p>
+            <h2>Top Selling Automation Solutions</h2>
+          </div>
+          <div className="scroll-controls">
+            <button className="scroll-btn" onClick={() => scroll('left')} aria-label="Scroll left">
+              ‹
             </button>
-            <div className="flex items-center gap-2 pl-4 border-l border-neutral-200">
-              <div className="w-8 h-8 rounded-full bg-neutral-200 flex items-center justify-center text-neutral-600 font-bold">
-                {session?.name?.[0] || 'D'}
-              </div>
-              <span className="text-sm font-medium text-neutral-700">{session?.name || 'Dharanish D.'}</span>
-            </div>
+            <button className="scroll-btn" onClick={() => scroll('right')} aria-label="Scroll right">
+              ›
+            </button>
           </div>
         </div>
 
-        {/* Hero Banner */}
-        <div className="relative rounded-[32px] overflow-hidden bg-[#e8f1e9] min-h-[220px] flex items-center p-8 md:p-12">
-          {/* Mock background image (if missing, fallback to linear gradient) */}
-          <div 
-            className="absolute inset-0 z-0 opacity-40 mix-blend-multiply"
-            style={{ 
-              backgroundImage: 'url(/background.png)', 
-              backgroundPosition: 'right center', 
-              backgroundSize: 'cover',
-              backgroundRepeat: 'no-repeat'
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#e8f1e9] via-[#e8f1e9]/90 to-transparent z-0"></div>
-          
-          <div className="relative z-10 max-w-xl">
-            <h1 className="text-3xl md:text-4xl font-bold text-neutral-900 mb-4">
-              {getGreeting()}, {session?.name?.split(' ')[0] || 'Dharanish'}! <span className="inline-block animate-wave">👋</span>
-            </h1>
-            <p className="text-neutral-700 text-lg mb-8 max-w-md leading-relaxed">
-              Manage your irrigation equipment, monitor orders, and get technical assistance from one place.
-            </p>
-            <div className="flex flex-wrap items-center gap-4">
-              <Link to="/customer/products" className="bg-[#115e41] text-white px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 hover:bg-[#0d4a33] transition-colors">
-                <ShoppingBag size={18} /> Browse Products
-              </Link>
-              <Link to="/customer/query-section" className="bg-white text-[#115e41] px-6 py-2.5 rounded-xl font-medium flex items-center gap-2 border border-[#115e41]/20 hover:bg-neutral-50 transition-colors">
-                <Headset size={18} /> Get Technical Support
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {isLoading ? (
-            Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)
-          ) : (
-            stats.map((stat, idx) => (
-              <Card key={idx} hover className="p-5 flex items-center gap-4 rounded-2xl">
-                <div className={`p-4 rounded-2xl ${stat.bg} ${stat.color} flex-shrink-0`}>
-                  <stat.icon size={28} strokeWidth={1.5} />
+        <div className="product-scroll-wrapper" ref={scrollRef}>
+          <div className="product-scroll-track">
+            {reliableProducts.map((product, idx) => (
+              <article
+                key={product.id}
+                className={`reliable-card ${hoveredProduct === product.id ? 'hovered' : ''}`}
+                onMouseEnter={() => setHoveredProduct(product.id)}
+                onMouseLeave={() => setHoveredProduct(null)}
+              >
+                <div className="reliable-rank">#{idx + 1}</div>
+                <div className="reliable-img-wrap">
+                  <img src={product.image} alt={product.name} className="reliable-img" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center mb-1">
-                    <p className="text-sm font-medium text-neutral-500 truncate">{stat.label}</p>
-                    <span className={`text-xs font-bold ${stat.trendColor}`}>{stat.trend}</span>
+                <div className="reliable-info">
+                  <h4 className="reliable-name">{product.name}</h4>
+                  <p className="reliable-desc">{product.description}</p>
+                  <div className="reliable-meta">
+                    <span className="reliable-price">{formatCurrency(product.price)}</span>
+                    <span className="reliable-sales">{product.sales} sold</span>
                   </div>
-                  <p className="text-2xl font-bold text-neutral-900 mb-0.5">{stat.value}</p>
-                  <p className="text-xs text-neutral-400 truncate">{stat.subtext}</p>
+                  <div className="reliable-rating-bar" title="Click to write a review" style={{ cursor: 'pointer' }} onClick={() => { setReviewTargetProduct(product); setReviewModalOpen(true); }}>
+                    <div className="reliable-stars hover:scale-105 transition-transform">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <span key={s} className={`star-icon ${s <= Math.round(product.rating) ? 'filled' : ''}`}>★</span>
+                      ))}
+                    </div>
+                    <span className="reliable-rating-num">{product.rating}</span>
+                  </div>
+                  <Link to="/customer/query-section" state={{ productId: product.id }} className="reliable-cta">
+                    Get Estimate →
+                  </Link>
                 </div>
-              </Card>
-            ))
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          
-          {/* Recent Orders List (Table) */}
-          <div className="xl:col-span-2 flex flex-col">
-            <Card className="p-0 overflow-hidden flex-1 flex flex-col rounded-2xl">
-              <div className="p-5 flex items-center justify-between border-b border-neutral-100">
-                <div className="flex items-center gap-2">
-                  <Package className="text-primary" size={20} />
-                  <h3 className="text-lg font-bold text-neutral-900">Recent Orders</h3>
-                </div>
-                <Link to="/customer/cart" className="text-sm font-medium text-primary hover:text-teal-800 flex items-center">
-                  View all orders <ChevronRight size={16} />
-                </Link>
-              </div>
-              
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-neutral-50/50">
-                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500">Order ID</th>
-                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500">Product</th>
-                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500">Date</th>
-                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500">Status</th>
-                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500">Amount</th>
-                      <th className="px-5 py-3 text-xs font-semibold text-neutral-500 text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-neutral-100">
-                    {isLoading ? (
-                      Array(4).fill(0).map((_, i) => (
-                        <tr key={i}>
-                          <td className="px-5 py-4"><Skeleton className="h-4 w-20" /></td>
-                          <td className="px-5 py-4"><Skeleton className="h-4 w-32" /></td>
-                          <td className="px-5 py-4"><Skeleton className="h-4 w-24" /></td>
-                          <td className="px-5 py-4"><Skeleton className="h-6 w-16 rounded-full" /></td>
-                          <td className="px-5 py-4"><Skeleton className="h-4 w-16" /></td>
-                          <td className="px-5 py-4 text-center"><Skeleton className="h-8 w-8 rounded-full mx-auto" /></td>
-                        </tr>
-                      ))
-                    ) : recentOrders.length > 0 ? (
-                      recentOrders.map((order) => {
-                        const firstItem = order.items?.[0];
-                        const product = products.find(p => p.id === firstItem?.productId);
-                        return (
-                          <tr key={order.id} className="hover:bg-neutral-50/50 transition-colors group">
-                            <td className="px-5 py-4 text-sm font-medium text-neutral-900">#ORD{order.id.toString().slice(-4)}</td>
-                            <td className="px-5 py-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded bg-neutral-100 flex items-center justify-center overflow-hidden">
-                                  {product?.image ? <img src={product.image} alt="" className="w-full h-full object-cover" /> : <Package size={14} className="text-neutral-400" />}
-                                </div>
-                                <span className="text-sm text-neutral-700 font-medium line-clamp-1">{product?.name || 'Multiple Items'}</span>
-                              </div>
-                            </td>
-                            <td className="px-5 py-4 text-sm text-neutral-500">{formatDateTime(order.createdAt).split(',')[0]}</td>
-                            <td className="px-5 py-4">
-                              <Badge variant={order.status === 'Completed' || order.status === 'Delivered' ? 'success' : order.status === 'Paid' ? 'primary' : order.status === 'Processing' ? 'warning' : 'default'} className="!px-3 !py-1">
-                                {order.status === 'Completed' ? 'Delivered' : order.status}
-                              </Badge>
-                            </td>
-                            <td className="px-5 py-4 text-sm font-bold text-neutral-900">{formatCurrency(order.total)}</td>
-                            <td className="px-5 py-4 text-center">
-                              <button className="p-1.5 text-neutral-400 hover:text-primary hover:bg-teal-50 rounded border border-transparent hover:border-teal-100 transition-colors">
-                                <Eye size={18} />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })
-                    ) : (
-                      <tr>
-                        <td colSpan={6} className="px-5 py-8 text-center text-neutral-500 text-sm">
-                          No recent orders found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
+              </article>
+            ))}
           </div>
-
-          {/* Side Panel: Help & Support (Match mockup) */}
-          <div className="flex flex-col h-full">
-            <Card className="p-8 bg-[#f4f7f6] border-0 rounded-2xl flex-1 flex flex-col justify-center items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-[#e8efec] flex items-center justify-center text-[#115e41] mb-5">
-                <Headset size={32} />
-              </div>
-              <h3 className="text-xl font-bold text-neutral-900 mb-3">Need Technical Support?</h3>
-              <p className="text-neutral-600 text-sm mb-8 leading-relaxed max-w-[250px]">
-                Have questions about installation or need a custom estimation for your agricultural setup?
-              </p>
-              <Link to="/customer/query-section" className="w-full py-3 bg-[#115e41] text-white font-medium rounded-xl hover:bg-[#0d4a33] transition-colors flex items-center justify-center gap-2 mb-3 shadow-sm">
-                <MessageSquare size={18} /> Ask a Query
-              </Link>
-              <p className="text-xs text-neutral-500 flex items-center justify-center gap-1.5">
-                <Check className="text-[#115e41]" size={14} /> Our team typically replies within 24 hours
-              </p>
-            </Card>
-          </div>
-
         </div>
+      </section>
 
-        {/* Top Selling Automation Solutions */}
-        <div className="pt-4">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <h3 className="text-xl font-black text-neutral-900 uppercase tracking-tight">Top Selling Automation Solutions</h3>
+      {/* ── Charts Section: Bar Graph + Pie Chart Side by Side ── */}
+      <section className="dash-charts-row">
+        {/* Bar Chart */}
+        <article className="dash-chart-card">
+          <div className="dash-chart-head">
+            <div className="dash-chart-icon bar-icon">
+              <BarChart3 size={20} />
             </div>
-            <Link to="/customer/products" className="text-sm font-medium text-primary hover:text-teal-800 flex items-center">
-              View catalog <ChevronRight size={16} />
-            </Link>
+            <div>
+              <p className="eyebrow">Product Sales</p>
+              <h3>Sales Bar Chart</h3>
+            </div>
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {isLoading ? (
-              Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-72 rounded-2xl" />)
-            ) : (
-              recommendedProducts.map((product, index) => {
-                const activeOffers = product.offers?.filter(o => o.isActive) || [];
-                let promoPrice = null;
-                
-                for (const offer of activeOffers) {
-                  if (offer.type === 'Flat Discount' && offer.value > 0) {
-                    const candidate = product.price - offer.value;
-                    if (candidate > 0 && (!promoPrice || candidate < promoPrice)) {
-                      promoPrice = candidate;
-                    }
-                  } else if (offer.type === 'Percentage Discount' && offer.value > 0) {
-                    const candidate = product.price - (product.price * (offer.value / 100));
-                    if (candidate > 0 && (!promoPrice || candidate < promoPrice)) {
-                      promoPrice = candidate;
-                    }
-                  }
-                }
-
-                const soldCounts = [72, 56, 51, 89];
-                const soldCount = soldCounts[index] || 45;
-
-                return (
-                  <Card key={product.id} hover className="p-0 overflow-hidden h-full flex flex-col rounded-2xl bg-[#fafcfa] border border-neutral-100 relative group">
-                    <div className="absolute top-4 left-4 bg-[#0aa6b5] text-white text-xs font-black px-2 py-1 rounded-md shadow-sm z-10">
-                      #{index + 1}
-                    </div>
-                    
-                    <div className="aspect-[4/3] relative p-6 pb-2 flex items-center justify-center">
-                      <img src={product.image} alt={product.name} className="w-full h-full object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105" />
-                    </div>
-                    
-                    <div className="p-6 flex-1 flex flex-col bg-white rounded-b-2xl">
-                      <h4 className="font-black text-[15px] text-neutral-900 mb-3 uppercase leading-snug">{product.name}</h4>
-                      <p className="text-[13px] text-neutral-500 mb-6 line-clamp-6 leading-relaxed">{product.description}</p>
-                      
-                      <div className="mt-auto">
-                        <div className="flex items-end justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            {promoPrice ? (
-                              <>
-                                <span className="text-xl font-black text-[#115e41] tracking-tight">{formatCurrency(promoPrice)}</span>
-                                <span className="text-sm text-neutral-400 line-through decoration-red-400 decoration-2 font-semibold">{formatCurrency(product.price)}</span>
-                              </>
-                            ) : (
-                              <span className="text-xl font-black text-[#115e41] tracking-tight">{formatCurrency(product.price)}</span>
-                            )}
-                          </div>
-                          
-                          <div className="bg-[#eef2f3] text-[#4a5f68] text-xs font-bold px-3 py-1.5 rounded-full">
-                            {soldCount} sold
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center gap-1 text-xs font-semibold text-neutral-600 mb-4">
-                          <span className="text-yellow-400 text-sm">★</span>
-                          <span className="text-yellow-400 text-sm">★</span>
-                          <span className="text-yellow-400 text-sm">★</span>
-                          <span className="text-yellow-400 text-sm">★</span>
-                          <span className="text-yellow-400 text-sm">★</span>
-                          <span className="ml-1">4.5</span>
-                        </div>
-                        
-                        <Link to={`/customer/products`} className="w-full py-2.5 bg-white text-[#115e41] border-2 border-[#115e41] rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#115e41] hover:text-white transition-colors text-sm">
-                          <ShoppingCart size={16} /> Add to Cart
-                        </Link>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })
-            )}
+          <div className="bar-chart-container">
+            <BarChartSVG data={chartData} />
           </div>
+        </article>
+
+        {/* Pie Chart */}
+        <article className="dash-chart-card">
+          <div className="dash-chart-head">
+            <div className="dash-chart-icon pie-icon">
+              <PieChart size={20} />
+            </div>
+            <div>
+              <p className="eyebrow">Market Share</p>
+              <h3>Sales Distribution</h3>
+            </div>
+          </div>
+          <div className="pie-chart-container">
+            <div className="pie-chart-wrap">
+              <PieChartSVG data={chartData} />
+            </div>
+            <div className="pie-legend">
+              {chartData.map((d, i) => (
+                <div key={d.id} className="pie-legend-item">
+                  <span
+                    className="pie-legend-dot"
+                    style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}
+                  />
+                  <span className="pie-legend-label">{d.shortName}</span>
+                  <strong className="pie-legend-val">{d.sales}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+        </article>
+      </section>
+      
+      {toast && (
+        <div className="fixed bottom-6 right-6 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-2xl font-bold z-50 animate-in fade-in slide-in-from-bottom-5">
+          {toast}
         </div>
-        
-      </div>
+      )}
+
+      <ReviewModal
+        open={reviewModalOpen}
+        onClose={() => { setReviewModalOpen(false); setReviewTargetProduct(null); }}
+        onSave={handleSaveReview}
+        initial={reviewTargetProduct ? { productName: reviewTargetProduct.name } : null}
+      />
     </AppShell>
   );
 };

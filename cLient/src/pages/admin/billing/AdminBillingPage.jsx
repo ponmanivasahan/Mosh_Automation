@@ -1,14 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Package, HelpCircle, Check, AlertCircle, Edit, DollarSign, Clock, ListFilter, FileText } from 'lucide-react';
+import { Package, HelpCircle, Check, AlertCircle, Edit, DollarSign, Clock, ListFilter } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
-import Card from '../../../components/ui/Card';
-import Badge from '../../../components/ui/Badge';
-import Button from '../../../components/ui/Button';
-import EmptyState from '../../../components/ui/EmptyState';
+import CustomSelect from '../../../components/CustomSelect';
 import { getProducts, getBillingSettings, setBillingSettings, updateEstimation } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import { openPdfBase64 } from '../../../utils/pdfHelper';
 import { API_URL } from '../../../utils/api';
+import './AdminBillingPage.css';
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
@@ -166,17 +164,17 @@ const AdminBillingPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Column: Product Selection Option & View */}
-          <div className="lg:col-span-4 bg-slate-50 border border-slate-200/80 p-6 rounded-2xl space-y-6 lg:sticky lg:top-28">
+          <div className="lg:col-span-4 bg-slate-100 border border-slate-200/80 p-6 rounded-lg space-y-6 lg:sticky lg:top-28">
             <div>
               <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                <Package size={16} className="text-primary" />
+                <Package size={16} className="text-teal-600" />
                 Linked Product Details
               </h3>
               <p className="text-xs text-slate-500 mt-1">Examine product details connected to the active customer query.</p>
             </div>
 
             {selectedProduct ? (
-              <Card className="p-4 space-y-4">
+              <div className="p-4 rounded-lg bg-white border border-slate-200 space-y-4 shadow-sm">
                 <div className="h-44 bg-slate-50 rounded-lg p-3 border flex items-center justify-center">
                   <img src={selectedProduct.image} alt={selectedProduct.name} className="max-h-full max-w-full object-contain" />
                 </div>
@@ -186,46 +184,40 @@ const AdminBillingPage = () => {
                   <p className="text-xs text-slate-600 mt-2 line-clamp-3 leading-relaxed font-semibold">{selectedProduct.description}</p>
                   <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
                     <span className="text-[10px] text-slate-400 font-bold uppercase">Base Price</span>
-                    <strong className="text-sm text-primary font-bold">{formatCurrency(selectedProduct.price)}</strong>
+                    <strong className="text-sm text-teal-600 font-bold">{formatCurrency(selectedProduct.price)}</strong>
                   </div>
                 </div>
-              </Card>
+              </div>
             ) : (
-              <EmptyState 
-                icon={Package} 
-                title="No product selected" 
-                description="Click 'Update Inquiry' on a query card to view its linked product specifications." 
-              />
+              <p className="text-xs text-slate-400 italic text-center py-8">Click 'Update Inquiry' on a query card to view its linked product specifications.</p>
             )}
           </div>
 
           {/* Right Column: Customer Queries Viewer & Updater */}
-          <div className="lg:col-span-8 bg-slate-50 border border-slate-200/80 p-6 rounded-2xl space-y-6 max-h-[78vh] overflow-y-auto overflow-x-hidden">
+          <div className="lg:col-span-8 bg-slate-100 border border-slate-200/80 p-6 rounded-lg space-y-6 max-h-[78vh] overflow-y-auto overflow-x-hidden">
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                  <HelpCircle size={16} className="text-primary" />
+                  <HelpCircle size={16} className="text-teal-600" />
                   Customer Estimation Queries
                 </h3>
                 <p className="text-xs text-slate-500 mt-1">Review live inquiry requests and update values directly.</p>
               </div>
-              <Badge variant="default" className="text-[10px]">
+              <span className="text-[10px] bg-slate-200 px-3 py-1 rounded-full text-slate-600 font-bold">
                 {estimations.length} inquiries
-              </Badge>
+              </span>
             </div>
 
             {!estimations.length ? (
-              <EmptyState
-                icon={HelpCircle}
-                title="No inquiries"
-                description="No customer estimation inquiries found."
-              />
+              <div className="text-center py-16 bg-white border rounded-lg p-6">
+                <p className="text-xs text-slate-400 italic">No customer estimation inquiries found.</p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {estimations.map((est) => {
                   const isEditing = editingEstId === est.id;
                   return (
-                    <Card key={est.id} className="p-5 space-y-4">
+                    <div key={est.id} className="p-5 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
                       {/* Inquiry Header */}
                       <div className="flex flex-wrap justify-between items-start gap-2 border-b border-slate-100 pb-3">
                         <div>
@@ -240,9 +232,11 @@ const AdminBillingPage = () => {
                             <span>Submitted: {formatDateTime(est.createdAt)}</span>
                           </p>
                         </div>
-                        <Badge variant={est.stage === 'replied' ? 'success' : 'warning'}>
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                          est.stage === 'replied' ? 'bg-teal-50 text-teal-600' : 'bg-amber-50 text-amber-600'
+                        }`}>
                           {est.stage || 'Pending'}
-                        </Badge>
+                        </span>
                       </div>
 
                       {/* Inquiry Content */}
@@ -258,14 +252,12 @@ const AdminBillingPage = () => {
                           {est.adminResponse && <p className="leading-relaxed font-semibold">"{est.adminResponse}"</p>}
                           {est.attachmentUrl && (
                             <div className="mt-2">
-                              <Button
-                                variant="secondary"
-                                size="sm"
+                              <button
                                 onClick={(e) => { e.preventDefault(); openPdfBase64(est.attachmentUrl); }}
-                                className="font-bold text-primary border-primary/20"
+                                className="inline-flex items-center gap-1 bg-white border border-teal-200 text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition shadow-sm font-bold"
                               >
-                                <FileText size={14} className="mr-1" /> View Attached PDF
-                              </Button>
+                                📄 View Attached PDF
+                              </button>
                             </div>
                           )}
                         </div>
@@ -274,72 +266,73 @@ const AdminBillingPage = () => {
                       {/* Display Edit Fields if in edit mode */}
                       {isEditing ? (
                         <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-200 mt-3 space-y-4">
-                          <div className="space-y-1">
+                          <div className="form-field-group">
                             <label className="text-xs font-bold text-slate-700">Estimated Price (₹)</label>
                             <input
                               type="number"
                               value={editPrice}
                               onChange={(e) => setEditPrice(e.target.value)}
-                              className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none font-bold"
+                              className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none mt-1 font-bold"
                             />
                           </div>
 
-                          <div className="space-y-1">
+                          <div className="form-field-group">
                             <label className="text-xs font-bold text-slate-700">Write Response Message</label>
                             <textarea
                               value={editResponse}
                               onChange={(e) => setEditResponse(e.target.value)}
                               placeholder="Write response details, estimate values, setup times..."
-                              className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none h-[70px] resize-none font-bold"
+                              className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 outline-none mt-1 h-[70px] resize-none font-bold"
                             />
                           </div>
 
-                          <div className="space-y-1">
+                          <div className="form-field-group">
                             <label className="text-xs font-bold text-slate-700">Attach PDF (Optional)</label>
                             <input
                               type="file"
                               accept="application/pdf"
                               onChange={handleFileChange}
-                              className="w-full text-xs"
+                              className="w-full text-xs mt-1"
                             />
                             {editAttachmentName && (
-                              <p className="text-[10px] text-primary font-bold mt-1">Selected: {editAttachmentName}</p>
+                              <p className="text-[10px] text-teal-600 font-bold mt-1">Selected: {editAttachmentName}</p>
                             )}
                           </div>
 
                           <div className="flex gap-2 pt-2">
-                            <Button
+                            <button
+                              type="button"
                               onClick={() => handleUpdateEstimation(est.id)}
-                              className="flex-1"
+                              className="flex-1 text-[11px] bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-lg transition"
                             >
                               Send Reply
-                            </Button>
-                            <Button
-                              variant="secondary"
+                            </button>
+                            <button
+                              type="button"
                               onClick={handleCancelEdit}
+                              className="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-lg transition border"
                             >
                               Cancel
-                            </Button>
+                            </button>
                           </div>
                         </div>
                       ) : (
                         <div className="flex justify-between items-center border-t border-slate-100 pt-3">
                           <div className="flex items-center gap-1">
                             <span className="text-[10px] text-slate-400 uppercase font-bold">Estimated Cost:</span>
-                            <strong className="text-sm text-primary font-bold">{formatCurrency(est.total)}</strong>
+                            <strong className="text-sm text-teal-600 font-bold">{formatCurrency(est.total)}</strong>
                           </div>
-                          <Button
-                            variant="secondary"
-                            size="sm"
+                          <button
+                            type="button"
                             onClick={() => handleStartEdit(est)}
-                            className="text-xs font-bold"
+                            className="text-xs bg-slate-100 border border-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg hover:bg-slate-200 transition flex items-center gap-1.5"
                           >
-                            <Edit size={12} className="mr-1.5" />
+                            <Edit size={12} />
                             Update Inquiry
-                          </Button>
+                          </button>
                         </div>
                       )}
-                    </Card>
+                    </div>
                   );
                 })}
               </div>
