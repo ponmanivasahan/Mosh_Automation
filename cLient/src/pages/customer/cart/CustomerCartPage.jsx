@@ -3,6 +3,7 @@ import CustomSelect from '../../../components/CustomSelect';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ShoppingBag,
+  ShoppingCart,
   Trash2,
   Plus,
   Minus,
