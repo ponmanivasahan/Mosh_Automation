@@ -2,18 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Edit2, CheckCircle, Sparkles, Upload, X, Check, AlertCircle } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import { adminLinks } from '../../../utils/customerLinks';
 import { getStories, addStory, updateStory, deleteStory } from '../../../utils/storage';
-
-const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Product Management' },
-  { to: '/admin/invoices', label: 'Billing' },
-  { to: '/admin/billing', label: 'Query Management' },
-  { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' },
-  { to: '/admin/estimations', label: 'Estimation Calculator' },
-  { to: '/admin/customers', label: 'Customers' }
-];
 
 const emptyForm = {
   title: '',
@@ -162,10 +152,10 @@ const AdminStoriesPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* Left Column: Form to Add/Edit Story */}
-          <article className="lg:col-span-4 panel bg-slate-100 p-6 rounded-lg border border-slate-200">
-            <div className="panel-header-section mb-4">
+          <article className="lg:col-span-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs">
+            <div className="panel-header-section mb-4 pb-3 border-b border-slate-100">
               <span className="badge-kicker text-teal-700 uppercase tracking-wider text-[9px] font-bold">Marketing Control</span>
-              <h2 className="text-base font-bold text-slate-800">{editingId ? 'Edit Success Story' : 'Add Success Story'}</h2>
+              <h2 className="text-base font-bold text-slate-900">{editingId ? 'Edit Success Story' : 'Add Success Story'}</h2>
               <p className="text-xs text-slate-500">Publish high-impact case studies to the storefront.</p>
             </div>
 
@@ -269,9 +259,9 @@ const AdminStoriesPage = () => {
           </article>
 
           {/* Right Column: Stories catalog list */}
-          <article className="lg:col-span-8 panel bg-slate-100 p-6 rounded-lg border border-slate-200 max-h-[78vh] overflow-y-auto overflow-x-hidden">
-            <div className="panel-header-section mb-6">
-              <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+          <article className="lg:col-span-8 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs max-h-[78vh] overflow-y-auto overflow-x-hidden">
+            <div className="panel-header-section mb-6 pb-3 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <Sparkles size={16} className="text-teal-600" />
                 Stories Catalog list
               </h2>

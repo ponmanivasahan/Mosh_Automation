@@ -15,22 +15,12 @@ import {
   Clock
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import Tabs from '../../../components/ui/Tabs';
+import { adminLinks } from '../../../utils/customerLinks';
 import { getProducts, addProduct, updateProduct, deleteProduct, getDbStatus } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import { API_URL } from '../../../utils/api';
 import './AdminProductsPage.css';
-
-const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Product Management' },
-  { to: '/admin/invoices', label: 'Billing' },
-  { to: '/admin/billing', label: 'Query Management' },
-  { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' },
-  { to: '/admin/estimations', label: 'Estimation Calculator' },
-  { to: '/admin/customers', label: 'Customers' }
-];
-
 import OfferManager from '../../../components/products/OfferManager';
 
 const emptyForm = {
@@ -54,6 +44,7 @@ const emptyForm = {
 const AdminProductsPage = () => {
   const [products, setProductsState] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('All');
   const [message, setMessage] = useState('');
   const [dbConnected, setDbConnected] = useState(() => getDbStatus());
 
@@ -254,12 +245,22 @@ const AdminProductsPage = () => {
     });
   };
 
+  const categories = useMemo(() => {
+    const set = new Set();
+    products.forEach(p => p.category && set.add(p.category));
+    return Array.from(set);
+  }, [products]);
+
   const filteredProducts = useMemo(() => {
-    return products.filter(p =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [products, searchQuery]);
+    return products.filter((p) => {
+      const matchesSearch = !searchQuery || (
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      const matchesCategory = categoryFilter === 'All' || p.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchQuery, categoryFilter]);
 
   return (
     <AppShell title="Product Management Portal" links={adminLinks}>
@@ -286,15 +287,15 @@ const AdminProductsPage = () => {
         </AnimatePresence>
 
         {/* Catalog rotation banner container */}
-        <article className="panel bg-slate-100 p-6 rounded-lg border border-slate-200">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <article className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-5">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-100">
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Products in Rotation</h2>
+              <h2 className="text-xl font-bold text-slate-900">Products in Rotation</h2>
               <p className="text-xs text-slate-500 mt-1">Live active listings on the customer portal.</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-              <div className="flex items-center gap-2 border bg-white px-3 py-1.5 rounded-lg text-slate-500 shadow-sm flex-1 md:flex-none">
+              <div className="flex items-center gap-2 border border-slate-200 bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600 shadow-xs flex-1 md:flex-none">
                 <Search size={14} className="text-slate-400" />
                 <input
                   type="text"
@@ -307,12 +308,31 @@ const AdminProductsPage = () => {
 
               <button
                 onClick={() => setShowAddModal(true)}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2 px-4 rounded-lg shadow transition flex items-center gap-1.5 shrink-0"
+                className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs transition flex items-center gap-1.5 shrink-0"
               >
                 <Plus size={14} /> Add Product
               </button>
             </div>
           </div>
+
+          {/* Category Tabs */}
+          {categories.length > 0 && (
+            <div className="overflow-x-auto no-scrollbar pb-1">
+              <Tabs
+                tabs={[
+                  { id: 'All', label: 'All Categories', count: products.length },
+                  ...categories.map((c) => ({
+                    id: c,
+                    label: c,
+                    count: products.filter((p) => p.category === c).length
+                  }))
+                ]}
+                activeTab={categoryFilter}
+                onChange={setCategoryFilter}
+                size="sm"
+              />
+            </div>
+          )}
 
           <div className="space-y-4">
             {filteredProducts.map((p) => (

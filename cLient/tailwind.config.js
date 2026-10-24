@@ -14,7 +14,10 @@ export default {
         glow: '0 0 0 1px rgba(37, 99, 235, 0.06), 0 30px 50px rgba(15, 118, 110, 0.08)'
       },
       borderRadius: {
-        xl: '24px'
+        'lg': '10px',
+        'xl': '14px',
+        '2xl': '18px',
+        '3xl': '24px'
       },
       keyframes: {
         wave: {

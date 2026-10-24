@@ -1,20 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Shield, User, ToggleLeft, ToggleRight, Check, Users, Clock } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import { adminLinks } from '../../../utils/customerLinks';
 import { formatDateTime } from '../../../utils/format';
 import { API_URL } from '../../../utils/api';
-
-const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Product Management' },
-  { to: '/admin/invoices', label: 'Billing' },
-  { to: '/admin/billing', label: 'Query Management' },
-  { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' },
-  { to: '/admin/estimations', label: 'Estimation Calculator' },
-  { to: '/admin/settings', label: 'Settings' },
-  { to: '/admin/customers', label: 'Customers' }
-];
 
 const AdminSettingsPage = () => {
   const [users, setUsers] = useState([]);
@@ -84,16 +73,16 @@ const AdminSettingsPage = () => {
           </div>
         )}
 
-        <div className="bg-slate-100 border border-slate-200/80 p-6 rounded space-y-6">
-          <div className="flex justify-between items-center">
+        <div className="bg-white border border-slate-200/90 p-4 sm:p-6 rounded-2xl space-y-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-100">
             <div>
-              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <Users size={20} className="text-teal-600" />
                 User Access Registry
               </h2>
               <p className="text-xs text-slate-500 mt-1">Manage portal member credentials, admin access rights, and change account roles instantly.</p>
             </div>
-            <span className="text-xs bg-white border px-3 py-1.5 rounded-full font-bold shadow-sm text-slate-600">
+            <span className="text-xs bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-full font-bold shadow-xs text-slate-700">
               {users.length} Registered Users
             </span>
           </div>

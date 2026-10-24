@@ -20,6 +20,7 @@ import {
   Inbox
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import Tabs from '../../../components/ui/Tabs';
 import { useAuth } from '../../../utils/AuthContext';
 import { getProducts, getEstimations, addEstimation, updateEstimation, addNotification } from '../../../utils/storage';
 import { formatDateTime } from '../../../utils/format';
@@ -421,37 +422,28 @@ const CustomerQueryPage = () => {
 
         {/* Submitted Queries Section */}
         <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="flex p-2 rounded-xl bg-slate-100 text-slate-700">
-              <FileText size={20} />
-            </span>
-            <h3 className="text-xl font-bold text-slate-800">My Submitted Queries</h3>
-          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+            <div className="flex items-center gap-3">
+              <span className="flex p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60">
+                <FileText size={20} />
+              </span>
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">My Submitted Queries</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Track admin replies, pricing quotes, and attachments</p>
+              </div>
+            </div>
 
-          {/* Tabs Filter Bar */}
-          <div className="flex gap-2 border-b border-slate-200 pb-3">
-            {['All', 'Pending', 'Completed'].map((tab) => {
-              const count = tab === 'All'
-                ? queries.length
-                : tab === 'Pending'
-                ? queries.filter(q => !q.adminResponse && !q.attachmentUrl && q.stage !== 'replied' && q.stage !== 'completed').length
-                : queries.filter(q => !!q.adminResponse || !!q.attachmentUrl || q.stage === 'replied' || q.stage === 'completed').length;
-              
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`text-xs font-bold px-4 py-2 rounded-xl transition ${
-                    activeTab === tab
-                      ? 'bg-teal-600 text-white '
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {tab} ({count})
-                </button>
-              );
-            })}
+            {/* Aligned Tabs Component */}
+            <Tabs
+              tabs={[
+                { id: 'All', label: 'All Queries', count: queries.length },
+                { id: 'Pending', label: 'In Review', count: queries.filter(q => !q.adminResponse && !q.attachmentUrl && q.stage !== 'replied' && q.stage !== 'completed').length },
+                { id: 'Completed', label: 'Replied & Resolved', count: queries.filter(q => !!q.adminResponse || !!q.attachmentUrl || q.stage === 'replied' || q.stage === 'completed').length }
+              ]}
+              activeTab={activeTab}
+              onChange={setActiveTab}
+              size="sm"
+            />
           </div>
 
           {loading ? (

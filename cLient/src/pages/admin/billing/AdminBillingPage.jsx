@@ -1,29 +1,28 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Package, HelpCircle, Check, AlertCircle, Edit, DollarSign, Clock, ListFilter } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import Tabs from '../../../components/ui/Tabs';
 import CustomSelect from '../../../components/CustomSelect';
+import { adminLinks } from '../../../utils/customerLinks';
 import { getProducts, getBillingSettings, setBillingSettings, updateEstimation } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import { openPdfBase64 } from '../../../utils/pdfHelper';
 import { API_URL } from '../../../utils/api';
 import './AdminBillingPage.css';
 
-const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Product Management' },
-  { to: '/admin/invoices', label: 'Billing' },
-  { to: '/admin/billing', label: 'Query Management' },
-  { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' },
-  { to: '/admin/estimations', label: 'Estimation Calculator' },
-  { to: '/admin/customers', label: 'Customers' }
-];
-
 const AdminBillingPage = () => {
   const [products, setProducts] = useState([]);
   const [estimations, setEstimations] = useState([]);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [toast, setToast] = useState(null);
+  const [estFilter, setEstFilter] = useState('All'); // All, Pending, Replied
+
+  // Filtered estimations
+  const filteredEstimations = useMemo(() => {
+    if (estFilter === 'Pending') return estimations.filter(e => e.stage !== 'replied' && e.stage !== 'completed');
+    if (estFilter === 'Replied') return estimations.filter(e => e.stage === 'replied' || e.stage === 'completed');
+    return estimations;
+  }, [estimations, estFilter]);
 
   // Estimation updating state
   const [editingEstId, setEditingEstId] = useState(null);
@@ -194,27 +193,35 @@ const AdminBillingPage = () => {
           </div>
 
           {/* Right Column: Customer Queries Viewer & Updater */}
-          <div className="lg:col-span-8 bg-slate-100 border border-slate-200/80 p-6 rounded-lg space-y-6 max-h-[78vh] overflow-y-auto overflow-x-hidden">
-            <div className="flex justify-between items-center">
+          <div className="lg:col-span-8 bg-white border border-slate-200/90 p-6 rounded-2xl space-y-6 max-h-[78vh] overflow-y-auto overflow-x-hidden shadow-xs">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
                   <HelpCircle size={16} className="text-teal-600" />
                   Customer Estimation Queries
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">Review live inquiry requests and update values directly.</p>
+                <p className="text-xs text-slate-500 mt-0.5">Review live inquiry requests, send customized quotes, and upload proposal PDFs.</p>
               </div>
-              <span className="text-[10px] bg-slate-200 px-3 py-1 rounded-full text-slate-600 font-bold">
-                {estimations.length} inquiries
-              </span>
+
+              <Tabs
+                tabs={[
+                  { id: 'All', label: 'All Queries', count: estimations.length },
+                  { id: 'Pending', label: 'Pending', count: estimations.filter(e => e.stage !== 'replied' && e.stage !== 'completed').length },
+                  { id: 'Replied', label: 'Replied', count: estimations.filter(e => e.stage === 'replied' || e.stage === 'completed').length }
+                ]}
+                activeTab={estFilter}
+                onChange={setEstFilter}
+                size="sm"
+              />
             </div>
 
-            {!estimations.length ? (
-              <div className="text-center py-16 bg-white border rounded-lg p-6">
-                <p className="text-xs text-slate-400 italic">No customer estimation inquiries found.</p>
+            {!filteredEstimations.length ? (
+              <div className="text-center py-16 bg-slate-50 border border-slate-100 rounded-xl p-6">
+                <p className="text-xs text-slate-400 italic">No customer estimation inquiries matching "{estFilter}".</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {estimations.map((est) => {
+                {filteredEstimations.map((est) => {
                   const isEditing = editingEstId === est.id;
                   return (
                     <div key={est.id} className="p-5 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">

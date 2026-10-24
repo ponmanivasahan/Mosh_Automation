@@ -16,6 +16,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import Tabs from '../../../components/ui/Tabs';
 import { customerLinks } from '../../../utils/customerLinks';
 import './CustomerHelpCenterPage.css';
 
@@ -140,21 +141,17 @@ const CustomerHelpCenterPage = () => {
           {/* Left Column: FAQs & Self Service */}
           <div className="help-left-col">
             
-            {/* FAQ Category Pills */}
-            <div className="category-tabs-row">
-              {faqCategories.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategory(cat);
-                    setOpenFaq(null);
-                  }}
-                  className={`cat-tab-btn ${selectedCategory === cat ? 'active' : ''}`}
-                >
-                  {cat}
-                </button>
-              ))}
+            {/* FAQ Category Aligned Tabs */}
+            <div className="mb-4">
+              <Tabs
+                tabs={faqCategories.map((cat) => ({ id: cat, label: cat }))}
+                activeTab={selectedCategory}
+                onChange={(cat) => {
+                  setSelectedCategory(cat);
+                  setOpenFaq(null);
+                }}
+                size="sm"
+              />
             </div>
 
             {/* Accordion FAQ List */}

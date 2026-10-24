@@ -3,22 +3,12 @@ import { Package, Calculator, ClipboardList, Shield, RefreshCw, Edit3, Save, Dow
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import SystemEstimatePDF from '../../../components/pdf/SystemEstimatePDF';
 import AppShell from '../../../components/AppShell';
+import { adminLinks } from '../../../utils/customerLinks';
 import CustomSelect from '../../../components/CustomSelect';
 import { getProducts, getBillingSettings } from '../../../utils/storage';
 import { API_URL } from '../../../utils/api';
 import { formatCurrency } from '../../../utils/format';
 import './AdminEstimationsPage.css';
-
-const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Product Management' },
-  { to: '/admin/invoices', label: 'Billing' },
-  { to: '/admin/billing', label: 'Query Management' },
-  { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' },
-  { to: '/admin/estimations', label: 'Estimation Calculator' },
-  { to: '/admin/customers', label: 'Customers' }
-];
 
 const AdminEstimationsPage = () => {
   const [products, setProducts] = useState(() => getProducts());
@@ -222,7 +212,7 @@ const AdminEstimationsPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Selector & Details */}
-          <div className="lg:col-span-4 bg-slate-100 border border-slate-200/80 p-6 rounded-lg space-y-6">
+          <div className="lg:col-span-4 bg-white border border-slate-200/90 p-6 rounded-2xl space-y-6 shadow-xs">
             <div>
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <Package size={16} className="text-teal-600" />
@@ -244,8 +234,8 @@ const AdminEstimationsPage = () => {
               />
 
               {selectedProduct && (
-                <div className="p-4 rounded-lg bg-white border border-slate-200 space-y-4 shadow-sm">
-                  <div className="h-44 bg-slate-50 rounded-lg p-3 border flex items-center justify-center">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-4 shadow-xs">
+                  <div className="h-44 bg-white rounded-lg p-3 border border-slate-100 flex items-center justify-center">
                     <img src={selectedProduct.image} alt={selectedProduct.name} className="max-h-full max-w-full object-contain" />
                   </div>
                   <div>
@@ -253,7 +243,7 @@ const AdminEstimationsPage = () => {
                     <p className="text-[10px] text-slate-400 mt-0.5">ID: {selectedProduct.id}</p>
                     <p className="text-[11px] text-slate-500 mt-2 leading-relaxed font-semibold">{selectedProduct.description}</p>
                     
-                    <div className="mt-4 pt-3 border-t border-slate-100 space-y-1.5 text-xs text-slate-600 font-bold">
+                    <div className="mt-4 pt-3 border-t border-slate-200/60 space-y-1.5 text-xs text-slate-600 font-bold">
                       <div className="flex justify-between">
                         <span>Base Price:</span>
                         <span className="text-slate-800">{formatCurrency(selectedProduct.price)}</span>
@@ -274,7 +264,7 @@ const AdminEstimationsPage = () => {
           </div>
 
           {/* Right Column: Calculator Configuration & Invoice */}
-          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-100 border border-slate-200/80 p-6 rounded-lg">
+          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white border border-slate-200/90 p-6 rounded-2xl shadow-xs">
             {/* Config Fields */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 border-b pb-2">

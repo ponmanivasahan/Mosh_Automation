@@ -84,12 +84,12 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
   const gallery = [product.image, product.image, product.image];
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="bg-white rounded-2xl max-w-4xl w-full mx-4 p-6 shadow-2xl overflow-y-auto max-h-[92vh] border border-slate-100 flex flex-col space-y-6"
+        className="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl overflow-y-auto max-h-[92vh] border border-slate-100 flex flex-col space-y-5"
       >
         {/* Modal Header */}
         <div className="flex items-start justify-between border-b border-slate-100 pb-3">

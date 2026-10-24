@@ -2,20 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Trash2, CheckCircle, Reply, Check, AlertCircle, X } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import { adminLinks } from '../../../utils/customerLinks';
 import { getReviews, updateReview, deleteReview } from '../../../utils/storage';
 import { formatDateTime } from '../../../utils/format';
 import { API_URL } from '../../../utils/api';
-
-const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Product Management' },
-  { to: '/admin/invoices', label: 'Billing' },
-  { to: '/admin/billing', label: 'Query Management' },
-  { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' },
-  { to: '/admin/estimations', label: 'Estimation Calculator' },
-  { to: '/admin/customers', label: 'Customers' }
-];
 
 const AdminReviewsPage = () => {
   const [reviews, setReviews] = useState(() => getReviews());
@@ -114,13 +104,13 @@ const AdminReviewsPage = () => {
           </div>
         )}
 
-        <div className="bg-slate-100 border border-slate-200/80 p-6 rounded-lg space-y-6 max-h-[78vh] overflow-y-auto overflow-x-hidden">
-          <div className="flex justify-between items-center">
+        <div className="bg-white border border-slate-200/90 p-6 rounded-2xl space-y-6 max-h-[78vh] overflow-y-auto overflow-x-hidden shadow-xs">
+          <div className="flex justify-between items-center pb-4 border-b border-slate-100">
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Customer Feedback & Reviews</h2>
+              <h2 className="text-xl font-bold text-slate-900">Customer Feedback & Reviews</h2>
               <p className="text-xs text-slate-500 mt-1">Manage ratings, reply to customer inquiries, and highlight key reviews on the storefront.</p>
             </div>
-            <span className="text-xs bg-white border px-3 py-1.5 rounded-full font-bold shadow-sm text-slate-600">
+            <span className="text-xs bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-full font-bold shadow-xs text-slate-700">
               {reviews.length} Total Reviews
             </span>
           </div>

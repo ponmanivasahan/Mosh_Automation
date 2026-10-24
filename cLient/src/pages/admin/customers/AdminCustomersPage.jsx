@@ -13,19 +13,9 @@ import {
   Hash
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import { adminLinks } from '../../../utils/customerLinks';
 import { API_URL } from '../../../utils/api';
 import { formatDateTime } from '../../../utils/format';
-
-const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Product Management' },
-  { to: '/admin/invoices', label: 'Billing' },
-  { to: '/admin/billing', label: 'Query Management' },
-  { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' },
-  { to: '/admin/estimations', label: 'Estimation Calculator' },
-  { to: '/admin/customers', label: 'Customers' }
-];
 
 const AdminCustomersPage = () => {
   const [customers, setCustomers] = useState([]);
@@ -112,7 +102,7 @@ const AdminCustomersPage = () => {
     <AppShell title="Customers Database" links={adminLinks}>
       <div className="admin-customers-page space-y-6">
         {/* Top Control Panel */}
-        <header className="panel flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-100 p-6 rounded-lg border border-slate-200 gap-4">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs gap-4">
           <div>
             <p className="text-teal-700 uppercase tracking-wider text-[10px] font-bold">Mosh Systems HQ</p>
             <h2 className="text-2xl font-bold text-slate-800">Customer Accounts & Sync</h2>
@@ -122,7 +112,7 @@ const AdminCustomersPage = () => {
           </div>
           <button
             onClick={() => fetchCustomers(true)}
-            className="flex items-center gap-2 bg-white text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-xl border shadow-sm text-xs font-bold transition duration-300"
+            className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl border border-slate-200 shadow-xs text-xs font-bold transition duration-200"
           >
             <RefreshCw size={14} className={syncing ? 'animate-spin text-teal-600' : 'text-slate-500'} />
             <span>{syncing ? 'Syncing...' : 'Sync Now'}</span>

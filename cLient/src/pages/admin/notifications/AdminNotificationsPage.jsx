@@ -13,20 +13,11 @@ import {
   ArrowRight
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import Tabs from '../../../components/ui/Tabs';
+import { adminLinks } from '../../../utils/customerLinks';
 import { getNotifications, markAllNotificationsRead, markNotificationRead, deleteNotification as deleteNotificationApi } from '../../../utils/storage';
 import { formatDateTime } from '../../../utils/format';
 import './AdminNotificationsPage.css';
-
-const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Product Management' },
-  { to: '/admin/invoices', label: 'Billing' },
-  { to: '/admin/billing', label: 'Query Management' },
-  { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' },
-  { to: '/admin/estimations', label: 'Estimation Calculator' },
-  { to: '/admin/customers', label: 'Customers' }
-];
 
 const AdminNotificationsPage = () => {
   const [notifications, setNotifications] = useState(() => getNotifications());
@@ -105,29 +96,18 @@ const AdminNotificationsPage = () => {
           </div>
         </div>
 
-        {/* Filter controls and count badge */}
-        <div className="filters-bar-wrapper">
-          <div className="filters-group">
-            {['All', 'Unread', 'Read'].map((type) => {
-              const count =
-                type === 'All'
-                  ? notifications.length
-                  : type === 'Unread'
-                  ? notifications.filter((n) => !n.read).length
-                  : notifications.filter((n) => n.read).length;
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setFilter(type)}
-                  className={`filter-tab-btn ${filter === type ? 'active' : ''}`}
-                >
-                  <span>{type}</span>
-                  <span className="count-badge">{count}</span>
-                </button>
-              );
-            })}
-          </div>
+        {/* Aligned Filter Tabs */}
+        <div className="mb-4">
+          <Tabs
+            tabs={[
+              { id: 'All', label: 'All Alerts', count: notifications.length },
+              { id: 'Unread', label: 'Unread', count: notifications.filter((n) => !n.read).length },
+              { id: 'Read', label: 'Archived / Read', count: notifications.filter((n) => n.read).length }
+            ]}
+            activeTab={filter}
+            onChange={setFilter}
+            size="sm"
+          />
         </div>
 
         {/* Notification stack list */}

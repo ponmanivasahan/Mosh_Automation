@@ -15,6 +15,7 @@ import Badge from '../../../components/ui/Badge';
 import Button from '../../../components/ui/Button';
 import Skeleton from '../../../components/ui/Skeleton';
 import EmptyState from '../../../components/ui/EmptyState';
+import Tabs from '../../../components/ui/Tabs';
 
 const CustomerProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -187,6 +188,25 @@ const CustomerProductsPage = () => {
           </div>
           <ProductsToolbar filters={filters} onChange={setFilters} categories={categories} />
         </div>
+
+        {/* Quick Category Filter Tabs */}
+        {categories.length > 0 && (
+          <div className="mb-6 overflow-x-auto no-scrollbar pb-1">
+            <Tabs
+              tabs={[
+                { id: '', label: 'All Controllers', count: products.length },
+                ...categories.map((c) => ({
+                  id: c,
+                  label: c,
+                  count: products.filter((p) => p.category === c).length
+                }))
+              ]}
+              activeTab={filters.category || ''}
+              onChange={(cat) => setFilters((prev) => ({ ...prev, category: cat }))}
+              size="sm"
+            />
+          </div>
+        )}
 
         {/* Loading state / Grid state */}
         {loading ? (

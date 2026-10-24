@@ -21,21 +21,12 @@ import {
   Check
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import Tabs from '../../../components/ui/Tabs';
+import { adminLinks } from '../../../utils/customerLinks';
 import { getProducts, getOrders, getReviews, updateOrder, addNotification, getDbStatus } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import { API_URL } from '../../../utils/api';
 import './AdminDashboardPage.css';
-
-const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Product Management' },
-  { to: '/admin/invoices', label: 'Billing' },
-  { to: '/admin/billing', label: 'Query Management' },
-  { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' },
-  { to: '/admin/estimations', label: 'Estimation Calculator' },
-  { to: '/admin/customers', label: 'Customers' }
-];
 
 const AdminDashboardPage = () => {
   const [products, setProducts] = useState(() => getProducts());
@@ -166,6 +157,15 @@ const AdminDashboardPage = () => {
     return orders.filter(o => o.status === orderFilter);
   }, [orders, orderFilter]);
 
+  const orderTabs = useMemo(() => [
+    { id: 'All', label: 'All Orders', count: orders.length },
+    { id: 'Paid', label: 'Paid', count: orders.filter(o => o.paymentStatus === 'Paid' || o.status === 'Paid' || Boolean(o.transactionId)).length },
+    { id: 'Pending', label: 'Pending', count: orders.filter(o => o.status === 'Pending').length },
+    { id: 'Dispatched', label: 'Dispatched', count: orders.filter(o => o.status === 'Dispatched').length },
+    { id: 'Completed', label: 'Completed', count: orders.filter(o => o.status === 'Completed').length },
+    { id: 'Cancelled', label: 'Cancelled', count: orders.filter(o => o.status === 'Cancelled').length }
+  ], [orders]);
+
   return (
     <AppShell title="Admin Portal Control Dashboard" links={adminLinks}>
       {!dbConnected ? (
@@ -189,131 +189,151 @@ const AdminDashboardPage = () => {
         </header>
 
         {/* Dynamic Metric Cards Grid */}
-        <section className="admin-metrics-grid grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2">
+        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
           {/* Card 1: Total Products */}
           <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
+            whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('products')}
-            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
           >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Products</p>
-              <Package size={16} className="text-blue-500" />
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Products</span>
+              <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform">
+                <Package size={16} />
+              </div>
             </div>
-            <h3 className="text-2xl font-bold text-slate-800 mt-3">{products.length}</h3>
-            <span className="text-[10px] text-slate-400 font-bold block mt-1">Click to view items</span>
+            <div className="mt-3">
+              <h3 className="text-2xl font-extrabold text-slate-800 leading-none">{products.length}</h3>
+              <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">View all catalog</span>
+            </div>
           </motion.article>
 
           {/* Card 2: Active Orders */}
           <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
+            whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('active-orders')}
-            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
           >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Active Orders</p>
-              <ShoppingCart size={16} className="text-amber-500" />
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Active</span>
+              <div className="p-2 rounded-xl bg-amber-50 text-amber-600 group-hover:scale-105 transition-transform">
+                <ShoppingCart size={16} />
+              </div>
             </div>
-            <h3 className="text-2xl font-bold text-amber-600 mt-3">{activeOrdersCount}</h3>
-            <span className="text-[10px] text-slate-400 font-bold block mt-1">Placed & Processing</span>
+            <div className="mt-3">
+              <h3 className="text-2xl font-extrabold text-amber-600 leading-none">{activeOrdersCount}</h3>
+              <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">Processing orders</span>
+            </div>
           </motion.article>
 
           {/* Card 3: Dispatched Orders */}
           <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
+            whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('dispatched-orders')}
-            className="metric-card bg-slate-100 border border-teal-200 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
           >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Dispatched</p>
-              <Truck size={16} className="text-teal-500" />
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Dispatched</span>
+              <div className="p-2 rounded-xl bg-teal-50 text-teal-600 group-hover:scale-105 transition-transform">
+                <Truck size={16} />
+              </div>
             </div>
-            <h3 className="text-2xl font-bold text-teal-600 mt-3">{dispatchedOrdersCount}</h3>
-            <span className="text-[10px] text-slate-400 font-bold block mt-1">On the way</span>
+            <div className="mt-3">
+              <h3 className="text-2xl font-extrabold text-teal-600 leading-none">{dispatchedOrdersCount}</h3>
+              <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">In transit tracking</span>
+            </div>
           </motion.article>
 
           {/* Card 4: Completed Orders */}
           <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
+            whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('completed-orders')}
-            className="metric-card bg-slate-100 border-2 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
           >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Completed</p>
-              <CheckCircle size={16} className="text-emerald-500" />
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Delivered</span>
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-105 transition-transform">
+                <CheckCircle size={16} />
+              </div>
             </div>
-            <h3 className="text-2xl font-extrabold text-emerald-600 mt-3">{completedOrdersCount}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Delivered orders</span>
+            <div className="mt-3">
+              <h3 className="text-2xl font-extrabold text-emerald-600 leading-none">{completedOrdersCount}</h3>
+              <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">Delivered orders</span>
+            </div>
           </motion.article>
 
           {/* Card 5: Cancelled Orders */}
           <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
+            whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('cancelled-orders')}
-            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
           >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Cancelled Orders</p>
-              <Trash2 size={16} className="text-rose-500" />
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Cancelled</span>
+              <div className="p-2 rounded-xl bg-rose-50 text-rose-600 group-hover:scale-105 transition-transform">
+                <Trash2 size={16} />
+              </div>
             </div>
-            <h3 className="text-2xl font-extrabold text-rose-600 mt-3">{cancelledOrdersCount}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Cancelled items list</span>
+            <div className="mt-3">
+              <h3 className="text-2xl font-extrabold text-rose-600 leading-none">{cancelledOrdersCount}</h3>
+              <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">Voided orders</span>
+            </div>
           </motion.article>
 
           {/* Card 6: Total Customers */}
           <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
+            whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('customers')}
-            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
           >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Customers</p>
-              <Users size={16} className="text-indigo-500" />
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Customers</span>
+              <div className="p-2 rounded-xl bg-indigo-50 text-indigo-600 group-hover:scale-105 transition-transform">
+                <Users size={16} />
+              </div>
             </div>
-            <h3 className="text-2xl font-extrabold text-indigo-600 mt-3">{totalCustomers}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Registered clients</span>
+            <div className="mt-3">
+              <h3 className="text-2xl font-extrabold text-indigo-600 leading-none">{totalCustomers}</h3>
+              <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">Registered clients</span>
+            </div>
           </motion.article>
 
           {/* Card 7: Total Revenue */}
           <motion.article
-            whileHover={{ y: -4, scale: 1.02 }}
+            whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('revenue')}
-            className="metric-card bg-slate-100 border p-5 rounded-lg flex flex-col justify-between cursor-pointer hover:shadow-md transition"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
           >
-            <div className="flex justify-between items-start">
-              <p className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Total Revenue</p>
-              <TrendingUp size={16} className="text-pink-500" />
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Revenue</span>
+              <div className="p-2 rounded-xl bg-teal-50 text-teal-700 group-hover:scale-105 transition-transform">
+                <TrendingUp size={16} />
+              </div>
             </div>
-            <h3 className="text-xl font-extrabold text-pink-600 mt-3 truncate">{formatCurrency(totalRevenue)}</h3>
-            <span className="text-[10px] text-slate-400 font-semibold block mt-1">Excl. cancelled</span>
+            <div className="mt-3">
+              <h3 className="text-xl font-extrabold text-slate-900 leading-none truncate">{formatCurrency(totalRevenue)}</h3>
+              <span className="text-[10px] text-teal-700 font-semibold block mt-1.5">Excl. cancelled</span>
+            </div>
           </motion.article>
         </section>
         
 
 
         {/* Recent Orders - Live management list */}
-        <section className="panel bg-slate-100 border-2 rounded-2xl p-5 md:p-6 space-y-5">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+        <section className="bg-white border border-slate-200/90 rounded-2xl p-5 md:p-6 space-y-5 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <p className="dashboard-eyebrow text-teal-700 uppercase tracking-wider text-[10px] font-bold">Client operations</p>
               <h2 className="text-xl font-bold text-slate-800">Manage Orders ({filteredOrders.length})</h2>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
-              {['All', 'Paid', 'Pending', 'Dispatched', 'Completed', 'Cancelled'].map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setOrderFilter(tab)}
-                  className={`text-[11px] px-3 py-1.5 rounded-xl font-bold transition-all whitespace-nowrap ${
-                    orderFilter === tab ? 'bg-teal-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+            {/* Filter Tabs Component */}
+            <Tabs
+              tabs={orderTabs}
+              activeTab={orderFilter}
+              onChange={setOrderFilter}
+              size="sm"
+            />
           </div>
 
           {!filteredOrders.length ? (

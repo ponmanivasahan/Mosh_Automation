@@ -39,12 +39,12 @@ const CheckoutModal = ({ open, onClose, product, onPlace }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
-        className="bg-white rounded-2xl max-w-2xl w-full mx-4 p-6 shadow-xl overflow-auto max-h-[90vh]"
+        className="bg-white rounded-2xl max-w-xl w-full p-4 sm:p-6 shadow-xl overflow-auto max-h-[90vh]"
       >
         <div className="flex items-start justify-between">
           <h2 className="text-2xl font-bold">Checkout</h2>

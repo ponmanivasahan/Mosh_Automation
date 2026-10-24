@@ -23,6 +23,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import Tabs from '../../../components/ui/Tabs';
 import { useAuth } from '../../../utils/AuthContext';
 import {
   addNotification,
@@ -43,6 +44,7 @@ import './CustomerCartPage.css';
 const CustomerCartPage = () => {
   const { session } = useAuth();
   const [cartItems, setCartItems] = useState(getCart());
+  const [cartTab, setCartTab] = useState('cart');
   const [message, setMessage] = useState('');
   
   // Checkout & Payment Modal states
@@ -511,233 +513,283 @@ const CustomerCartPage = () => {
           )}
         </AnimatePresence>
 
-        <div className="cart-layout-grid">
-          
-          {/* Left Side: Cart Items List */}
-          <div className="cart-left-section">
-            <div className="section-card-panel">
-              <div className="panel-header-row">
-                <h2 className="panel-title">Shopping Cart ({cartItems.length} Items)</h2>
-                {cartItems.length > 0 && (
-                  <span className="shipping-banner">
-                    <Truck size={14} />
-                    {priceDetails.subtotal > 3000 ? 'Free Shipping Active!' : 'Add ₹' + (3000 - priceDetails.subtotal) + ' more for Free Delivery'}
-                  </span>
-                )}
-              </div>
-
-              {!cartItems.length ? (
-                <div className="empty-cart-view">
-                  <div className="empty-icon-wrap">
-                    <ShoppingBag size={48} />
-                  </div>
-                  <h3>Your Cart is Empty</h3>
-                  <p>Explore Mosh Automation catalog to discover and add smart controllers.</p>
-                </div>
-              ) : (
-                <div className="cart-items-divider-list">
-                  {cartItems.map((item) => (
-                    <article className="cart-item-card" key={item.id}>
-                      <div className="item-img-container">
-                        <img src={item.image} alt={item.name} />
-                      </div>
-                      
-                      <div className="item-details">
-                        <h3 className="item-name">{item.name}</h3>
-                        <p className="item-desc">{item.description}</p>
-                        
-                        <div className="item-price-quantity-row">
-                          <span className="price-tag">{formatCurrency(item.unitPrice)}</span>
-                          
-                          <div className="quantity-control-group">
-                            <button
-                              type="button"
-                              onClick={() => updateQuantity(item.id, -1)}
-                              className="qty-btn"
-                            >
-                              <Minus size={12} />
-                            </button>
-                            <span className="qty-value">{item.quantity || 1}</span>
-                            <button
-                              type="button"
-                              onClick={() => updateQuantity(item.id, 1)}
-                              className="qty-btn"
-                            >
-                              <Plus size={12} />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.id, item.name)}
-                        className="btn-item-remove"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Previous Order History Section */}
-            <div className="section-card-panel">
-              <h2 className="panel-title mb-6 flex items-center gap-2">
-                <Package size={20} className="text-teal-600" /> Order History
-              </h2>
-
-              {!orders.length ? (
-                <p className="no-history-text">No previous orders found.</p>
-              ) : (
-                <div className="orders-timeline-list">
-                  {orders.map((order) => (
-                    <article
-                      className="order-history-card cursor-pointer hover:border-teal-300 hover:shadow-md transition-all duration-300"
-                      key={order.id}
-                      onClick={() => setSelectedOrder(order)}
-                    >
-                      <div className="order-history-top">
-                        <div className="order-meta-info">
-                          <span className="order-id-label">Order ID: #{order.id}</span>
-                          <span className="order-date-text">
-                            <Calendar size={11} /> {formatDateTime(order.createdAt)}
-                          </span>
-                        </div>
-                        <span className={`order-status-badge text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
-                          order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'bg-emerald-50 text-emerald-600' :
-                          order.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
-                          order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-700'
-                        }`}>
-                          {order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'Paid' : order.status === 'Processing' ? 'Payment Pending' : order.status}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-4 py-3 overflow-x-auto pr-2">
-                        {order.items?.map((oItem, oIdx) => (
-                          <div key={oIdx} className="relative shrink-0 border border-slate-100 rounded-lg p-1.5 bg-slate-50 flex items-center justify-center">
-                            <img src={oItem.image} alt={oItem.name} className="w-12 h-12 object-contain" />
-                            <span className="absolute -top-1.5 -right-1.5 bg-slate-800 text-white text-[9px] h-4.5 w-4.5 rounded-full flex items-center justify-center font-bold">
-                              {oItem.quantity || 1}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="order-history-footer flex justify-between items-center mt-3 pt-3 border-t">
-                        <div>
-                          <span className="grand-total-label">
-                            {order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'Total Paid' : 'Total (Pending)'}
-                          </span>
-                          <strong className="grand-total-val">{formatCurrency(order.total)}</strong>
-                        </div>
-                        <div className="flex gap-2">
-                          {order.paymentStatus !== 'Paid' && order.status !== 'Paid' && order.status !== 'Cancelled' && order.status !== 'Completed' && (
-                            <button
-                              type="button"
-                              disabled={paymentStatusState === 'initializing'}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                startRazorpayPayment(order);
-                              }}
-                              className="bg-teal-600 hover:bg-teal-700 text-white text-[10px] font-bold px-3.5 py-2 rounded-xl transition-all shadow-sm disabled:opacity-50"
-                            >
-                              {paymentStatusState === 'initializing' && activePaymentOrder?.id === order.id ? 'Initializing...' : 'Pay Now'}
-                            </button>
-                          )}
-                          {order.status === 'Dispatched' ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleMarkDelivered(order);
-                              }}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold px-4 py-2 rounded-xl transition-all animate-pulse shadow-sm"
-                            >
-                              Delivered
-                            </button>
-                          ) : (
-                            order.status !== 'Cancelled' && order.status !== 'Completed' && order.status !== 'Paid' && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleCancelOrder(order);
-                                }}
-                                className="bg-rose-50 border border-rose-200 text-rose-600 text-[10px] font-bold px-3.5 py-2 rounded-xl hover:bg-rose-100 transition-all shadow-sm"
-                              >
-                                Cancel
-                              </button>
-                            )
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
+        {/* Aligned Page Header & Tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200/80">
+          <div>
+            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              {cartTab === 'cart' ? 'Shopping Cart' : 'Order History & Tracking'}
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              {cartTab === 'cart'
+                ? 'Review your selected items and complete secure payment checkout.'
+                : 'Track fulfillment progress, view invoices, and confirm delivery.'}
+            </p>
           </div>
 
-          {/* Right Side: Price Details Card */}
-          {cartItems.length > 0 && (
-            <aside className="cart-right-sidebar">
-              <div className="price-details-card">
-                <h3 className="sidebar-title">Price Details</h3>
-                <div className="price-breakdown-list">
-                  <div className="price-row">
-                    <span>Price ({priceDetails.totalItems} items)</span>
-                    <span>{formatCurrency(priceDetails.subtotal)}</span>
-                  </div>
-                  <div className="price-row text-green-600 font-semibold">
-                    <span>Discount</span>
-                    <span>- {formatCurrency(priceDetails.discount)}</span>
-                  </div>
-                  <div className="price-row">
-                    <span>Delivery Charges</span>
-                    <span className={priceDetails.deliveryCharges === 0 ? 'text-green-600 font-semibold' : ''}>
-                      {priceDetails.deliveryCharges === 0 ? 'FREE' : formatCurrency(priceDetails.deliveryCharges)}
+          <Tabs
+            tabs={[
+              { id: 'cart', label: 'Shopping Cart', count: cartItems.length, icon: ShoppingCart },
+              { id: 'orders', label: 'Order History', count: orders.length, icon: Package }
+            ]}
+            activeTab={cartTab}
+            onChange={setCartTab}
+            size="md"
+          />
+        </div>
+
+        {cartTab === 'cart' ? (
+          <div className="cart-layout-grid">
+            {/* Left Side: Cart Items List */}
+            <div className="cart-left-section">
+              <div className="section-card-panel bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
+                <div className="panel-header-row mb-4 flex items-center justify-between">
+                  <h3 className="text-base font-bold text-slate-800">
+                    Cart Items ({cartItems.length})
+                  </h3>
+                  {cartItems.length > 0 && (
+                    <span className="shipping-banner text-xs font-semibold text-teal-700 bg-teal-50 px-3 py-1 rounded-full flex items-center gap-1.5 border border-teal-200/60">
+                      <Truck size={14} />
+                      {priceDetails.subtotal > 3000 ? 'Free Shipping Active!' : `Add ₹${3000 - priceDetails.subtotal} more for Free Delivery`}
                     </span>
-                  </div>
-                  <div className="price-row">
-                    <span>Secured Packaging Fee</span>
-                    <span>{formatCurrency(priceDetails.packagingFee)}</span>
-                  </div>
-                  <div className="total-amount-row">
-                    <span>Total Amount</span>
-                    <strong>{formatCurrency(priceDetails.finalAmount)}</strong>
-                  </div>
+                  )}
                 </div>
-                {priceDetails.discount > 0 && (
-                  <p className="savings-msg">
-                    You will save {formatCurrency(priceDetails.discount)} on this order
-                  </p>
+
+                {!cartItems.length ? (
+                  <div className="empty-cart-view text-center py-16">
+                    <div className="empty-icon-wrap w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4 text-slate-400">
+                      <ShoppingBag size={32} />
+                    </div>
+                    <h3 className="text-base font-bold text-slate-800">Your Cart is Empty</h3>
+                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                      Explore our automation catalog to select controllers, wireless modules, and accessories.
+                    </p>
+                    <div className="flex items-center justify-center gap-3 mt-6">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/customer/products')}
+                        className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
+                      >
+                        Explore Products
+                      </button>
+                      {orders.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setCartTab('orders')}
+                          className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl transition"
+                        >
+                          View Past Orders ({orders.length})
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="cart-items-divider-list divide-y divide-slate-100">
+                    {cartItems.map((item) => (
+                      <article className="cart-item-card py-4 flex gap-4 items-center justify-between" key={item.id}>
+                        <div className="item-img-container h-20 w-20 rounded-xl bg-slate-50 border border-slate-100 p-2 shrink-0 flex items-center justify-center">
+                          <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
+                        </div>
+                        
+                        <div className="item-details flex-1 min-w-0">
+                          <h4 className="item-name font-bold text-sm text-slate-900 truncate">{item.name}</h4>
+                          <p className="item-desc text-xs text-slate-500 line-clamp-1 mt-0.5">{item.description}</p>
+                          
+                          <div className="item-price-quantity-row flex items-center gap-4 mt-3">
+                            <span className="price-tag font-extrabold text-sm text-slate-900">{formatCurrency(item.unitPrice)}</span>
+                            
+                            <div className="quantity-control-group inline-flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white">
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(item.id, -1)}
+                                className="qty-btn p-1.5 hover:bg-slate-100 text-slate-600 transition"
+                              >
+                                <Minus size={12} />
+                              </button>
+                              <span className="qty-value px-3 text-xs font-bold text-slate-800">{item.quantity || 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => updateQuantity(item.id, 1)}
+                                className="qty-btn p-1.5 hover:bg-slate-100 text-slate-600 transition"
+                              >
+                                <Plus size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.id, item.name)}
+                          className="btn-item-remove p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
+                          title="Remove item"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </article>
+                    ))}
+                  </div>
                 )}
-                
+              </div>
+            </div>
+
+            {/* Right Side: Price Details Card */}
+            {cartItems.length > 0 && (
+              <aside className="cart-right-sidebar">
+                <div className="price-details-card bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-4">
+                  <h3 className="sidebar-title text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
+                    Price Details
+                  </h3>
+                  <div className="price-breakdown-list space-y-2.5 text-xs">
+                    <div className="price-row flex justify-between text-slate-600">
+                      <span>Price ({priceDetails.totalItems} items)</span>
+                      <span className="font-semibold text-slate-800">{formatCurrency(priceDetails.subtotal)}</span>
+                    </div>
+                    <div className="price-row flex justify-between text-emerald-600 font-semibold">
+                      <span>Discount</span>
+                      <span>-{formatCurrency(priceDetails.discount)}</span>
+                    </div>
+                    <div className="price-row flex justify-between text-slate-600">
+                      <span>Delivery Charges</span>
+                      <span className={priceDetails.shippingFee === 0 ? 'text-emerald-600 font-bold' : 'font-semibold text-slate-800'}>
+                        {priceDetails.shippingFee === 0 ? 'FREE' : formatCurrency(priceDetails.shippingFee)}
+                      </span>
+                    </div>
+                    {priceDetails.wireFee > 0 && (
+                      <div className="price-row flex justify-between text-slate-600">
+                        <span>Wire & Sensor Accessories</span>
+                        <span className="font-semibold text-slate-800">{formatCurrency(priceDetails.wireFee)}</span>
+                      </div>
+                    )}
+                    <div className="price-total-row flex justify-between pt-3 border-t border-slate-200 text-sm font-extrabold text-slate-900">
+                      <span>Total Amount</span>
+                      <span className="text-teal-700">{formatCurrency(priceDetails.grandTotal)}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCheckoutModal(true)}
+                    className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm rounded-xl shadow-xs transition duration-200 flex items-center justify-center gap-2"
+                  >
+                    <span>Proceed to Checkout</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              </aside>
+            )}
+          </div>
+        ) : (
+          /* Order History View Tab */
+          <div className="order-history-view-container bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-5">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">My Orders ({orders.length})</h3>
+                <p className="text-xs text-slate-400 mt-0.5">Real-time status tracking and tax receipts</p>
+              </div>
+            </div>
+
+            {!orders.length ? (
+              <div className="text-center py-16">
+                <Package size={40} className="text-slate-300 mx-auto mb-3" />
+                <p className="text-sm font-semibold text-slate-600">No previous orders found.</p>
+                <p className="text-xs text-slate-400 mt-1">Orders you place will appear here with live tracking.</p>
                 <button
-                  className="btn-checkout-primary"
                   type="button"
-                  onClick={placeOrder}
+                  onClick={() => navigate('/customer/products')}
+                  className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-bold hover:bg-teal-700 transition"
                 >
-                  Place Order <ChevronRight size={16} />
+                  Browse Products
                 </button>
               </div>
+            ) : (
+              <div className="orders-timeline-list space-y-4">
+                {orders.map((order) => (
+                  <article
+                    className="order-history-card border border-slate-200/90 rounded-2xl p-5 hover:border-teal-300 hover:shadow-md transition-all duration-200 bg-white"
+                    key={order.id}
+                    onClick={() => setSelectedOrder(order)}
+                  >
+                    <div className="order-history-top flex justify-between items-start flex-wrap gap-2">
+                      <div className="order-meta-info">
+                        <span className="order-id-label font-bold text-sm text-slate-900 block">Order #{order.id}</span>
+                        <span className="order-date-text text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                          <Calendar size={12} /> {formatDateTime(order.createdAt)}
+                        </span>
+                      </div>
+                      <span className={`order-status-badge text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider ${
+                        order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                        order.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
+                        order.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                      }`}>
+                        {order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'Paid' : order.status === 'Processing' ? 'Payment Pending' : order.status}
+                      </span>
+                    </div>
 
-              <div className="security-assurances-card">
-                <div className="assurance-item">
-                  <Shield size={16} className="text-teal-600" />
-                  <span>Safe and Secure Payments</span>
-                </div>
-                <div className="assurance-item">
-                  <CreditCard size={16} className="text-teal-600" />
-                  <span>100% Payment Protection</span>
-                </div>
+                    <div className="flex items-center gap-3 py-4 overflow-x-auto pr-2">
+                      {order.items?.map((oItem, oIdx) => (
+                        <div key={oIdx} className="relative shrink-0 border border-slate-200 rounded-xl p-2 bg-slate-50 flex items-center justify-center">
+                          <img src={oItem.image} alt={oItem.name} className="w-12 h-12 object-contain" />
+                          <span className="absolute -top-1.5 -right-1.5 bg-slate-800 text-white text-[9px] h-4.5 w-4.5 rounded-full flex items-center justify-center font-bold">
+                            {oItem.quantity || 1}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="order-history-footer flex justify-between items-center mt-2 pt-3 border-t border-slate-100">
+                      <div>
+                        <span className="grand-total-label text-[10px] uppercase font-bold text-slate-400 block">
+                          {order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'Total Paid' : 'Total (Pending)'}
+                        </span>
+                        <strong className="grand-total-val text-base font-extrabold text-slate-900">{formatCurrency(order.total)}</strong>
+                      </div>
+                      <div className="flex gap-2">
+                        {order.paymentStatus !== 'Paid' && order.status !== 'Paid' && order.status !== 'Cancelled' && order.status !== 'Completed' && (
+                          <button
+                            type="button"
+                            disabled={paymentStatusState === 'initializing'}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startRazorpayPayment(order);
+                            }}
+                            className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs disabled:opacity-50"
+                          >
+                            {paymentStatusState === 'initializing' && activePaymentOrder?.id === order.id ? 'Initializing...' : 'Pay Now'}
+                          </button>
+                        )}
+                        {order.status === 'Dispatched' ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleMarkDelivered(order);
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all animate-pulse shadow-xs"
+                          >
+                            Mark Delivered
+                          </button>
+                        ) : (
+                          order.status !== 'Cancelled' && order.status !== 'Completed' && order.status !== 'Paid' && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCancelOrder(order);
+                              }}
+                              className="bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-rose-100 transition-all shadow-xs"
+                            >
+                              Cancel
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ))}
               </div>
-            </aside>
-          )}
-
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Checkout Modal */}

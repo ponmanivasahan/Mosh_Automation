@@ -8,6 +8,8 @@ import AdminReviewsPage from './pages/admin/reviews/AdminReviewsPage';
 import AdminStoriesPage from './pages/admin/stories/AdminStoriesPage';
 import AdminEstimationsPage from './pages/admin/estimations/AdminEstimationsPage';
 import AdminCustomersPage from './pages/admin/customers/AdminCustomersPage';
+import AdminNotificationsPage from './pages/admin/notifications/AdminNotificationsPage';
+import AdminSettingsPage from './pages/admin/settings/AdminSettingsPage';
 import CustomerCartPage from './pages/customer/cart/CustomerCartPage';
 import CustomerDashboardPage from './pages/customer/dashboard/CustomerDashboardPage';
 import CustomerQueryPage from './pages/customer/query/CustomerQueryPage';
@@ -149,6 +151,22 @@ const App = () => (
       element={
         <ProtectedRoute role="admin">
           <AdminCustomersPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/notifications"
+      element={
+        <ProtectedRoute role="admin">
+          <AdminNotificationsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/settings"
+      element={
+        <ProtectedRoute role="admin">
+          <AdminSettingsPage />
         </ProtectedRoute>
       }
     />

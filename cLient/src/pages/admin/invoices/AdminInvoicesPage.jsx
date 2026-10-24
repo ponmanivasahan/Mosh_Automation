@@ -2,23 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, CheckCircle, Search, FileText, Download, X, Eye } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import Tabs from '../../../components/ui/Tabs';
 import CustomSelect from '../../../components/CustomSelect';
+import { adminLinks } from '../../../utils/customerLinks';
 import { getInvoices, addInvoice, deleteInvoice, getProducts } from '../../../utils/storage';
 import { formatCurrency } from '../../../utils/format';
 import { numberToWords } from '../../../utils/numToWords';
 import { PDFDownloadLink, PDFViewer } from '@react-pdf/renderer';
 import InvoicePDF from '../../../components/pdf/InvoicePDF';
-
-const adminLinks = [
-  { to: '/admin/dashboard', label: 'Dashboard' },
-  { to: '/admin/products', label: 'Product Management' },
-  { to: '/admin/invoices', label: 'Billing' },
-  { to: '/admin/billing', label: 'Query Management' },
-  { to: '/admin/reviews', label: 'Reviews' },
-  { to: '/admin/stories', label: 'Success Stories' },
-  { to: '/admin/estimations', label: 'Estimation Calculator' },
-  { to: '/admin/customers', label: 'Customers' }
-];
 
 const emptyItem = {
   productId: '',
@@ -227,31 +218,37 @@ const AdminInvoicesPage = () => {
           )}
         </AnimatePresence>
 
-        <article className="panel bg-slate-100 p-6 rounded-lg border border-slate-200">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <article className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Billing Management</h2>
-              <p className="text-xs text-slate-500 mt-1">Manage customer invoices and generate tax invoices.</p>
+              <h2 className="text-xl font-bold text-slate-900">Billing & GST Invoices</h2>
+              <p className="text-xs text-slate-500 mt-1">Manage customer invoices, generate GST tax documents, and download PDFs.</p>
             </div>
             <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-              <div className="flex items-center gap-2 border bg-white px-3 py-1.5 rounded-lg text-slate-500 shadow-sm">
+              <Tabs
+                tabs={[
+                  { id: 'All', label: 'All Invoices', count: invoices.length },
+                  { id: 'Today', label: 'Today', count: invoices.filter(i => (i.invoiceDate || i.createdAt || '').startsWith(new Date().toISOString().split('T')[0])).length }
+                ]}
+                activeTab={dateFilter}
+                onChange={setDateFilter}
+                size="sm"
+              />
+
+              <div className="flex items-center gap-2 border border-slate-200 bg-slate-50 px-3 py-1.5 rounded-xl text-slate-600">
                 <Search size={14} className="text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search invoices..."
+                  placeholder="Search customer..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-transparent border-0 text-xs outline-none focus:ring-0 w-32"
+                  className="bg-transparent border-0 text-xs outline-none focus:ring-0 w-28 sm:w-36"
                 />
               </div>
-              <CustomSelect
-                value={dateFilter}
-                onChange={setDateFilter}
-                options={[{value:'All',label:'All Time'},{value:'Today',label:'Today'}]}
-              />
+
               <button
                 onClick={() => setShowAddModal(true)}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2 px-4 rounded-lg shadow transition flex items-center gap-1.5"
+                className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs transition flex items-center gap-1.5"
               >
                 <Plus size={14} /> Create Invoice
               </button>
