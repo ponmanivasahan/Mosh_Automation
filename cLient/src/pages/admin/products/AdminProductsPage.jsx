@@ -278,7 +278,7 @@ const AdminProductsPage = () => {
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border backdrop-blur-xl bg-teal-600 text-white border-teal-500 font-bold text-xs"
+              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border backdrop-blur-xl bg-blue-600 text-white border-blue-500 font-bold text-xs"
             >
               <CheckCircle size={16} />
               <span>{message}</span>
@@ -308,7 +308,7 @@ const AdminProductsPage = () => {
 
               <button
                 onClick={() => setShowAddModal(true)}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs transition flex items-center gap-1.5 shrink-0"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs transition flex items-center gap-1.5 shrink-0"
               >
                 <Plus size={14} /> Add Product
               </button>
@@ -343,7 +343,7 @@ const AdminProductsPage = () => {
                   </div>
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[9px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-bold uppercase shrink-0">{p.category || 'Automation'}</span>
+                      <span className="text-[9px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase shrink-0">{p.category || 'Automation'}</span>
                       <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase shrink-0 ${
                         p.availability === 'Out of Stock' ? 'bg-rose-50 text-rose-600' : 'bg-green-50 text-green-700'
                       }`}>
@@ -372,7 +372,7 @@ const AdminProductsPage = () => {
                         <div className="mt-2 flex flex-col gap-1.5">
                           {activeOffers.slice(0, 2).map((offer, idx) => (
                             <div key={idx} className="flex flex-col items-start gap-0.5">
-                              <span className="text-[10px] font-bold text-teal-700 bg-teal-100 px-2 py-0.5 rounded-full shadow-sm animate-pulse flex items-center gap-1">
+                              <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full shadow-sm animate-pulse flex items-center gap-1">
                                 <Gift size={10} /> {offer.title}
                               </span>
                               {offer.validUntil && (
@@ -422,7 +422,7 @@ const AdminProductsPage = () => {
                         <strong className="text-base text-rose-600 font-extrabold drop-shadow-sm scale-105 origin-right transition-transform">{formatCurrency(promoPrice)}</strong>
                       </div>
                     ) : (
-                      <strong className="text-sm text-teal-700 font-bold shrink-0">{formatCurrency(p.price)}</strong>
+                      <strong className="text-sm text-blue-700 font-bold shrink-0">{formatCurrency(p.price)}</strong>
                     );
                   })()}
                   <div className="flex items-center gap-2 shrink-0">
@@ -463,7 +463,7 @@ const AdminProductsPage = () => {
               >
                 <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                   <div>
-                    <span className="badge-kicker text-teal-600 font-bold uppercase tracking-wider text-[10px]">Catalog Manager</span>
+                    <span className="badge-kicker text-blue-600 font-bold uppercase tracking-wider text-[10px]">Catalog Manager</span>
                     <h2 className="text-xl font-bold text-slate-800">Register New Product</h2>
                   </div>
                   <button onClick={resetRegister} className="p-1 rounded-lg hover:bg-slate-100 transition">
@@ -546,7 +546,7 @@ const AdminProductsPage = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
                     <div className="form-field-group col-span-2">
-                      <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider">Estimation Points</h4>
+                      <h4 className="text-[10px] uppercase font-bold text-blue-600 tracking-wider">Estimation Points</h4>
                     </div>
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Float Sensor Fee / Unit</label>
@@ -624,7 +624,7 @@ const AdminProductsPage = () => {
                   {/* Drag-and-drop Image Upload preview */}
                   <div className="form-field-group">
                     <label className="text-xs font-bold text-slate-700">Product Image *</label>
-                    <div className="relative border-2 border-dashed border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col items-center justify-center cursor-pointer hover:border-teal-500 transition">
+                    <div className="relative border-2 border-dashed border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition">
                       <input
                         type="file"
                         accept="image/*"
@@ -647,7 +647,7 @@ const AdminProductsPage = () => {
                   <div className="flex gap-3 pt-3 border-t border-slate-100">
                     <button
                       type="submit"
-                      className="flex-1 text-xs bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-lg transition"
+                      className="flex-1 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition"
                     >
                       Publish Product
                     </button>
@@ -677,7 +677,7 @@ const AdminProductsPage = () => {
               >
                 <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                   <div>
-                    <span className="badge-kicker text-teal-600 font-bold uppercase tracking-wider text-[10px]">Catalog Editor</span>
+                    <span className="badge-kicker text-blue-600 font-bold uppercase tracking-wider text-[10px]">Catalog Editor</span>
                     <h2 className="text-xl font-bold text-slate-800">Modify Product Details</h2>
                   </div>
                   <button onClick={resetEdit} className="p-1 rounded-lg hover:bg-slate-100 transition">
@@ -757,7 +757,7 @@ const AdminProductsPage = () => {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
                     <div className="form-field-group col-span-2">
-                      <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider">Estimation Points</h4>
+                      <h4 className="text-[10px] uppercase font-bold text-blue-600 tracking-wider">Estimation Points</h4>
                     </div>
                     <div className="form-field-group">
                       <label className="text-xs font-bold text-slate-700">Float Sensor Fee / Unit</label>
@@ -834,7 +834,7 @@ const AdminProductsPage = () => {
                   {/* Drag-and-drop Image Upload preview */}
                   <div className="form-field-group">
                     <label className="text-xs font-bold text-slate-700">Change Product Image Asset *</label>
-                    <div className="relative border-2 border-dashed border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col items-center justify-center cursor-pointer hover:border-teal-500 transition">
+                    <div className="relative border-2 border-dashed border-slate-200 rounded-lg p-4 bg-slate-50 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition">
                       <input
                         type="file"
                         accept="image/*"
@@ -857,7 +857,7 @@ const AdminProductsPage = () => {
                   <div className="flex gap-3 pt-3 border-t border-slate-100">
                     <button
                       type="submit"
-                      className="flex-1 text-xs bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-lg transition"
+                      className="flex-1 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition"
                     >
                       Save Changes
                     </button>

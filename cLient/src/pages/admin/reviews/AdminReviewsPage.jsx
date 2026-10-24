@@ -97,7 +97,7 @@ const AdminReviewsPage = () => {
         {/* Toast alerts */}
         {toast && (
           <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border backdrop-blur-xl ${
-            toast.type === 'success' ? 'bg-teal-600 text-white border-teal-500' : 'bg-rose-600 text-white border-rose-500'
+            toast.type === 'success' ? 'bg-blue-600 text-white border-blue-500' : 'bg-rose-600 text-white border-rose-500'
           }`}>
             {toast.type === 'success' ? <Check size={20} /> : <AlertCircle size={20} />}
             <span className="font-semibold text-sm">{toast.message}</span>
@@ -147,11 +147,11 @@ const AdminReviewsPage = () => {
 
                     {/* Admin Reply display */}
                     {rev.adminReply && (
-                      <div className="mt-3 bg-teal-50/50 border border-teal-100 p-3 rounded-lg text-xs text-teal-800">
-                        <strong className="block text-[9px] uppercase tracking-wider text-teal-700 font-bold mb-1">Your Response</strong>
+                      <div className="mt-3 bg-blue-50/50 border border-blue-100 p-3 rounded-lg text-xs text-blue-800">
+                        <strong className="block text-[9px] uppercase tracking-wider text-blue-700 font-bold mb-1">Your Response</strong>
                         <p className="font-semibold">"{rev.adminReply}"</p>
                         {rev.repliedAt && (
-                          <span className="text-[8px] text-teal-600/80 block mt-1">Replied on: {formatDateTime(rev.repliedAt)}</span>
+                          <span className="text-[8px] text-blue-600/80 block mt-1">Replied on: {formatDateTime(rev.repliedAt)}</span>
                         )}
                       </div>
                     )}
@@ -172,7 +172,7 @@ const AdminReviewsPage = () => {
                         <button
                           type="button"
                           onClick={() => handleSubmitReply(rev.id, rev)}
-                          className="text-[10px] bg-teal-600 hover:bg-teal-700 text-white font-bold py-1 px-3 rounded-lg transition"
+                          className="text-[10px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded-lg transition"
                         >
                           Submit
                         </button>

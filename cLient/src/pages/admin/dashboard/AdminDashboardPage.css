@@ -1,33 +1,37 @@
 .admin-dashboard-page {
   display: grid;
-  gap: 16px;
+  gap: 24px;
 }
 
 .dashboard-eyebrow {
-  color: var(--accent);
+  color: #2563eb;
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .admin-topbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .admin-topbar-chip {
   align-self: center;
-  min-width: 140px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid var(--edge);
-  background: rgba(255, 255, 255, 0.05);
-  display: grid;
-  gap: 4px;
-  text-align: center;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
 }
 
 .admin-topbar-chip span,
@@ -35,63 +39,82 @@
 .admin-panel-head p,
 .country-row span,
 .category-item span {
-  color: var(--muted);
+  color: #64748b;
 }
 
+/* Metric KPI Cards Grid */
 .admin-metrics-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
 }
 
 .metric-card {
-  border: 1px solid var(--edge);
+  border: 1px solid #e2e8f0;
   border-radius: 18px;
-  padding: 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  padding: 20px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.metric-card p,
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+}
+
+.metric-card p {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  margin: 0;
+}
+
+.metric-card h3 {
+  margin: 10px 0 6px;
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
 .metric-card span {
   font-size: 12px;
 }
 
-.metric-card h3 {
-  margin: 10px 0 8px;
-  font-size: 1.6rem;
-}
-
-.add-card {
-  display: grid;
-  place-items: center;
-  text-align: center;
-  border-style: dashed;
-}
-
-.add-card h3 {
-  font-size: 2rem;
-  margin: 4px 0;
-}
-
-.admin-chart-card,
+/* Panels */
 .admin-recent-panel,
+.admin-chart-card,
 .admin-product-strip {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 18px -2px rgba(15, 23, 42, 0.04);
   margin-bottom: 0;
 }
 
 .admin-panel-head {
-  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .chart-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 16px;
   align-items: center;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 600;
 }
 
 .chart-legend span {
@@ -108,7 +131,7 @@
 }
 
 .legend-margin {
-  background: #5b7cfa;
+  background: #2563eb;
 }
 
 .legend-revenue {
@@ -118,9 +141,9 @@
 .sales-chart {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
   align-items: end;
-  min-height: 280px;
+  min-height: 260px;
 }
 
 .sales-day {
@@ -131,7 +154,7 @@
 
 .sales-bars {
   width: 100%;
-  min-height: 220px;
+  min-height: 200px;
   display: flex;
   align-items: end;
   justify-content: center;
@@ -140,34 +163,34 @@
 
 .sales-bar {
   width: 14px;
-  border-radius: 10px 10px 0 0;
+  border-radius: 8px 8px 0 0;
   display: block;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
 }
 
 .margin-bar {
-  background: linear-gradient(180deg, #6a8cff, #5574ee);
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
 }
 
 .revenue-bar {
-  background: linear-gradient(180deg, #f7b956, #ef8d24);
+  background: linear-gradient(180deg, #fbbf24, #f59e0b);
 }
 
 .sales-day small {
-  color: var(--muted);
-  font-weight: 700;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 11px;
 }
 
 .admin-two-column-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 20px;
 }
 
 .category-body {
   display: grid;
   grid-template-columns: 1fr minmax(180px, 220px);
-  gap: 18px;
+  gap: 20px;
   align-items: center;
 }
 
@@ -182,6 +205,8 @@
   grid-template-columns: auto 1fr auto;
   gap: 10px;
   align-items: center;
+  font-size: 13.5px;
+  font-weight: 500;
 }
 
 .category-dot {
@@ -196,24 +221,24 @@
 }
 
 .donut-chart {
-  width: 220px;
-  height: 220px;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
   position: relative;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
 }
 
 .donut-hole {
   position: absolute;
   inset: 28px;
   border-radius: 50%;
-  background: linear-gradient(180deg, rgba(22, 33, 58, 0.92), rgba(13, 20, 38, 0.92));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  background: #ffffff;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 @media (max-width: 1280px) {
   .admin-metrics-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .admin-two-column-grid {
@@ -224,10 +249,7 @@
 @media (max-width: 1024px) {
   .admin-topbar {
     flex-direction: column;
-  }
-
-  .admin-metrics-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: flex-start;
   }
 
   .category-body {
@@ -236,7 +258,7 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 640px) {
   .admin-metrics-grid {
     grid-template-columns: 1fr;
   }
@@ -246,20 +268,18 @@
   }
 
   .sales-bars {
-    min-height: 180px;
+    min-height: 160px;
   }
 
-  .panel {
-    padding: 18px;
-  }
-
-  .panel-head,
-  .admin-topbar {
-    align-items: flex-start;
+  .admin-recent-panel,
+  .admin-chart-card,
+  .admin-product-strip {
+    padding: 18px 14px;
+    border-radius: 16px;
   }
 
   .donut-chart {
-    width: 180px;
-    height: 180px;
+    width: 160px;
+    height: 160px;
   }
 }

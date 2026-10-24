@@ -104,7 +104,7 @@ const AdminCustomersPage = () => {
         {/* Top Control Panel */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs gap-4">
           <div>
-            <p className="text-teal-700 uppercase tracking-wider text-[10px] font-bold">Mosh Systems HQ</p>
+            <p className="text-blue-700 uppercase tracking-wider text-[10px] font-bold">Mosh Systems HQ</p>
             <h2 className="text-2xl font-bold text-slate-800">Customer Accounts & Sync</h2>
             <p className="text-xs text-slate-500 mt-1">
               Active directory of customer records populated directly from the central MySQL database.
@@ -114,7 +114,7 @@ const AdminCustomersPage = () => {
             onClick={() => fetchCustomers(true)}
             className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl border border-slate-200 shadow-xs text-xs font-bold transition duration-200"
           >
-            <RefreshCw size={14} className={syncing ? 'animate-spin text-teal-600' : 'text-slate-500'} />
+            <RefreshCw size={14} className={syncing ? 'animate-spin text-blue-600' : 'text-slate-500'} />
             <span>{syncing ? 'Syncing...' : 'Sync Now'}</span>
           </button>
         </header>
@@ -137,8 +137,8 @@ const AdminCustomersPage = () => {
           </div>
           <div className="bg-white border rounded-2xl p-5 shadow-sm">
             <p className="text-[10px] uppercase font-bold text-slate-400">Total Orders</p>
-            <h3 className="text-2xl font-extrabold text-teal-600 mt-2 flex items-center gap-2">
-              <ShoppingCart size={20} className="text-teal-500" />
+            <h3 className="text-2xl font-extrabold text-blue-600 mt-2 flex items-center gap-2">
+              <ShoppingCart size={20} className="text-blue-500" />
               {stats.totalOrders}
             </h3>
           </div>
@@ -182,7 +182,7 @@ const AdminCustomersPage = () => {
         <section className="bg-white border rounded-2xl p-5 md:p-6 shadow-sm">
           {loading ? (
             <div className="text-center py-20">
-              <RefreshCw size={24} className="animate-spin text-teal-600 mx-auto" />
+              <RefreshCw size={24} className="animate-spin text-blue-600 mx-auto" />
               <p className="text-xs text-slate-500 mt-3 font-semibold">Connecting to live MySQL database...</p>
             </div>
           ) : error ? (
@@ -233,7 +233,7 @@ const AdminCustomersPage = () => {
                       <td className="py-4 font-semibold text-slate-600">
                         <div className="space-y-1">
                           <div className="flex items-center gap-1 text-slate-850">
-                            <Phone size={12} className="text-teal-600" />
+                            <Phone size={12} className="text-blue-600" />
                             <span>{cust.phone}</span>
                           </div>
                           <div className="flex items-center gap-1 text-[11px] text-slate-400">
@@ -263,8 +263,8 @@ const AdminCustomersPage = () => {
                       {/* Metrics counts & Actions */}
                       <td className="py-4 text-right pr-2">
                         <div className="flex items-center justify-end gap-3 text-[11px] font-bold">
-                          <span className="flex items-center gap-1 bg-teal-50 text-teal-700 px-2 py-0.5 rounded" title="Orders placed">
-                            <ShoppingCart size={11} className="text-teal-600" />
+                          <span className="flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded" title="Orders placed">
+                            <ShoppingCart size={11} className="text-blue-600" />
                             {cust.numOrders}
                           </span>
                           <span className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded" title=" Queries submitted">

@@ -272,7 +272,7 @@ const CustomerQueryPage = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl  border backdrop-blur-xl ${
-                toast.type === 'success' ? 'bg-teal-600 text-white border-teal-500' : 'bg-rose-600 text-white border-rose-500'
+                toast.type === 'success' ? 'bg-blue-600 text-white border-blue-500' : 'bg-rose-600 text-white border-rose-500'
               }`}
             >
               {toast.type === 'success' ? <Check size={20} /> : <AlertCircle size={20} />}
@@ -282,8 +282,8 @@ const CustomerQueryPage = () => {
         </AnimatePresence>
 
         {/* Page Hero */}
-        <div className="bg-gradient-to-br from-teal-700/10 via-sky-600/5 to-transparent border border-slate-200/80 p-8 sm:p-10 rounded-3xl space-y-4">
-          <div className="inline-flex p-3 rounded-2xl bg-teal-600/10 text-teal-700">
+        <div className="bg-gradient-to-br from-blue-700/10 via-sky-600/5 to-transparent border border-slate-200/80 p-8 sm:p-10 rounded-3xl space-y-4">
+          <div className="inline-flex p-3 rounded-2xl bg-blue-600/10 text-blue-700">
             <HelpCircle size={28} />
           </div>
           <div>
@@ -324,7 +324,7 @@ const CustomerQueryPage = () => {
                 maxLength={1000}
                 rows={6}
                 placeholder="Describe your requirement, ask your question, or explain the issue you need assistance with..."
-                className="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/10 transition text-sm text-slate-800 leading-relaxed"
+                className="w-full p-4 border border-slate-200 rounded-2xl outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10 transition text-sm text-slate-800 leading-relaxed"
               />
               <div className="flex items-center justify-between text-xs text-slate-400 font-semibold px-1">
                 <span>Maximum 1000 characters</span>
@@ -336,7 +336,7 @@ const CustomerQueryPage = () => {
             <div className="space-y-2">
               <span className="block text-xs font-semibold text-slate-400 uppercase tracking-wider">Attachment (Optional)</span>
               <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-teal-500 hover:bg-teal-50/20 text-slate-600 hover:text-teal-700 transition cursor-pointer text-xs font-bold">
+                <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-500 hover:bg-blue-50/20 text-slate-600 hover:text-blue-700 transition cursor-pointer text-xs font-bold">
                   <Paperclip size={14} />
                   Choose File
                   <input
@@ -346,7 +346,7 @@ const CustomerQueryPage = () => {
                   />
                 </label>
                 {attachmentName && (
-                  <span className="text-xs text-teal-600 font-semibold flex items-center gap-2">
+                  <span className="text-xs text-blue-600 font-semibold flex items-center gap-2">
                     <FileText size={12} /> {attachmentName}
                   </span>
                 )}
@@ -356,7 +356,7 @@ const CustomerQueryPage = () => {
             {/* Submit CTA */}
             <button
               onClick={handleSubmitQuery}
-              className="w-full flex items-center justify-center py-3.5 bg-gradient-to-r from-teal-600 to-sky-600 hover:from-teal-700 hover:to-sky-700 text-white rounded-2xl font-bold text-sm transition-all duration-300 "
+              className="w-full flex items-center justify-center py-3.5 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 text-white rounded-2xl font-bold text-sm transition-all duration-300 "
             >
               Submit Query
             </button>
@@ -382,7 +382,7 @@ const CustomerQueryPage = () => {
                 <div className="p-6 space-y-6">
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide bg-teal-50 text-teal-700 rounded-full">
+                      <span className="px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide bg-blue-50 text-blue-700 rounded-full">
                         {selectedProduct.category || 'Automation'}
                       </span>
                       <span className="text-xs text-emerald-600 font-bold flex items-center gap-1.5">
@@ -400,7 +400,7 @@ const CustomerQueryPage = () => {
                     <ul className="space-y-1.5">
                       {productFeatures.map((f, i) => (
                         <li key={i} className="flex items-start gap-2.5 text-xs text-slate-600">
-                          <Check className="text-teal-600 mt-0.5 flex-shrink-0" size={12} />
+                          <Check className="text-blue-600 mt-0.5 flex-shrink-0" size={12} />
                           <span>{f}</span>
                         </li>
                       ))}
@@ -410,7 +410,7 @@ const CustomerQueryPage = () => {
                   {/* Warranty and Trust row */}
                   <div className="flex items-center gap-4 pt-4 border-t border-slate-100">
                     <div className="flex items-center gap-2 text-slate-500">
-                      <ShieldCheck size={16} className="text-teal-600" />
+                      <ShieldCheck size={16} className="text-blue-600" />
                       <span className="text-xs font-semibold">1 Year Warranty Included</span>
                     </div>
                   </div>
@@ -424,7 +424,7 @@ const CustomerQueryPage = () => {
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
             <div className="flex items-center gap-3">
-              <span className="flex p-2 rounded-xl bg-teal-50 text-teal-700 border border-teal-200/60">
+              <span className="flex p-2 rounded-xl bg-blue-50 text-blue-700 border border-blue-200/60">
                 <FileText size={20} />
               </span>
               <div>
@@ -489,16 +489,16 @@ const CustomerQueryPage = () => {
                       </div>
 
                       {(q.adminResponse || q.attachmentUrl) && (
-                        <div className="rounded-2xl bg-teal-50/50 p-3 border border-teal-100/50 text-slate-800 text-xs">
-                          <strong className="block text-teal-800 font-bold uppercase tracking-wider text-[9px] mb-1">Admin Response</strong>
+                        <div className="rounded-2xl bg-blue-50/50 p-3 border border-blue-100/50 text-slate-800 text-xs">
+                          <strong className="block text-blue-800 font-bold uppercase tracking-wider text-[9px] mb-1">Admin Response</strong>
                           {q.adminResponse && <p className="leading-relaxed font-semibold">{q.adminResponse}</p>}
                           {q.attachmentUrl && (
-                            <div className="mt-3 flex items-center justify-between bg-teal-50/50 p-2.5 rounded-lg border border-teal-100/50">
-                              <span className="text-teal-700 font-bold flex items-center gap-1.5">
+                            <div className="mt-3 flex items-center justify-between bg-blue-50/50 p-2.5 rounded-lg border border-blue-100/50">
+                              <span className="text-blue-700 font-bold flex items-center gap-1.5">
                                 Estimation.pdf
                               </span>
                               <div className="flex items-center gap-2">
-                                <a href={q.attachmentUrl} download="Estimation.pdf" className="text-[10px] bg-teal-600 border border-teal-700 text-white px-3 py-1.5 rounded-lg hover:bg-teal-700 transition shadow-sm font-bold">
+                                <a href={q.attachmentUrl} download="Estimation.pdf" className="text-[10px] bg-blue-600 border border-blue-700 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition shadow-sm font-bold">
                                   Download PDF
                                 </a>
                               </div>
@@ -513,7 +513,7 @@ const CustomerQueryPage = () => {
                       {isPending ? (
                         <button
                           onClick={() => handleOpenEdit(q)}
-                          className="flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-700 transition"
+                          className="flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-700 transition"
                         >
                           <Edit2 size={13} /> Edit Query
                         </button>
@@ -560,7 +560,7 @@ const CustomerQueryPage = () => {
               {/* Header */}
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Edit2 size={18} className="text-teal-600" />
+                  <Edit2 size={18} className="text-blue-600" />
                   Modify Query
                 </h3>
                 <button
@@ -594,7 +594,7 @@ const CustomerQueryPage = () => {
                   onChange={(e) => setEditDescription(e.target.value)}
                   maxLength={1000}
                   rows={5}
-                  className="w-full p-3.5 border border-slate-200 rounded-xl outline-none focus:border-teal-600 transition text-xs font-medium text-slate-800"
+                  className="w-full p-3.5 border border-slate-200 rounded-xl outline-none focus:border-blue-600 transition text-xs font-medium text-slate-800"
                 />
               </div>
 
@@ -608,7 +608,7 @@ const CustomerQueryPage = () => {
                 </button>
                 <button
                   onClick={handleUpdateQuery}
-                  className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl transition text-xs font-bold"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition text-xs font-bold"
                 >
                   Update Query
                 </button>

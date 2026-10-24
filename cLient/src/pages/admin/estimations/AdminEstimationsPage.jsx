@@ -204,8 +204,8 @@ const AdminEstimationsPage = () => {
             <h2 className="text-xl font-bold text-slate-800">Admin Estimation Generator</h2>
             <p className="text-xs text-slate-500 mt-1">Configure smart water level controllers and compute exact billing parameters from database fields.</p>
           </div>
-          <div className="flex items-center gap-2 bg-white text-teal-700 px-4 py-2 rounded-xl border shadow-sm">
-            <RefreshCw size={14} className="text-teal-600" />
+          <div className="flex items-center gap-2 bg-white text-blue-700 px-4 py-2 rounded-xl border shadow-sm">
+            <RefreshCw size={14} className="text-blue-600" />
             <strong className="text-xs font-bold">Live Catalog Connected</strong>
           </div>
         </header>
@@ -215,7 +215,7 @@ const AdminEstimationsPage = () => {
           <div className="lg:col-span-4 bg-white border border-slate-200/90 p-6 rounded-2xl space-y-6 shadow-xs">
             <div>
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <Package size={16} className="text-teal-600" />
+                <Package size={16} className="text-blue-600" />
                 Select Product
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5 font-bold">Pick an automation controller to load specs</p>
@@ -268,7 +268,7 @@ const AdminEstimationsPage = () => {
             {/* Config Fields */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 border-b pb-2">
-                <Calculator size={16} className="text-teal-600" />
+                <Calculator size={16} className="text-blue-600" />
                 Parameters
               </h3>
 
@@ -315,7 +315,7 @@ const AdminEstimationsPage = () => {
                     id="installation-opt"
                     checked={includeInstallation}
                     onChange={(e) => setIncludeInstallation(e.target.checked)}
-                    className="h-4 w-4 text-teal-600 border-slate-200 rounded cursor-pointer"
+                    className="h-4 w-4 text-blue-600 border-slate-200 rounded cursor-pointer"
                   />
                   <label htmlFor="installation-opt" className="text-xs font-bold text-slate-700 cursor-pointer">
                     Include Installation Support
@@ -330,14 +330,14 @@ const AdminEstimationsPage = () => {
                 <div>
                   <div className="flex justify-between items-center border-b pb-2">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                      <ClipboardList size={14} className="text-teal-600" />
+                      <ClipboardList size={14} className="text-blue-600" />
                       Estimation Invoice
                     </h3>
                     {!isEditingInvoice ? (
                       <button
                         type="button"
                         onClick={startEditingInvoice}
-                        className="text-[10px] text-teal-600 hover:text-teal-700 font-bold flex items-center gap-1 cursor-pointer"
+                        className="text-[10px] text-blue-600 hover:text-blue-700 font-bold flex items-center gap-1 cursor-pointer"
                       >
                         <Edit3 size={11} /> Edit Invoice
                       </button>
@@ -451,7 +451,7 @@ const AdminEstimationsPage = () => {
                   <div className="flex justify-between items-end">
                     <div>
                       <p className="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Estimated Cost</p>
-                      <strong className="text-xl font-extrabold text-teal-600 leading-tight">{formatCurrency(calculations.total)}</strong>
+                      <strong className="text-xl font-extrabold text-blue-600 leading-tight">{formatCurrency(calculations.total)}</strong>
                     </div>
                     {selectedProduct && calculations ? (
                     <PDFDownloadLink
@@ -471,7 +471,7 @@ const AdminEstimationsPage = () => {
                         estimationNumber: 'EST-NEW'
                       }} />}
                       fileName={`Estimation_${customerName || 'New'}.pdf`}
-                      className="text-xs bg-teal-600 hover:bg-teal-700 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow transition cursor-pointer"
+                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow transition cursor-pointer"
                     >
                       {({ loading }) => (
                         <>
@@ -494,7 +494,7 @@ const AdminEstimationsPage = () => {
         {/* Customer Details Form at the Bottom */}
         <div className="mt-8 bg-slate-100 border border-slate-200/80 p-6 rounded-lg mb-8 shadow-sm">
           <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-6 border-b pb-3">
-            <ClipboardList size={18} className="text-teal-600" />
+            <ClipboardList size={18} className="text-blue-600" />
             Customer Details for Estimation (Optional)
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

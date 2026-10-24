@@ -227,7 +227,7 @@ const CustomerCartPage = () => {
         description: `Order ${orderToPay.id}`,
         order_id: data.razorpayOrderId,
         theme: {
-          color: '#0d9488', // Mosh teal
+          color: '#2563eb', // Mosh teal
           backdrop_color: 'rgba(0,0,0,0.6)'
         },
         config: {
@@ -505,7 +505,7 @@ const CustomerCartPage = () => {
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-xl bg-teal-600 text-white border-teal-500"
+              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-xl bg-blue-600 text-white border-blue-500"
             >
               <CheckCircle size={20} />
               <span className="font-semibold text-sm">{message}</span>
@@ -547,7 +547,7 @@ const CustomerCartPage = () => {
                     Cart Items ({cartItems.length})
                   </h3>
                   {cartItems.length > 0 && (
-                    <span className="shipping-banner text-xs font-semibold text-teal-700 bg-teal-50 px-3 py-1 rounded-full flex items-center gap-1.5 border border-teal-200/60">
+                    <span className="shipping-banner text-xs font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1.5 border border-blue-200/60">
                       <Truck size={14} />
                       {priceDetails.subtotal > 3000 ? 'Free Shipping Active!' : `Add ₹${3000 - priceDetails.subtotal} more for Free Delivery`}
                     </span>
@@ -567,7 +567,7 @@ const CustomerCartPage = () => {
                       <button
                         type="button"
                         onClick={() => navigate('/customer/products')}
-                        className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
+                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
                       >
                         Explore Products
                       </button>
@@ -662,14 +662,14 @@ const CustomerCartPage = () => {
                     )}
                     <div className="price-total-row flex justify-between pt-3 border-t border-slate-200 text-sm font-extrabold text-slate-900">
                       <span>Total Amount</span>
-                      <span className="text-teal-700">{formatCurrency(priceDetails.grandTotal)}</span>
+                      <span className="text-blue-700">{formatCurrency(priceDetails.grandTotal)}</span>
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => setShowCheckoutModal(true)}
-                    className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold text-sm rounded-xl shadow-xs transition duration-200 flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-xs transition duration-200 flex items-center justify-center gap-2"
                   >
                     <span>Proceed to Checkout</span>
                     <ArrowRight size={16} />
@@ -696,7 +696,7 @@ const CustomerCartPage = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/customer/products')}
-                  className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-xl text-xs font-bold hover:bg-teal-700 transition"
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition"
                 >
                   Browse Products
                 </button>
@@ -705,7 +705,7 @@ const CustomerCartPage = () => {
               <div className="orders-timeline-list space-y-4">
                 {orders.map((order) => (
                   <article
-                    className="order-history-card border border-slate-200/90 rounded-2xl p-5 hover:border-teal-300 hover:shadow-md transition-all duration-200 bg-white"
+                    className="order-history-card border border-slate-200/90 rounded-2xl p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200 bg-white"
                     key={order.id}
                     onClick={() => setSelectedOrder(order)}
                   >
@@ -752,7 +752,7 @@ const CustomerCartPage = () => {
                               e.stopPropagation();
                               startRazorpayPayment(order);
                             }}
-                            className="bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs disabled:opacity-50"
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs disabled:opacity-50"
                           >
                             {paymentStatusState === 'initializing' && activePaymentOrder?.id === order.id ? 'Initializing...' : 'Pay Now'}
                           </button>
@@ -820,7 +820,7 @@ const CustomerCartPage = () => {
               </button>
 
               <div className="mb-6 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-50 text-teal-600">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                   <MapPin size={24} />
                 </div>
                 <div>
@@ -839,7 +839,7 @@ const CustomerCartPage = () => {
                     placeholder="Enter your name"
                     value={shippingDetails.name}
                     onChange={(e) => setShippingDetails({ ...shippingDetails, name: e.target.value })}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
                   />
                 </div>
 
@@ -863,7 +863,7 @@ const CustomerCartPage = () => {
                       placeholder="e.g. Coimbatore"
                       value={shippingDetails.city}
                       onChange={(e) => setShippingDetails({ ...shippingDetails, city: e.target.value })}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
                     />
                   </div>
                 </div>
@@ -878,7 +878,7 @@ const CustomerCartPage = () => {
                       placeholder="Street, Room/Door No"
                       value={shippingDetails.address}
                       onChange={(e) => setShippingDetails({ ...shippingDetails, address: e.target.value })}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
                     />
                   </div>
                   <div>
@@ -892,13 +892,13 @@ const CustomerCartPage = () => {
                       maxLength="6"
                       value={shippingDetails.pincode}
                       onChange={(e) => setShippingDetails({ ...shippingDetails, pincode: e.target.value.replace(/\D/g, '') })}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-teal-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none font-semibold text-slate-800"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex items-center gap-2 bg-teal-50 border border-teal-100 rounded-2xl p-3 text-xs text-teal-800 font-semibold">
+                  <div className="flex items-center gap-2 bg-blue-50 border border-blue-100 rounded-2xl p-3 text-xs text-blue-800 font-semibold">
                     <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
                     Payment will be processed securely via <strong className="ml-1">Razorpay</strong> (UPI)
                   </div>
@@ -907,7 +907,7 @@ const CustomerCartPage = () => {
                 <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Total Amount</p>
-                    <strong className="text-xl font-extrabold text-teal-600">{formatCurrency(priceDetails.finalAmount)}</strong>
+                    <strong className="text-xl font-extrabold text-blue-600">{formatCurrency(priceDetails.finalAmount)}</strong>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -919,7 +919,7 @@ const CustomerCartPage = () => {
                     </button>
                     <button
                       type="submit"
-                      className="rounded-2xl bg-teal-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-teal-200/50 hover:bg-teal-700 hover:shadow-teal-300/50 transition-all"
+                      className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200/50 hover:bg-blue-700 hover:shadow-blue-300/50 transition-all"
                     >
                       Proceed to Payment
                     </button>
@@ -962,7 +962,7 @@ const CustomerCartPage = () => {
               {paymentStatusState === 'initializing' && (
                 <div className="w-full flex flex-col items-center justify-center py-8 space-y-4 text-center">
                   <div className="relative flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-full border-4 border-slate-100 border-t-teal-600 animate-spin flex items-center justify-center" />
+                    <div className="w-16 h-16 rounded-full border-4 border-slate-100 border-t-blue-600 animate-spin flex items-center justify-center" />
                   </div>
                   <h4 className="font-extrabold text-slate-800 text-lg">Initializing Payment...</h4>
                   <p className="text-xs text-slate-500 max-w-[260px] leading-relaxed font-semibold">Please wait while we connect to Razorpay.</p>
@@ -971,8 +971,8 @@ const CustomerCartPage = () => {
 
               {paymentStatusState === 'paying' && (
                 <div className="w-full flex flex-col items-center text-center space-y-4">
-                  <div className="bg-teal-50 border border-teal-100 rounded-2xl p-4 w-full text-xs text-teal-900 font-semibold space-y-1">
-                    <p className="text-[10px] text-teal-600 font-bold uppercase">Order Information</p>
+                  <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 w-full text-xs text-blue-900 font-semibold space-y-1">
+                    <p className="text-[10px] text-blue-600 font-bold uppercase">Order Information</p>
                     <p>Order No: #{activePaymentOrder.id}</p>
                     <p>Customer Name: {activePaymentOrder.customerName}</p>
                     <p className="text-sm font-extrabold mt-1">Amount Due: {formatCurrency(activePaymentOrder.total)}</p>
@@ -1010,13 +1010,13 @@ const CustomerCartPage = () => {
                         placeholder=""
                         value={transactionIdInput}
                         onChange={(e) => setTransactionIdInput(e.target.value)}
-                        className="w-full text-center tracking-wide font-extrabold text-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-teal-500 focus:bg-white transition-colors"
+                        className="w-full text-center tracking-wide font-extrabold text-sm rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none focus:border-blue-500 focus:bg-white transition-colors"
                       />
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-2xl shadow-lg transition"
+                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg transition"
                     >
                       I have completed the payment
                     </button>
@@ -1024,10 +1024,10 @@ const CustomerCartPage = () => {
 
                   {/* QR actions footer */}
                   <div className="flex w-full justify-between items-center text-[10px] text-slate-400 font-bold border-t pt-3">
-                    <button type="button" onClick={handleDownloadQR} className="hover:text-teal-600 flex items-center gap-1">
+                    <button type="button" onClick={handleDownloadQR} className="hover:text-blue-600 flex items-center gap-1">
                       <Download size={12} /> Download QR
                     </button>
-                    <button type="button" onClick={handleRefreshQR} className="hover:text-teal-600 flex items-center gap-1">
+                    <button type="button" onClick={handleRefreshQR} className="hover:text-blue-600 flex items-center gap-1">
                       <RefreshCw size={12} /> Refresh QR
                     </button>
                     <button type="button" onClick={handleCancelPayment} className="hover:text-rose-600 flex items-center gap-1 text-rose-500">
@@ -1040,8 +1040,8 @@ const CustomerCartPage = () => {
               {paymentStatusState === 'verifying' && (
                 <div className="w-full flex flex-col items-center justify-center py-6 px-2 space-y-5 text-center">
                   <div className="relative flex items-center justify-center">
-                    <div className="w-20 h-20 rounded-full border-4 border-teal-100 border-t-teal-600 animate-spin flex items-center justify-center" />
-                    <ShieldCheck className="absolute h-9 w-9 text-teal-600" />
+                    <div className="w-20 h-20 rounded-full border-4 border-blue-100 border-t-blue-600 animate-spin flex items-center justify-center" />
+                    <ShieldCheck className="absolute h-9 w-9 text-blue-600" />
                   </div>
 
                   <div>
@@ -1052,29 +1052,29 @@ const CustomerCartPage = () => {
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border">
                     <div 
-                      className="bg-gradient-to-r from-teal-500 to-emerald-500 h-full transition-all duration-500 rounded-full" 
+                      className="bg-gradient-to-r from-blue-500 to-emerald-500 h-full transition-all duration-500 rounded-full" 
                       style={{ width: `${verificationProgress}%` }}
                     />
                   </div>
 
                   {/* Live Step Status List */}
                   <div className="w-full space-y-2.5 text-left text-xs font-semibold bg-slate-50 p-4 rounded-2xl border">
-                    <div className={`flex items-center gap-3 ${verificationStep >= 1 ? 'text-teal-800 font-bold' : 'text-slate-400'}`}>
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${verificationStep > 1 ? 'bg-emerald-500 text-white' : verificationStep === 1 ? 'bg-teal-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'}`}>
+                    <div className={`flex items-center gap-3 ${verificationStep >= 1 ? 'text-blue-800 font-bold' : 'text-slate-400'}`}>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${verificationStep > 1 ? 'bg-emerald-500 text-white' : verificationStep === 1 ? 'bg-blue-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'}`}>
                         {verificationStep > 1 ? <Check size={12} strokeWidth={3} /> : '1'}
                       </div>
                       <span className="truncate">1. Validating UTR / Transaction Ref: <span className="font-mono text-slate-900">{transactionIdInput}</span></span>
                     </div>
 
-                    <div className={`flex items-center gap-3 ${verificationStep >= 2 ? 'text-teal-800 font-bold' : 'text-slate-400'}`}>
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${verificationStep > 2 ? 'bg-emerald-500 text-white' : verificationStep === 2 ? 'bg-teal-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'}`}>
+                    <div className={`flex items-center gap-3 ${verificationStep >= 2 ? 'text-blue-800 font-bold' : 'text-slate-400'}`}>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${verificationStep > 2 ? 'bg-emerald-500 text-white' : verificationStep === 2 ? 'bg-blue-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'}`}>
                         {verificationStep > 2 ? <Check size={12} strokeWidth={3} /> : '2'}
                       </div>
                       <span className="truncate">2. Connecting {shippingDetails.paymentMethod} Gateway & NPCI Node</span>
                     </div>
 
-                    <div className={`flex items-center gap-3 ${verificationStep >= 3 ? 'text-teal-800 font-bold' : 'text-slate-400'}`}>
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${verificationProgress === 100 ? 'bg-emerald-500 text-white' : verificationStep === 3 ? 'bg-teal-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'}`}>
+                    <div className={`flex items-center gap-3 ${verificationStep >= 3 ? 'text-blue-800 font-bold' : 'text-slate-400'}`}>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${verificationProgress === 100 ? 'bg-emerald-500 text-white' : verificationStep === 3 ? 'bg-blue-600 text-white animate-pulse' : 'bg-slate-200 text-slate-500'}`}>
                         {verificationProgress === 100 ? <Check size={12} strokeWidth={3} /> : '3'}
                       </div>
                       <span className="truncate">3. Confirming Settlement & Credit to Bank</span>
@@ -1146,7 +1146,7 @@ const CustomerCartPage = () => {
                     <button
                       type="button"
                       onClick={() => setPaymentStatusState('paying')}
-                      className="flex-1 py-3 bg-teal-600 text-white font-bold rounded-xl text-xs hover:bg-teal-700 transition"
+                      className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl text-xs hover:bg-blue-700 transition"
                     >
                       Retry Payment
                     </button>
@@ -1201,7 +1201,7 @@ const CustomerCartPage = () => {
                 </div>
                 <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase ${
                   selectedOrder.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' : 
-                  selectedOrder.status === 'Paid' ? 'bg-teal-50 text-teal-600' :
+                  selectedOrder.status === 'Paid' ? 'bg-blue-50 text-blue-600' :
                   selectedOrder.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
                 }`}>
                   {selectedOrder.status}
@@ -1212,7 +1212,7 @@ const CustomerCartPage = () => {
                 {/* Shipping Details */}
                 <div className="rounded-2xl bg-slate-50 p-4 border border-slate-100">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
-                    <MapPin size={12} className="text-teal-600" /> Shipping Address
+                    <MapPin size={12} className="text-blue-600" /> Shipping Address
                   </h4>
                   <p className="text-sm font-semibold text-slate-800">{selectedOrder.customerName || session?.name}</p>
                   <p className="text-xs text-slate-500 mt-1">Phone: {selectedOrder.customerPhone || session?.phone}</p>
@@ -1227,8 +1227,8 @@ const CustomerCartPage = () => {
 
                 {/* Transaction details if order is Paid */}
                 {selectedOrder.paymentStatus === 'Paid' && (
-                  <div className="rounded-2xl bg-teal-50/50 p-4 border border-teal-100/50 text-xs font-semibold text-teal-900 space-y-1">
-                    <h4 className="text-[10px] uppercase font-bold text-teal-600 tracking-wider mb-1">Transaction Details</h4>
+                  <div className="rounded-2xl bg-blue-50/50 p-4 border border-blue-100/50 text-xs font-semibold text-blue-900 space-y-1">
+                    <h4 className="text-[10px] uppercase font-bold text-blue-600 tracking-wider mb-1">Transaction Details</h4>
                     <p>Payment Method: {selectedOrder.paymentMethod}</p>
                     <p>Transaction Reference: {selectedOrder.transactionId}</p>
                     {selectedOrder.paymentTime && <p>Paid On: {formatDateTime(selectedOrder.paymentTime)}</p>}
@@ -1261,7 +1261,7 @@ const CustomerCartPage = () => {
                   <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">
                     {selectedOrder.paymentStatus === 'Paid' || selectedOrder.status === 'Paid' ? 'Total Amount Paid' : 'Total Amount (Payment Pending)'}
                   </p>
-                  <strong className="text-xl font-extrabold text-teal-600">{formatCurrency(selectedOrder.total)}</strong>
+                  <strong className="text-xl font-extrabold text-blue-600">{formatCurrency(selectedOrder.total)}</strong>
                 </div>
                 <div className="flex gap-2">
                   <button
@@ -1305,7 +1305,7 @@ const CustomerCartPage = () => {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={confirmModal.onConfirm}
-                className="flex-1 rounded-2xl bg-teal-700 px-4 py-3 text-xs font-bold text-white hover:bg-teal-700 shadow-md shadow-teal-600/10 transition"
+                className="flex-1 rounded-2xl bg-blue-700 px-4 py-3 text-xs font-bold text-white hover:bg-blue-700 shadow-md shadow-blue-600/10 transition"
               >
                 OK
               </button>

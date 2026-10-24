@@ -153,7 +153,7 @@ const AdminBillingPage = () => {
         {/* Toast alert */}
         {toast && (
           <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border backdrop-blur-xl ${
-            toast.type === 'success' ? 'bg-teal-600 text-white border-teal-500' : 'bg-rose-600 text-white border-rose-500'
+            toast.type === 'success' ? 'bg-blue-600 text-white border-blue-500' : 'bg-rose-600 text-white border-rose-500'
           }`}>
             {toast.type === 'success' ? <Check size={20} /> : <AlertCircle size={20} />}
             <span className="font-semibold text-sm">{toast.message}</span>
@@ -166,7 +166,7 @@ const AdminBillingPage = () => {
           <div className="lg:col-span-4 bg-slate-100 border border-slate-200/80 p-6 rounded-lg space-y-6 lg:sticky lg:top-28">
             <div>
               <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                <Package size={16} className="text-teal-600" />
+                <Package size={16} className="text-blue-600" />
                 Linked Product Details
               </h3>
               <p className="text-xs text-slate-500 mt-1">Examine product details connected to the active customer query.</p>
@@ -183,7 +183,7 @@ const AdminBillingPage = () => {
                   <p className="text-xs text-slate-600 mt-2 line-clamp-3 leading-relaxed font-semibold">{selectedProduct.description}</p>
                   <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
                     <span className="text-[10px] text-slate-400 font-bold uppercase">Base Price</span>
-                    <strong className="text-sm text-teal-600 font-bold">{formatCurrency(selectedProduct.price)}</strong>
+                    <strong className="text-sm text-blue-600 font-bold">{formatCurrency(selectedProduct.price)}</strong>
                   </div>
                 </div>
               </div>
@@ -197,7 +197,7 @@ const AdminBillingPage = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
-                  <HelpCircle size={16} className="text-teal-600" />
+                  <HelpCircle size={16} className="text-blue-600" />
                   Customer Estimation Queries
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">Review live inquiry requests, send customized quotes, and upload proposal PDFs.</p>
@@ -240,7 +240,7 @@ const AdminBillingPage = () => {
                           </p>
                         </div>
                         <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                          est.stage === 'replied' ? 'bg-teal-50 text-teal-600' : 'bg-amber-50 text-amber-600'
+                          est.stage === 'replied' ? 'bg-blue-50 text-blue-600' : 'bg-amber-50 text-amber-600'
                         }`}>
                           {est.stage || 'Pending'}
                         </span>
@@ -254,14 +254,14 @@ const AdminBillingPage = () => {
 
                       {/* Admin Response display if not editing */}
                       {!isEditing && (est.adminResponse || est.attachmentUrl) && (
-                        <div className="text-xs text-teal-800 bg-teal-50/50 p-3 rounded-lg border border-teal-100">
-                          <strong className="block text-[9px] uppercase tracking-wider text-teal-700 mb-1">Admin Response Sent</strong>
+                        <div className="text-xs text-blue-800 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                          <strong className="block text-[9px] uppercase tracking-wider text-blue-700 mb-1">Admin Response Sent</strong>
                           {est.adminResponse && <p className="leading-relaxed font-semibold">"{est.adminResponse}"</p>}
                           {est.attachmentUrl && (
                             <div className="mt-2">
                               <button
                                 onClick={(e) => { e.preventDefault(); openPdfBase64(est.attachmentUrl); }}
-                                className="inline-flex items-center gap-1 bg-white border border-teal-200 text-teal-700 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition shadow-sm font-bold"
+                                className="inline-flex items-center gap-1 bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition shadow-sm font-bold"
                               >
                                 📄 View Attached PDF
                               </button>
@@ -302,7 +302,7 @@ const AdminBillingPage = () => {
                               className="w-full text-xs mt-1"
                             />
                             {editAttachmentName && (
-                              <p className="text-[10px] text-teal-600 font-bold mt-1">Selected: {editAttachmentName}</p>
+                              <p className="text-[10px] text-blue-600 font-bold mt-1">Selected: {editAttachmentName}</p>
                             )}
                           </div>
 
@@ -310,7 +310,7 @@ const AdminBillingPage = () => {
                             <button
                               type="button"
                               onClick={() => handleUpdateEstimation(est.id)}
-                              className="flex-1 text-[11px] bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded-lg transition"
+                              className="flex-1 text-[11px] bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition"
                             >
                               Send Reply
                             </button>
@@ -327,7 +327,7 @@ const AdminBillingPage = () => {
                         <div className="flex justify-between items-center border-t border-slate-100 pt-3">
                           <div className="flex items-center gap-1">
                             <span className="text-[10px] text-slate-400 uppercase font-bold">Estimated Cost:</span>
-                            <strong className="text-sm text-teal-600 font-bold">{formatCurrency(est.total)}</strong>
+                            <strong className="text-sm text-blue-600 font-bold">{formatCurrency(est.total)}</strong>
                           </div>
                           <button
                             type="button"

@@ -119,7 +119,7 @@ const AppShell = ({ title, links, children }) => {
   const roleLabel = session?.role === 'admin' ? 'Admin Portal' : 'Customer Portal';
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased selection:bg-teal-100 selection:text-teal-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
       
       {/* ─── Mobile Top Header ─── */}
       <header className="lg:hidden flex items-center justify-between bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 sticky top-0 z-40 shadow-xs">
@@ -136,7 +136,7 @@ const AppShell = ({ title, links, children }) => {
             <img src="/logo background.png" alt="Mosh Logo" className="h-7 w-7 rounded-lg object-contain border border-slate-200/60" />
             <div>
               <span className="font-extrabold text-xs tracking-wider text-slate-900 block leading-tight">MOSH AUTOMATION</span>
-              <span className="text-[10px] text-teal-700 font-semibold leading-none">{roleLabel}</span>
+              <span className="text-[10px] text-blue-700 font-semibold leading-none">{roleLabel}</span>
             </div>
           </div>
         </div>
@@ -163,7 +163,7 @@ const AppShell = ({ title, links, children }) => {
             >
               <ShoppingCart size={20} />
               {cartCount > 0 && (
-                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-teal-600 text-[9px] font-bold text-white shadow-xs">
+                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white shadow-xs">
                   {cartCount}
                 </span>
               )}
@@ -205,7 +205,7 @@ const AppShell = ({ title, links, children }) => {
               </div>
               <div>
                 <p className="font-extrabold text-sm tracking-wide text-slate-900 leading-tight">MOSH</p>
-                <p className="text-[10px] font-bold tracking-widest text-teal-700 uppercase">Automation</p>
+                <p className="text-[10px] font-bold tracking-widest text-blue-700 uppercase">Automation</p>
               </div>
             </div>
 
@@ -223,7 +223,7 @@ const AppShell = ({ title, links, children }) => {
           <div className="px-4 pt-3 pb-1">
             <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200/60 text-xs">
               <div className="flex items-center gap-1.5">
-                <span className={`h-2 w-2 rounded-full ${session?.role === 'admin' ? 'bg-indigo-500' : 'bg-teal-500'} animate-pulse`} />
+                <span className={`h-2 w-2 rounded-full ${session?.role === 'admin' ? 'bg-indigo-500' : 'bg-blue-500'} animate-pulse`} />
                 <span className="font-semibold text-slate-700">{roleLabel}</span>
               </div>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">v1.2</span>
@@ -245,7 +245,7 @@ const AppShell = ({ title, links, children }) => {
                   className={({ isActive }) =>
                     `group relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                       isActive
-                        ? 'bg-teal-50 text-teal-900 border border-teal-200/80 shadow-xs font-bold'
+                        ? 'bg-blue-50 text-blue-900 border border-blue-200/80 shadow-xs font-bold'
                         : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
                     }`
                   }
@@ -255,7 +255,7 @@ const AppShell = ({ title, links, children }) => {
                       <div className="flex items-center gap-3 min-w-0">
                         <Icon
                           className={`h-4.5 w-4.5 shrink-0 transition-colors ${
-                            isActive ? 'text-teal-700' : 'text-slate-400 group-hover:text-slate-600'
+                            isActive ? 'text-blue-700' : 'text-slate-400 group-hover:text-slate-600'
                           }`}
                         />
                         <span className="truncate">{link.label}</span>
@@ -263,7 +263,7 @@ const AppShell = ({ title, links, children }) => {
 
                       {/* Dynamic item badges */}
                       {isCartLink && cartCount > 0 && (
-                        <span className="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-600 text-white min-w-4.5 shadow-xs">
+                        <span className="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white min-w-4.5 shadow-xs">
                           {cartCount}
                         </span>
                       )}
@@ -285,7 +285,7 @@ const AppShell = ({ title, links, children }) => {
             <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between gap-2.5">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 text-white shadow-xs ${
-                  session?.role === 'admin' ? 'bg-indigo-600' : 'bg-teal-600'
+                  session?.role === 'admin' ? 'bg-indigo-600' : 'bg-blue-600'
                 }`}>
                   {session?.name ? session.name[0].toUpperCase() : 'U'}
                 </div>
@@ -353,12 +353,12 @@ const AppShell = ({ title, links, children }) => {
             {session?.role !== 'admin' && (
               <NavLink
                 to="/customer/cart"
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs font-bold hover:bg-teal-100 transition-colors shadow-xs"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold hover:bg-blue-100 transition-colors shadow-xs"
               >
                 <ShoppingCart size={15} />
                 <span>Cart</span>
                 {cartCount > 0 && (
-                  <span className="h-5 min-w-5 px-1.5 inline-flex items-center justify-center rounded-full bg-teal-700 text-white text-[10px] font-extrabold">
+                  <span className="h-5 min-w-5 px-1.5 inline-flex items-center justify-center rounded-full bg-blue-700 text-white text-[10px] font-extrabold">
                     {cartCount}
                   </span>
                 )}
@@ -374,7 +374,7 @@ const AppShell = ({ title, links, children }) => {
                 <span className="text-[10px] text-slate-400 capitalize">{session?.role || 'Guest'}</span>
               </div>
               <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-xs ${
-                session?.role === 'admin' ? 'bg-indigo-600' : 'bg-teal-600'
+                session?.role === 'admin' ? 'bg-indigo-600' : 'bg-blue-600'
               }`}>
                 {session?.name ? session.name[0].toUpperCase() : 'U'}
               </div>
@@ -398,7 +398,7 @@ const AppShell = ({ title, links, children }) => {
               to={link.to}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[10px] font-bold transition-all ${
-                  isActive ? 'text-teal-700 scale-105' : 'text-slate-500 hover:text-slate-800'
+                  isActive ? 'text-blue-700 scale-105' : 'text-slate-500 hover:text-slate-800'
                 }`
               }
             >

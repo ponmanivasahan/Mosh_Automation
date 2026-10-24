@@ -68,7 +68,7 @@ const AdminNotificationsPage = () => {
   const getNotificationIcon = (title) => {
     const t = title.toLowerCase();
     if (t.includes('cancel')) return <XCircle className="text-rose-500" size={18} />;
-    if (t.includes('order')) return <ShoppingBag className="text-teal-600" size={18} />;
+    if (t.includes('order')) return <ShoppingBag className="text-blue-600" size={18} />;
     return <FileText className="text-blue-500" size={18} />;
   };
 
@@ -150,7 +150,7 @@ const AdminNotificationsPage = () => {
                   {!item.read && (
                     <button
                       onClick={(e) => { e.stopPropagation(); markSingleRead(item.id); }}
-                      className="action-circle-btn text-teal-600 hover:bg-teal-50"
+                      className="action-circle-btn text-blue-600 hover:bg-blue-50"
                       title="Mark read"
                     >
                       <Check size={14} />

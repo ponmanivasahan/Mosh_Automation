@@ -67,7 +67,7 @@ const AdminSettingsPage = () => {
         
         {/* Toast Alert */}
         {toastMessage && (
-          <div className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded bg-teal-600 text-white border border-teal-500 font-bold text-xs shadow-xl">
+          <div className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded bg-blue-600 text-white border border-blue-500 font-bold text-xs shadow-xl">
             <Check size={16} />
             <span>{toastMessage}</span>
           </div>
@@ -77,7 +77,7 @@ const AdminSettingsPage = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                <Users size={20} className="text-teal-600" />
+                <Users size={20} className="text-blue-600" />
                 User Access Registry
               </h2>
               <p className="text-xs text-slate-500 mt-1">Manage portal member credentials, admin access rights, and change account roles instantly.</p>
@@ -106,7 +106,7 @@ const AdminSettingsPage = () => {
                     <td className="p-4 font-bold text-slate-500">{user.phone}</td>
                     <td className="p-4">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold uppercase text-[9px] ${
-                        user.role === 'admin' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-teal-50 text-teal-600 border border-teal-100'
+                        user.role === 'admin' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-blue-50 text-blue-600 border border-blue-100'
                       }`}>
                         {user.role === 'admin' ? 'Admin' : 'Customer'}
                       </span>
@@ -121,7 +121,7 @@ const AdminSettingsPage = () => {
                         className={`inline-flex items-center gap-1 px-3 py-1.5 rounded text-[10px] font-bold border transition ${
                           user.role === 'admin' 
                             ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
-                            : 'bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100'
+                            : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
                         }`}
                       >
                         {user.role === 'admin' ? (

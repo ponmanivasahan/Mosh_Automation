@@ -142,7 +142,7 @@ const AdminStoriesPage = () => {
         {/* Toast alerts */}
         {toast && (
           <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border backdrop-blur-xl ${
-            toast.type === 'success' ? 'bg-teal-600 text-white border-teal-500' : 'bg-rose-600 text-white border-rose-500'
+            toast.type === 'success' ? 'bg-blue-600 text-white border-blue-500' : 'bg-rose-600 text-white border-rose-500'
           }`}>
             {toast.type === 'success' ? <Check size={20} /> : <AlertCircle size={20} />}
             <span className="font-semibold text-sm">{toast.message}</span>
@@ -154,7 +154,7 @@ const AdminStoriesPage = () => {
           {/* Left Column: Form to Add/Edit Story */}
           <article className="lg:col-span-4 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs">
             <div className="panel-header-section mb-4 pb-3 border-b border-slate-100">
-              <span className="badge-kicker text-teal-700 uppercase tracking-wider text-[9px] font-bold">Marketing Control</span>
+              <span className="badge-kicker text-blue-700 uppercase tracking-wider text-[9px] font-bold">Marketing Control</span>
               <h2 className="text-base font-bold text-slate-900">{editingId ? 'Edit Success Story' : 'Add Success Story'}</h2>
               <p className="text-xs text-slate-500">Publish high-impact case studies to the storefront.</p>
             </div>
@@ -220,7 +220,7 @@ const AdminStoriesPage = () => {
               {/* Thumbnail Selector */}
               <div className="form-field-group">
                 <label className="text-xs font-bold text-slate-700">Thumbnail Image *</label>
-                <div className="relative border-2 border-dashed border-slate-200 rounded-lg p-4 bg-white flex flex-col items-center justify-center cursor-pointer hover:border-teal-500 transition">
+                <div className="relative border-2 border-dashed border-slate-200 rounded-lg p-4 bg-white flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 transition">
                   <input
                     type="file"
                     accept="image/*"
@@ -241,7 +241,7 @@ const AdminStoriesPage = () => {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="flex-1 text-xs bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 rounded-lg transition"
+                  className="flex-1 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg transition"
                 >
                   {editingId ? 'Save Changes' : 'Publish Story'}
                 </button>
@@ -262,7 +262,7 @@ const AdminStoriesPage = () => {
           <article className="lg:col-span-8 bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/90 shadow-xs max-h-[78vh] overflow-y-auto overflow-x-hidden">
             <div className="panel-header-section mb-6 pb-3 border-b border-slate-100">
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Sparkles size={16} className="text-teal-600" />
+                <Sparkles size={16} className="text-blue-600" />
                 Stories Catalog list
               </h2>
               <p className="text-xs text-slate-500 mt-1">Live client-facing success story entries.</p>
@@ -274,7 +274,7 @@ const AdminStoriesPage = () => {
                   <div className="space-y-3">
                     <img className="w-full h-32 object-cover rounded-lg border" src={story.image} alt={story.title} />
                     <div>
-                      <span className="text-[9px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-bold uppercase">Customer success</span>
+                      <span className="text-[9px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase">Customer success</span>
                       <h3 className="text-sm font-bold text-slate-900 mt-1.5 leading-tight">{story.title}</h3>
                       <p className="text-xs text-slate-500 font-bold mt-0.5">{story.subtitle}</p>
                       <p className="text-xs text-slate-600 line-clamp-3 mt-2 leading-relaxed font-semibold">{story.description}</p>

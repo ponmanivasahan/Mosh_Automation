@@ -23,7 +23,7 @@ const ProductCard = ({ product, onView, onAdd }) => {
         <div className="mt-4">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
             {product.category && (
-              <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200/60">
+              <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
                 {product.category}
               </span>
             )}
@@ -38,7 +38,7 @@ const ProductCard = ({ product, onView, onAdd }) => {
 
           <h3
             onClick={() => onView && onView(product)}
-            className="text-sm sm:text-base font-bold text-slate-900 line-clamp-2 hover:text-teal-700 cursor-pointer transition-colors"
+            className="text-sm sm:text-base font-bold text-slate-900 line-clamp-2 hover:text-blue-600 cursor-pointer transition-colors"
           >
             {product.name}
           </h3>
@@ -50,7 +50,7 @@ const ProductCard = ({ product, onView, onAdd }) => {
 
       <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-3">
         <div className="flex items-baseline justify-between">
-          <span className="text-teal-700 font-extrabold text-base sm:text-lg">
+          <span className="text-blue-600 font-extrabold text-base sm:text-lg">
             {product.price ? `₹${product.price.toLocaleString('en-IN')}` : '—'}
           </span>
           {product.mrp && (
@@ -69,7 +69,7 @@ const ProductCard = ({ product, onView, onAdd }) => {
           <button
             type="button"
             onClick={() => onAdd && onAdd(product)}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 text-xs font-bold shadow-xs transition"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 text-xs font-bold shadow-xs transition"
           >
             <ShoppingCart className="h-3.5 w-3.5" /> Add
           </button>

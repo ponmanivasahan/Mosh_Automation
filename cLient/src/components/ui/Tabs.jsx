@@ -43,14 +43,14 @@ const Tabs = ({
                 onClick={() => onChange(id)}
                 className={`group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-all duration-150 ${
                   isActive
-                    ? 'border-teal-600 text-teal-700 font-semibold'
+                    ? 'border-blue-600 text-blue-700 font-semibold'
                     : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
                 }`}
               >
                 {Icon && (
                   <Icon
                     className={`h-4 w-4 mr-2 transition-colors ${
-                      isActive ? 'text-teal-600' : 'text-slate-400 group-hover:text-slate-500'
+                      isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-500'
                     }`}
                   />
                 )}
@@ -59,7 +59,7 @@ const Tabs = ({
                   <span
                     className={`ml-2 rounded-full font-bold transition-colors ${badgeSizeClasses[size]} ${
                       isActive
-                        ? 'bg-teal-100 text-teal-800'
+                        ? 'bg-blue-100 text-blue-800'
                         : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
                     }`}
                   >
@@ -98,14 +98,14 @@ const Tabs = ({
                 sizeClasses[size]
               } ${fullWidth ? 'flex-1' : ''} ${
                 isActive
-                  ? 'bg-white text-slate-900 shadow-sm border border-slate-200/60 font-semibold text-teal-800'
+                  ? 'bg-white text-blue-800 shadow-sm border border-slate-200/60 font-semibold'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
               {Icon && (
                 <Icon
                   className={`h-3.5 w-3.5 transition-colors ${
-                    isActive ? 'text-teal-600' : 'text-slate-400'
+                    isActive ? 'text-blue-600' : 'text-slate-400'
                   }`}
                 />
               )}
@@ -114,7 +114,7 @@ const Tabs = ({
                 <span
                   className={`rounded-full font-bold transition-colors ${badgeSizeClasses[size]} ${
                     isActive
-                      ? 'bg-teal-50 text-teal-700 border border-teal-200/60'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
                       : 'bg-slate-200/70 text-slate-600'
                   }`}
                 >

@@ -178,12 +178,12 @@ const AdminDashboardPage = () => {
         {/* Top Header Overview Panel */}
         <header className="admin-topbar panel flex justify-between items-center bg-slate-100 p-6 rounded-lg border border-slate-200">
           <div>
-            <p className="dashboard-eyebrow text-teal-700 uppercase tracking-wider text-[10px] font-bold">HQ Systems Control</p>
+            <p className="dashboard-eyebrow text-blue-700 uppercase tracking-wider text-[10px] font-bold">HQ Systems Control</p>
             <h2 className="text-2xl font-bold text-slate-800">Admin Portal Overview</h2>
             <p className="text-xs text-slate-500 mt-1">Real-time telemetry tracking client orders, products catalog status, and customer reviews.</p>
           </div>
-          <div className="admin-topbar-chip flex items-center gap-2 bg-white text-teal-700 px-4 py-2 rounded-xl border shadow-sm">
-            <RefreshCw size={14} className="animate-spin text-teal-600" />
+          <div className="admin-topbar-chip flex items-center gap-2 bg-white text-blue-700 px-4 py-2 rounded-xl border shadow-sm">
+            <RefreshCw size={14} className="animate-spin text-blue-600" />
             <strong className="text-xs font-bold">Live Sync Active</strong>
           </div>
         </header>
@@ -234,12 +234,12 @@ const AdminDashboardPage = () => {
           >
             <div className="flex justify-between items-center">
               <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Dispatched</span>
-              <div className="p-2 rounded-xl bg-teal-50 text-teal-600 group-hover:scale-105 transition-transform">
+              <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform">
                 <Truck size={16} />
               </div>
             </div>
             <div className="mt-3">
-              <h3 className="text-2xl font-extrabold text-teal-600 leading-none">{dispatchedOrdersCount}</h3>
+              <h3 className="text-2xl font-extrabold text-blue-600 leading-none">{dispatchedOrdersCount}</h3>
               <span className="text-[10px] text-slate-400 font-semibold block mt-1.5">In transit tracking</span>
             </div>
           </motion.article>
@@ -306,13 +306,13 @@ const AdminDashboardPage = () => {
           >
             <div className="flex justify-between items-center">
               <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Revenue</span>
-              <div className="p-2 rounded-xl bg-teal-50 text-teal-700 group-hover:scale-105 transition-transform">
+              <div className="p-2 rounded-xl bg-blue-50 text-blue-700 group-hover:scale-105 transition-transform">
                 <TrendingUp size={16} />
               </div>
             </div>
             <div className="mt-3">
               <h3 className="text-xl font-extrabold text-slate-900 leading-none truncate">{formatCurrency(totalRevenue)}</h3>
-              <span className="text-[10px] text-teal-700 font-semibold block mt-1.5">Excl. cancelled</span>
+              <span className="text-[10px] text-blue-700 font-semibold block mt-1.5">Excl. cancelled</span>
             </div>
           </motion.article>
         </section>
@@ -323,7 +323,7 @@ const AdminDashboardPage = () => {
         <section className="bg-white border border-slate-200/90 rounded-2xl p-5 md:p-6 space-y-5 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
-              <p className="dashboard-eyebrow text-teal-700 uppercase tracking-wider text-[10px] font-bold">Client operations</p>
+              <p className="dashboard-eyebrow text-blue-700 uppercase tracking-wider text-[10px] font-bold">Client operations</p>
               <h2 className="text-xl font-bold text-slate-800">Manage Orders ({filteredOrders.length})</h2>
             </div>
 
@@ -350,7 +350,7 @@ const AdminDashboardPage = () => {
                           <h3 className="text-sm font-bold text-slate-900 truncate">{order.customerName}</h3>
                           <span className={`text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase shrink-0 ${
                             order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' :
-                            order.status === 'Dispatched' ? 'bg-teal-50 text-teal-600' :
+                            order.status === 'Dispatched' ? 'bg-blue-50 text-blue-600' :
                             order.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 font-extrabold' :
                             order.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-50 text-indigo-600'
                           }`}>
@@ -386,7 +386,7 @@ const AdminDashboardPage = () => {
 
                         {order.shippingAddress && (
                           <p className="text-[11px] text-slate-500 mt-2 bg-slate-50 p-2 rounded-xl border border-slate-100 flex items-center gap-1.5 font-bold">
-                            <MapPin size={12} className="text-teal-600 shrink-0" />
+                            <MapPin size={12} className="text-blue-600 shrink-0" />
                             <span className="truncate">Deliver: {order.shippingAddress.address || order.shippingAddress.city}, {order.shippingAddress.city}</span>
                           </p>
                         )}
@@ -403,7 +403,7 @@ const AdminDashboardPage = () => {
                       <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
                         <div className="flex justify-between items-center">
                           <span className="text-[10px] text-slate-400 font-bold uppercase">Total Amount</span>
-                          <strong className="text-base font-extrabold text-teal-600">{formatCurrency(order.total)}</strong>
+                          <strong className="text-base font-extrabold text-blue-600">{formatCurrency(order.total)}</strong>
                         </div>
 
                         <div className="flex flex-col gap-2">
@@ -413,7 +413,7 @@ const AdminDashboardPage = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleStatusChange(order.id, 'Dispatched')}
-                                  className="text-[9px] bg-teal-50 border border-teal-200 text-teal-700 py-1.5 rounded-xl font-bold hover:bg-teal-100"
+                                  className="text-[9px] bg-blue-50 border border-blue-200 text-blue-700 py-1.5 rounded-xl font-bold hover:bg-blue-100"
                                 >
                                   Dispatch
                                 </button>
@@ -465,7 +465,7 @@ const AdminDashboardPage = () => {
               >
                 <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                   <div>
-                    <span className="badge-kicker text-teal-600 font-bold uppercase tracking-wider text-[10px]">HQ Control Portal</span>
+                    <span className="badge-kicker text-blue-600 font-bold uppercase tracking-wider text-[10px]">HQ Control Portal</span>
                     <h2 className="text-xl font-bold text-slate-800 capitalize">{activeModalType.replace('-', ' ')} Summary</h2>
                   </div>
                   <button onClick={() => setActiveModalType(null)} className="p-1.5 rounded-lg hover:bg-slate-100 transition">
@@ -484,7 +484,7 @@ const AdminDashboardPage = () => {
                             <h4 className="text-xs font-bold text-slate-800 truncate">{p.name}</h4>
                             <p className="text-[10px] text-slate-400 font-bold">{p.category || 'Automation'}</p>
                           </div>
-                          <strong className="text-xs text-teal-600">{formatCurrency(p.price)}</strong>
+                          <strong className="text-xs text-blue-600">{formatCurrency(p.price)}</strong>
                         </div>
                       ))}
                     </div>
@@ -500,7 +500,7 @@ const AdminDashboardPage = () => {
                           </div>
                           <div className="text-right">
                             <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold uppercase mb-1">{o.status}</span>
-                            <strong className="block text-teal-700">{formatCurrency(o.total)}</strong>
+                            <strong className="block text-blue-700">{formatCurrency(o.total)}</strong>
                           </div>
                         </div>
                       ))}
@@ -519,8 +519,8 @@ const AdminDashboardPage = () => {
                             <p className="text-[10px] text-slate-400 mt-0.5">ID: #{o.id} · {formatDateTime(o.createdAt)}</p>
                           </div>
                           <div className="text-right">
-                            <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-teal-50 text-teal-700 font-bold uppercase mb-1">{o.status}</span>
-                            <strong className="block text-teal-700">{formatCurrency(o.total)}</strong>
+                            <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold uppercase mb-1">{o.status}</span>
+                            <strong className="block text-blue-700">{formatCurrency(o.total)}</strong>
                           </div>
                         </div>
                       ))}
@@ -540,7 +540,7 @@ const AdminDashboardPage = () => {
                           </div>
                           <div className="text-right">
                             <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold uppercase mb-1">{o.status}</span>
-                            <strong className="block text-teal-700">{formatCurrency(o.total)}</strong>
+                            <strong className="block text-blue-700">{formatCurrency(o.total)}</strong>
                           </div>
                         </div>
                       ))}
@@ -607,7 +607,7 @@ const AdminDashboardPage = () => {
               >
                 <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                   <div>
-                    <span className="badge-kicker text-teal-600 font-bold uppercase tracking-wider text-[10px]">Order & Payment Details</span>
+                    <span className="badge-kicker text-blue-600 font-bold uppercase tracking-wider text-[10px]">Order & Payment Details</span>
                     <h2 className="text-lg font-bold text-slate-800">Order #{selectedAdminOrder.id}</h2>
                   </div>
                   <button onClick={() => setSelectedAdminOrder(null)} className="p-1.5 rounded-lg hover:bg-slate-100 transition">
@@ -689,7 +689,7 @@ const AdminDashboardPage = () => {
                             <p className="font-bold text-slate-800 truncate">{it.name}</p>
                             <p className="text-[10px] text-slate-400 mt-0.5">₹{it.unitPrice || it.total} x {it.quantity}</p>
                           </div>
-                          <strong className="text-teal-700">{formatCurrency(it.total)}</strong>
+                          <strong className="text-blue-700">{formatCurrency(it.total)}</strong>
                         </div>
                       ))}
                     </div>
@@ -698,7 +698,7 @@ const AdminDashboardPage = () => {
                   <div className="flex justify-between items-center border-t pt-4">
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold text-left">Total Paid</p>
-                      <strong className="text-lg text-teal-600 font-extrabold">{formatCurrency(selectedAdminOrder.total)}</strong>
+                      <strong className="text-lg text-blue-600 font-extrabold">{formatCurrency(selectedAdminOrder.total)}</strong>
                     </div>
 
                     <div className="flex gap-2">

@@ -1,20 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Smartphone, CheckCircle, ShieldCheck, ArrowRight, Zap, Droplets, Activity } from 'lucide-react';
+import { 
+  User, 
+  Phone, 
+  ChevronDown, 
+  ArrowRight, 
+  Zap, 
+  Droplet, 
+  ShieldCheck, 
+  Wifi,
+  AlertCircle
+} from 'lucide-react';
 import { loginPhones } from '../../data/defaults';
 import { useAuth } from '../../utils/AuthContext';
 import { API_URL } from '../../utils/api';
 import './LoginPage.css';
-
-const rotatingMessages = [
-  'Innovative water level controller systems designed for modern residential & industrial needs.',
-  'Intelligent automated switching that eliminates tank overflow and dry-run damage.',
-  'Continuous wireless telemetry and heavy-duty engineering built for dependable 24/7 operation.'
-];
-
-const typingDelay = 28;
-const pauseDelay = 2200;
-const deleteDelay = 18;
 
 const LoginPage = () => {
   const { login } = useAuth();
@@ -23,59 +23,6 @@ const LoginPage = () => {
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [typedMessage, setTypedMessage] = useState('');
-  const messageIndexRef = useRef(0);
-  const phaseRef = useRef('typing');
-  const currentIndexRef = useRef(0);
-
-  // Typing animation effect
-  useEffect(() => {
-    let timeoutId;
-
-    const tick = () => {
-      const currentMessage = rotatingMessages[messageIndexRef.current];
-
-      if (phaseRef.current === 'typing') {
-        currentIndexRef.current += 1;
-        setTypedMessage(currentMessage.slice(0, currentIndexRef.current));
-
-        if (currentIndexRef.current >= currentMessage.length) {
-          phaseRef.current = 'pausing';
-          timeoutId = window.setTimeout(tick, pauseDelay);
-          return;
-        }
-      }
-
-      if (phaseRef.current === 'pausing') {
-        phaseRef.current = 'deleting';
-        timeoutId = window.setTimeout(tick, deleteDelay);
-        return;
-      }
-
-      if (phaseRef.current === 'deleting') {
-        currentIndexRef.current -= 1;
-        setTypedMessage(currentMessage.slice(0, currentIndexRef.current));
-
-        if (currentIndexRef.current <= 0) {
-          currentIndexRef.current = 0;
-          messageIndexRef.current = (messageIndexRef.current + 1) % rotatingMessages.length;
-          phaseRef.current = 'typing';
-          timeoutId = window.setTimeout(tick, 280);
-          return;
-        }
-      }
-
-      timeoutId = window.setTimeout(tick, phaseRef.current === 'deleting' ? deleteDelay : typingDelay);
-    };
-
-    timeoutId = window.setTimeout(tick, 350);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, []);
-
-  const currentYear = new Date().getFullYear();
 
   // Map registered phone to role fallback (local cache mode only)
   const getRoleFromPhone = (value) => {
@@ -155,7 +102,6 @@ const LoginPage = () => {
         }
       }
 
-      // If backend returns 401 or specific error
       if (response.status === 401 || response.status === 403) {
         const errData = await response.json().catch(() => ({}));
         setError(errData.message || 'Access restricted. Please verify credentials.');
@@ -163,7 +109,7 @@ const LoginPage = () => {
         return;
       }
 
-      // If server error or offline, fallback smoothly
+      // Offline / server fallback mode
       const fallbackRole = getRoleFromPhone(cleanedPhone);
       completeUserLogin({ name: cleanedName, phone: cleanedPhone, role: fallbackRole }, 'mock-token-' + Date.now());
     } catch (e) {
@@ -175,152 +121,134 @@ const LoginPage = () => {
     }
   };
 
-  const setQuickCredentials = (demoName, demoPhone) => {
-    setName(demoName);
-    setPhone(demoPhone);
-    setError('');
-  };
-
   return (
-    <div className="login-page-root">
-      
-      {/* Background Decor Elements */}
-      <div className="login-bg-glow-1" />
-      <div className="login-bg-glow-2" />
-      <div className="login-grid-pattern" />
+    <div className="login-exact-page">
+      {/* Top Left Subtle Dot Grid */}
+      <div className="dot-grid-decor" aria-hidden="true">
+        {Array.from({ length: 42 }).map((_, i) => (
+          <span key={i} className="dot" />
+        ))}
+      </div>
 
-      <div className="login-container">
+      {/* Soft Ambient Glows */}
+      <div className="glow-tr" aria-hidden="true" />
+      <div className="glow-bl" aria-hidden="true" />
+
+      <div className="login-exact-container">
         
-        {/* Left Column: Brand Hero & Value Proposition */}
-        <section className="login-hero-col">
-          <div className="login-hero-brand">
-            <div className="login-hero-logo-wrap">
-              <img src="/logo background.png" alt="Mosh Automation Logo" className="login-hero-logo" />
+        {/* Left Column: Brand, Vision & Feature Showcase */}
+        <section className="login-hero-section">
+          {/* Logo Badge Card */}
+          <div className="hero-logo-card">
+            <img src="/mosh-logo-badge.png" alt="MOSH Logo" className="hero-logo-img" />
+          </div>
+
+          {/* Brand Heading */}
+          <h1 className="hero-brand-heading">
+            <span className="brand-navy">MOSH </span>
+            <span className="brand-red">AUTOMATION</span>
+          </h1>
+          <p className="hero-brand-sub">Intelligent Water Management & Control Systems</p>
+
+          {/* Feature Pill Badge */}
+          <div className="hero-pill-badge">
+            <Zap className="hero-pill-icon" />
+            <span>Next-Gen IoT Controllers</span>
+          </div>
+
+          {/* Statement Quote */}
+          <h2 className="hero-quote-text">
+            “Intelligent automated switching that <span className="text-highlight">eliminates tank overflow</span>”
+          </h2>
+
+          {/* 3 Feature Showcase Cards */}
+          <div className="hero-feature-cards">
+            <div className="feature-card">
+              <div className="feature-icon-wrap icon-blue">
+                <Droplet className="feature-icon" />
+              </div>
+              <h3 className="feature-card-title">Overflow Prevention</h3>
+              <p className="feature-card-desc">Autonomous auto-switch sensing</p>
             </div>
-            <div>
-              <h1 className="login-hero-title">MOSH AUTOMATION</h1>
-              <p className="login-hero-subtitle">Intelligent Water Management & Control Systems</p>
+
+            <div className="feature-card">
+              <div className="feature-icon-wrap icon-emerald">
+                <ShieldCheck className="feature-icon" />
+              </div>
+              <h3 className="feature-card-title">Dry Run Protection</h3>
+              <p className="feature-card-desc">Motor longevity & load safety</p>
+            </div>
+
+            <div className="feature-card">
+              <div className="feature-icon-wrap icon-purple">
+                <Wifi className="feature-icon" />
+              </div>
+              <h3 className="feature-card-title">Wireless Telemetry</h3>
+              <p className="feature-card-desc">Dual tank multi-node syncing</p>
             </div>
           </div>
 
-          <div className="login-hero-highlight-box">
-            <div className="login-hero-badge">
-              <Zap size={14} className="text-teal-600" />
-              <span>Next-Gen IoT Controllers</span>
-            </div>
-
-            <div className="login-hero-typing-wrap">
-              <p className="login-hero-typed-text">
-                "{typedMessage}"
-                <span className="typing-caret" aria-hidden="true" />
-              </p>
-            </div>
-
-            <div className="login-hero-features-grid">
-              <div className="login-hero-feature-item">
-                <div className="feature-icon-circle bg-teal-50 text-teal-700">
-                  <Droplets size={16} />
-                </div>
-                <div>
-                  <h4 className="feature-title">Overflow Prevention</h4>
-                  <p className="feature-desc">Autonomous auto-switch sensing</p>
-                </div>
-              </div>
-
-              <div className="login-hero-feature-item">
-                <div className="feature-icon-circle bg-blue-50 text-blue-700">
-                  <ShieldCheck size={16} />
-                </div>
-                <div>
-                  <h4 className="feature-title">Dry Run Protection</h4>
-                  <p className="feature-desc">Motor longevity & load safety</p>
-                </div>
-              </div>
-
-              <div className="login-hero-feature-item">
-                <div className="feature-icon-circle bg-indigo-50 text-indigo-700">
-                  <Activity size={16} />
-                </div>
-                <div>
-                  <h4 className="feature-title">Wireless Telemetry</h4>
-                  <p className="feature-desc">Dual tank multi-node syncing</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="login-hero-footer">
-            <span>© {currentYear} Mosh Automation India. Engineered with precision.</span>
+          {/* Water Tanks & Glassy Wave Graphic at Bottom */}
+          <div className="hero-tanks-backdrop" aria-hidden="true">
+            <img src="/tanks-backdrop.png" alt="" className="tanks-img" />
           </div>
         </section>
 
-        {/* Right Column: Clean Modern Authentication Card */}
-        <section className="login-card-col">
-          <div className="login-card-panel">
+        {/* Right Column: High Precision Sign In Card */}
+        <section className="login-card-section">
+          <div className="login-card-inner">
             
-            <div className="login-card-header">
-              <div className="login-card-logo-badge">
-                <img src="/logo background.png" alt="Mosh" className="h-9 w-9 object-contain" />
-              </div>
-              <h2 className="login-card-title">Sign In to Portal</h2>
-              <p className="login-card-subtitle">
-                Access your orders, quotation requests, and system telemetry.
-              </p>
+            {/* Center Logo Badge */}
+            <div className="card-top-logo">
+              <img src="/mosh-logo-badge.png" alt="MOSH" className="card-logo-img" />
             </div>
 
-            {/* Quick Demo Test Pills */}
-            <div className="quick-test-section">
-              <span className="quick-test-label">Instant Demo Login:</span>
-              <div className="quick-test-buttons">
-                <button
-                  type="button"
-                  onClick={() => setQuickCredentials('Admin Manager', '9514714441')}
-                  className="quick-pill-btn admin"
-                  title="Fill Admin Credentials"
-                >
-                  <span className="pill-dot admin" /> Admin Portal
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQuickCredentials('Praveen Kumar', '9876543210')}
-                  className="quick-pill-btn customer"
-                  title="Fill Customer Credentials"
-                >
-                  <span className="pill-dot customer" /> Customer Portal
-                </button>
-              </div>
-            </div>
+            {/* Card Titles */}
+            <h2 className="card-title">Sign In to Portal</h2>
+            <p className="card-subtitle">
+              Access your orders, quotation requests, and system telemetry.
+            </p>
 
-            <form className="login-card-form" onSubmit={handleLogin}>
-              <div className="input-group">
-                <label className="input-label" htmlFor="user-name">
+            {/* Sign In Form */}
+            <form onSubmit={handleLogin} className="card-form">
+              {/* Full Name Field */}
+              <div className="form-field-group">
+                <label className="field-label" htmlFor="portal-user-name">
                   Full Name / Business Name
                 </label>
-                <input
-                  id="user-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^[a-zA-Z\s.'-]*$/.test(val)) {
-                      setName(val);
-                    }
-                  }}
-                  placeholder="e.g. John Doe"
-                  autoComplete="name"
-                  required
-                  className="login-input"
-                />
+                <div className="field-input-box">
+                  <User className="field-prefix-icon" />
+                  <input
+                    id="portal-user-name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^[a-zA-Z\s.'-]*$/.test(val)) {
+                        setName(val);
+                      }
+                    }}
+                    placeholder="e.g. John Doe"
+                    autoComplete="name"
+                    required
+                    className="field-text-input"
+                  />
+                </div>
               </div>
 
-              <div className="input-group">
-                <label className="input-label" htmlFor="user-phone">
+              {/* 10-Digit Mobile Number Field */}
+              <div className="form-field-group">
+                <label className="field-label" htmlFor="portal-user-phone">
                   10-Digit Mobile Number
                 </label>
-                <div className="phone-input-wrap">
-                  <span className="phone-prefix">+91</span>
+                <div className="field-input-box phone-box">
+                  <div className="country-code-pill">
+                    <Phone className="phone-mini-icon" />
+                    <span className="code-text">+91</span>
+                    <ChevronDown className="code-arrow" />
+                  </div>
                   <input
-                    id="user-phone"
+                    id="portal-user-phone"
                     type="tel"
                     inputMode="numeric"
                     value={phone}
@@ -329,38 +257,35 @@ const LoginPage = () => {
                     autoComplete="tel"
                     maxLength={10}
                     required
-                    className="login-input phone-input"
+                    className="field-text-input phone-input"
                   />
                 </div>
               </div>
 
+              {/* Error Alert */}
               {error && (
-                <div className="login-error-banner animate-fade-in">
+                <div className="error-alert-banner">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
                   <span>{error}</span>
                 </div>
               )}
 
+              {/* Continue to Portal Button */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="login-submit-btn"
+                className="portal-submit-button"
               >
-                {isSubmitting ? (
-                  <span>Signing In...</span>
-                ) : (
-                  <>
-                    <span>Continue to Portal</span>
-                    <ArrowRight size={16} />
-                  </>
-                )}
+                <span>{isSubmitting ? 'Signing In...' : 'Continue to Portal'}</span>
+                <ArrowRight className="w-4 h-4 ml-1" />
               </button>
             </form>
 
-            <div className="login-card-footer">
-              <p className="privacy-note">
-                By continuing, you agree to Mosh Automation's verified operations terms & privacy guidelines.
-              </p>
-            </div>
+            {/* Footer Terms & Guidelines */}
+            <p className="card-terms-notice">
+              By continuing, you agree to Mosh Automation's verified operations terms & privacy guidelines.
+            </p>
+
           </div>
         </section>
 

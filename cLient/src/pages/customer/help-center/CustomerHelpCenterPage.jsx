@@ -233,7 +233,7 @@ const CustomerHelpCenterPage = () => {
                     <ul className="steps-list">
                       {troubleshootingSteps[wizardSelection].steps.map((step, idx) => (
                         <li key={idx} className="step-item">
-                          <CheckCircle2 size={16} className="text-teal-600 mt-0.5" />
+                          <CheckCircle2 size={16} className="text-blue-600 mt-0.5" />
                           <span>{step}</span>
                         </li>
                       ))}
@@ -301,7 +301,7 @@ const CustomerHelpCenterPage = () => {
             {/* Google Map Location */}
             <div className="location-map-card">
               <div className="location-head">
-                <MapPin className="text-teal-600" size={20} />
+                <MapPin className="text-blue-600" size={20} />
                 <div>
                   <h4 className="location-title">Visit Mosh Automation</h4>
                   <p className="location-address">Varadharajapuram, Coimbatore, Tamil Nadu</p>

@@ -182,9 +182,11 @@ const CustomerProductsPage = () => {
         {/* Page header with kicker */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
           <div>
-            <p className="text-teal-600 font-bold uppercase tracking-wider text-sm mb-2">Explore solutions</p>
-            <h2 className="text-3xl font-extrabold text-neutral-900 mb-3">Automation Catalog</h2>
-            <p className="text-neutral-500 max-w-2xl">Select and order state-of-the-art water level controller solutions tailored for your requirements.</p>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold tracking-wide uppercase mb-2.5 border border-blue-200/60">
+              Explore solutions
+            </div>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-2">Automation Catalog</h2>
+            <p className="text-slate-500 max-w-2xl text-sm sm:text-base">Select and order state-of-the-art water level controller solutions tailored for your requirements.</p>
           </div>
           <ProductsToolbar filters={filters} onChange={setFilters} categories={categories} />
         </div>

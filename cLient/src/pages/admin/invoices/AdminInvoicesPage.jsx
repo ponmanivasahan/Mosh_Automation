@@ -210,7 +210,7 @@ const AdminInvoicesPage = () => {
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border backdrop-blur-xl bg-teal-600 text-white border-teal-500 font-bold text-xs"
+              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border backdrop-blur-xl bg-blue-600 text-white border-blue-500 font-bold text-xs"
             >
               <CheckCircle size={16} />
               <span>{message}</span>
@@ -248,7 +248,7 @@ const AdminInvoicesPage = () => {
 
               <button
                 onClick={() => setShowAddModal(true)}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs transition flex items-center gap-1.5"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs transition flex items-center gap-1.5"
               >
                 <Plus size={14} /> Create Invoice
               </button>
@@ -299,7 +299,7 @@ const AdminInvoicesPage = () => {
                   };
                   return (
                     <tr key={inv.id} className="hover:bg-slate-50 transition">
-                      <td className="px-4 py-3 font-bold text-teal-700">{inv.invoice_number}</td>
+                      <td className="px-4 py-3 font-bold text-blue-700">{inv.invoice_number}</td>
                       <td className="px-4 py-3 font-bold text-slate-800">{inv.customer_name}</td>
                       <td className="px-4 py-3 text-slate-500">{new Date(inv.invoice_date).toLocaleDateString()}</td>
                       <td className="px-4 py-3 font-bold text-slate-700">{formatCurrency(inv.grand_total)}</td>
@@ -307,7 +307,7 @@ const AdminInvoicesPage = () => {
                         <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-[10px] font-bold">Paid</span>
                       </td>
                       <td className="px-4 py-3 text-right flex items-center justify-end gap-2">
-                        <button onClick={() => setShowPreviewModal(uiInv)} className="text-teal-600 hover:text-teal-800 bg-teal-50 px-2 py-1 rounded flex items-center gap-1 font-bold">
+                        <button onClick={() => setShowPreviewModal(uiInv)} className="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded flex items-center gap-1 font-bold">
                           <Eye size={12}/> View
                         </button>
                         <PDFDownloadLink document={<InvoicePDF invoice={uiInv} />} fileName={`Invoice_${inv.invoice_number}.pdf`} className="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded flex items-center gap-1 font-bold">
@@ -337,7 +337,7 @@ const AdminInvoicesPage = () => {
           <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-lg max-w-4xl w-full p-6 shadow-2xl border flex flex-col max-h-[90vh] overflow-hidden">
               <div className="flex justify-between items-center mb-4 pb-4 border-b">
-                <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><FileText size={18} className="text-teal-600" /> Create Tax Invoice</h2>
+                <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><FileText size={18} className="text-blue-600" /> Create Tax Invoice</h2>
                 <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-700 bg-slate-100 p-1.5 rounded-full"><X size={16} /></button>
               </div>
               <div className="flex-1 overflow-y-auto pr-2 space-y-6">
@@ -360,7 +360,7 @@ const AdminInvoicesPage = () => {
                 <div className="border rounded-xl p-4">
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="font-bold text-sm">Invoice Items</h3>
-                    <button onClick={addItem} type="button" className="text-xs bg-teal-50 text-teal-700 px-3 py-1.5 rounded font-bold flex items-center gap-1"><Plus size={12}/> Add Item</button>
+                    <button onClick={addItem} type="button" className="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded font-bold flex items-center gap-1"><Plus size={12}/> Add Item</button>
                   </div>
                   <div className="space-y-3">
                     {items.map((item, idx) => (
@@ -378,8 +378,8 @@ const AdminInvoicesPage = () => {
                 </div>
 
                 {/* Summary */}
-                <div className="bg-teal-50 border border-teal-100 rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4">
-                  <div className="flex-1 text-xs text-teal-800 space-y-1">
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4">
+                  <div className="flex-1 text-xs text-blue-800 space-y-1">
                     <p><strong>Subtotal:</strong> {formatCurrency(calculations.taxableValue)}</p>
                     {calculations.sgstRate > 0 && <p><strong>SGST ({calculations.sgstRate}%):</strong> {formatCurrency(calculations.sgstAmount)}</p>}
                     {calculations.cgstRate > 0 && <p><strong>CGST ({calculations.cgstRate}%):</strong> {formatCurrency(calculations.cgstAmount)}</p>}
@@ -387,16 +387,16 @@ const AdminInvoicesPage = () => {
                     <p><strong>Rounded Off:</strong> {formatCurrency(calculations.roundedOff)}</p>
                   </div>
                   <div className="flex-1 flex flex-col items-end justify-center">
-                    <span className="text-xs font-bold text-teal-700">Grand Total</span>
-                    <span className="text-3xl font-black text-teal-900">{formatCurrency(calculations.grandTotal)}</span>
-                    <span className="text-[10px] text-teal-600 mt-1 italic text-right">{calculations.amountInWords}</span>
+                    <span className="text-xs font-bold text-blue-700">Grand Total</span>
+                    <span className="text-3xl font-black text-blue-900">{formatCurrency(calculations.grandTotal)}</span>
+                    <span className="text-[10px] text-blue-600 mt-1 italic text-right">{calculations.amountInWords}</span>
                   </div>
                 </div>
               </div>
 
               <div className="pt-4 border-t mt-4 flex justify-end gap-3 bg-white">
                 <button onClick={() => setShowAddModal(false)} className="px-5 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-lg">Cancel</button>
-                <button onClick={handleSubmit} className="px-5 py-2 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-lg shadow-lg flex items-center gap-2"><CheckCircle size={14}/> Save & Generate Invoice</button>
+                <button onClick={handleSubmit} className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg flex items-center gap-2"><CheckCircle size={14}/> Save & Generate Invoice</button>
               </div>
             </motion.div>
           </div>
@@ -409,9 +409,9 @@ const AdminInvoicesPage = () => {
           <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-lg w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
               <div className="flex justify-between items-center p-3 border-b bg-slate-50">
-                <h3 className="font-bold text-sm flex items-center gap-2"><FileText size={14} className="text-teal-600"/> Invoice Preview</h3>
+                <h3 className="font-bold text-sm flex items-center gap-2"><FileText size={14} className="text-blue-600"/> Invoice Preview</h3>
                 <div className="flex gap-2">
-                  <PDFDownloadLink document={<InvoicePDF invoice={showPreviewModal} />} fileName={`Invoice_${showPreviewModal.invoiceNumber || 'New'}.pdf`} className="bg-teal-600 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1">
+                  <PDFDownloadLink document={<InvoicePDF invoice={showPreviewModal} />} fileName={`Invoice_${showPreviewModal.invoiceNumber || 'New'}.pdf`} className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1">
                     {({ loading }) => loading ? 'Preparing...' : <><Download size={14}/> Download PDF</>}
                   </PDFDownloadLink>
                   <button onClick={() => setShowPreviewModal(null)} className="text-slate-500 hover:text-slate-800 bg-slate-200 px-3 py-1.5 rounded text-xs font-bold"><X size={14}/> Close</button>
