@@ -50,14 +50,6 @@ const ProductListingPage = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  useEffect(() => {
-    if (searchQuery.trim().length >= 3) {
-      const timer = setTimeout(() => {
-        trackProductSearch(searchQuery.trim(), filteredProducts.length);
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [searchQuery, filteredProducts.length]);
   const filteredProducts = useMemo(() => {
     return defaultProducts.filter(p => {
       const tech = productTechnicalData[p.id] || {};
@@ -68,6 +60,15 @@ const ProductListingPage = () => {
       return matchesCategory && matchesSearch;
     });
   }, [selectedCategory, searchQuery]);
+
+  useEffect(() => {
+    if (searchQuery.trim().length >= 3) {
+      const timer = setTimeout(() => {
+        trackProductSearch(searchQuery.trim(), filteredProducts.length);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [searchQuery, filteredProducts.length]);
 
   return (
     <div className="public-page-wrapper">

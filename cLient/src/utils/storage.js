@@ -27,6 +27,10 @@ const write = (key, value) => {
   localStorage.setItem(key, JSON.stringify(value));
 };
 
+export const getSession = () => read(KEYS.session, null);
+export const setSession = (session) => write(KEYS.session, session);
+export const clearSession = () => localStorage.removeItem(KEYS.session);
+
 const fallbackImage = productImageOptions[0]?.value || '';
 
 const normalizeProduct = (product) => {
@@ -91,12 +95,7 @@ export const getDbStatus = () => {
 
 let initialDataPromise = null;
 
-export const forceUserSync = async () => {
-  initialDataPromise = null; // Clear the cached promise
-  return ensureInitialData(); // Re-run the data fetch with the new auth token
-};
-
-export const ensureInitialData = async () => {
+export async function ensureInitialData() {
   if (initialDataPromise) return initialDataPromise;
 
   initialDataPromise = (async () => {
@@ -182,6 +181,11 @@ export const ensureInitialData = async () => {
   }
   })();
   return initialDataPromise;
+}
+
+export const forceUserSync = async () => {
+  initialDataPromise = null; // Clear the cached promise
+  return ensureInitialData(); // Re-run the data fetch with the new auth token
 };
 
 ensureInitialData();
@@ -620,10 +624,6 @@ export const clearCart = () => {
     // ignore
   }
 };
-
-export const getSession = () => read(KEYS.session, null);
-export const setSession = (session) => write(KEYS.session, session);
-export const clearSession = () => localStorage.removeItem(KEYS.session);
 
 export const updateUser = async (user) => {
   const rawUsers = localStorage.getItem('mosh_users');

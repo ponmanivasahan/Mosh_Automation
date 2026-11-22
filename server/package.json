@@ -4,9 +4,10 @@
   "description": "Enterprise-grade secure backend for Mosh Automation Admin and Customer Portal",
   "main": "src/server.js",
   "scripts": {
+    "prestart": "npm install",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "build": "echo 'No build step required for server'"
+    "build": "npm install"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

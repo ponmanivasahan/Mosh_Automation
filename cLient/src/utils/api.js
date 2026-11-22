@@ -58,14 +58,20 @@ export const getCsrfToken = () => {
   return match ? decodeURIComponent(match[2]) : null;
 };
 
+// Reference original window.fetch before interception
+let originalFetch = typeof window !== 'undefined' ? window.fetch : null;
+
 // Shared promise for concurrent requests waiting on a token refresh
 let refreshPromise = null;
 
 // Execute silent refresh using HttpOnly refresh token cookie
 export const executeRefresh = async () => {
   try {
+    if (!originalFetch && typeof window !== 'undefined') {
+      originalFetch = window.fetch;
+    }
     const refreshEndpoint = API_URL ? `${API_URL}/api/auth/refresh` : '/api/auth/refresh';
-    const res = await originalFetch.call(window, refreshEndpoint, {
+    const res = await (originalFetch || fetch).call(window, refreshEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -105,9 +111,8 @@ export const executeRefresh = async () => {
 };
 
 // Globally intercept fetch to attach credentials, CSRF token, and handle silent refresh
-let originalFetch;
 if (typeof window !== 'undefined') {
-  originalFetch = window.fetch;
+  if (!originalFetch) originalFetch = window.fetch;
   window.fetch = async function (resource, config = {}) {
     // Intercept all requests targeting our API (absolute or relative)
     const isTargetApi = typeof resource === 'string' && (

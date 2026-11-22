@@ -1,7 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const helmet = require('helmet');
+let helmet;
+try {
+  helmet = require('helmet');
+} catch {
+  helmet = null;
+}
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
@@ -33,40 +38,49 @@ const PORT = process.env.PORT || 5000;
 // Trust reverse proxy (Render, Vercel, Nginx, Cloudflare) for secure cookies and accurate rate limiting
 app.set('trust proxy', 1);
 
-// HTTP Security Headers via Helmet
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: [
-        "'self'",
-        "'unsafe-inline'",
-        "https://checkout.razorpay.com"
-      ],
-      frameSrc: [
-        "'self'",
-        "https://api.razorpay.com",
-        "https://checkout.razorpay.com"
-      ],
-      connectSrc: [
-        "'self'",
-        "https://api.razorpay.com",
-        "https://lumberjack.razorpay.com",
-        "https://mosh-automation.vercel.app",
-        "https://mosh-automation.onrender.com",
-        "http://localhost:*",
-        "http://127.0.0.1:*"
-      ],
-      imgSrc: ["'self'", "data:", "blob:", "https://*"],
-      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
-    }
-  },
-  crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: { policy: "cross-origin" }
-}));
+// HTTP Security Headers via Helmet (with resilient fallback)
+if (helmet) {
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://checkout.razorpay.com"
+        ],
+        frameSrc: [
+          "'self'",
+          "https://api.razorpay.com",
+          "https://checkout.razorpay.com"
+        ],
+        connectSrc: [
+          "'self'",
+          "https://api.razorpay.com",
+          "https://lumberjack.razorpay.com",
+          "https://mosh-automation.vercel.app",
+          "https://mosh-automation.onrender.com",
+          "http://localhost:*",
+          "http://127.0.0.1:*"
+        ],
+        imgSrc: ["'self'", "data:", "blob:", "https://*"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null
+      }
+    },
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  }));
+} else {
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    next();
+  });
+}
 
 // Strictly allow only verified origins with credentials
 const corsOptions = {
