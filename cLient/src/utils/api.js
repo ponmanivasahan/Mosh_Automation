@@ -21,15 +21,7 @@ const getApiUrl = () => {
   };
   
   // 3. Resolve API URL
-  // If explicitly configured, use it (sanitized for production)
-  if (envUrl) {
-    if (isBrowser && !isPageLocal && !isPageIp && isUrlLocal(envUrl)) {
-      return isPageRender ? window.location.origin : 'https://mosh-automation.onrender.com';
-    }
-    return envUrl.replace(/\/+$/, '');
-  }
-
-  // When deployed on Vercel with rewrites, use same-origin relative URL
+  // When deployed on Vercel with rewrites, use same-origin relative URL so cookies are first-party and never blocked by mobile browsers
   if (isBrowser && isPageVercel) {
     return '';
   }
@@ -44,6 +36,14 @@ const getApiUrl = () => {
   }
   if (isPageIp) {
     return `http://${hostname}:5001`;
+  }
+
+  // If explicitly configured, use it (sanitized for production)
+  if (envUrl) {
+    if (isBrowser && !isPageLocal && !isPageIp && isUrlLocal(envUrl)) {
+      return isPageRender ? window.location.origin : 'https://mosh-automation.onrender.com';
+    }
+    return envUrl.replace(/\/+$/, '');
   }
   
   return 'https://mosh-automation.onrender.com';

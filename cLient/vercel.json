@@ -7,10 +7,10 @@
     {
       "source": "/uploads/:path*",
       "destination": "https://mosh-automation.onrender.com/uploads/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
