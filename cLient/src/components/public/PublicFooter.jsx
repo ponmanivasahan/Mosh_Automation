@@ -157,16 +157,12 @@ const PublicFooter = () => {
 
         </div>
 
-        {/* Bottom Legal & Sitemap Links */}
+        {/* Bottom Legal & Portal Link */}
         <div className="footer-bottom-bar">
           <div className="copyright-text">
             © {currentYear} MOSH Automation. All rights reserved. Registered Trademark in India.
           </div>
           <div className="bottom-links">
-            <Link to="/sitemap.xml" target="_blank" rel="noopener noreferrer">XML Sitemap</Link>
-            <span className="dot-divider">•</span>
-            <Link to="/robots.txt" target="_blank" rel="noopener noreferrer">robots.txt</Link>
-            <span className="dot-divider">•</span>
             <Link to="/login">Portal Login</Link>
           </div>
         </div>
