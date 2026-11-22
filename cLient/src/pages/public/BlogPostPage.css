@@ -1,0 +1,318 @@
+/* ==========================================================================
+   MOSH AUTOMATION - BLOG POST STYLES
+   ========================================================================== */
+
+.blog-post-main {
+  background: #ffffff;
+  padding-bottom: 80px;
+}
+
+.article-header-banner {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 36px 0 40px;
+}
+
+.article-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.article-category-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0284c7;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 14px;
+}
+
+.article-h1 {
+  font-size: 34px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: 0 0 18px;
+}
+
+.article-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.meta-author,
+.meta-time,
+.meta-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meta-icon {
+  color: #94a3b8;
+}
+
+.meta-dot {
+  color: #cbd5e1;
+}
+
+/* Article Layout with Sidebar */
+.article-content-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 48px;
+  padding-top: 48px;
+}
+
+/* Article Body Typography */
+.article-body-content {
+  color: #334155;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.article-body-content h2 {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  margin: 36px 0 16px;
+  line-height: 1.3;
+}
+
+.article-body-content h3 {
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 28px 0 12px;
+  line-height: 1.35;
+}
+
+.article-body-content p {
+  margin: 0 0 20px;
+}
+
+.article-body-content strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.article-body-content ul,
+.article-body-content ol {
+  margin: 0 0 24px;
+  padding-left: 24px;
+}
+
+.article-body-content li {
+  margin-bottom: 10px;
+  line-height: 1.65;
+}
+
+.seo-comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 28px 0;
+  background: #f8fafc;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.seo-comparison-table th {
+  background: #0f172a;
+  color: #ffffff;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.seo-comparison-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 13.5px;
+}
+
+.seo-comparison-table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Sidebar */
+.article-hardware-sidebar {
+  position: relative;
+}
+
+.sidebar-sticky-box {
+  position: sticky;
+  top: 90px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.sidebar-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+}
+
+.sidebar-desc {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 0 0 18px;
+}
+
+.sidebar-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.sidebar-product-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.sidebar-prod-img-wrap {
+  width: 50px;
+  height: 50px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.sidebar-prod-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.sidebar-prod-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-prod-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+
+.sidebar-prod-name a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sidebar-prod-name a:hover {
+  color: #0080ff;
+}
+
+.sidebar-prod-price {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 2px;
+}
+
+.sidebar-view-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #0080ff;
+  text-decoration: none;
+}
+
+.sidebar-cta-box {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+}
+
+.sidebar-cta-box strong {
+  display: block;
+  font-size: 13px;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.sidebar-cta-box p {
+  font-size: 11.5px;
+  color: #64748b;
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+
+.sidebar-call-btn {
+  display: block;
+  padding: 8px 12px;
+  background: #0080ff;
+  color: #ffffff;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.sidebar-call-btn:hover {
+  background: #0070e0;
+}
+
+/* Bottom Nav */
+.article-bottom-nav {
+  padding-top: 40px;
+  margin-top: 40px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btn-back-blog {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0080ff;
+  text-decoration: none;
+}
+
+.btn-back-blog:hover {
+  color: #0060cc;
+}
+
+@media (max-width: 900px) {
+  .article-content-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .article-h1 {
+    font-size: 26px;
+  }
+}

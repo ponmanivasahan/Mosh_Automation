@@ -22,7 +22,6 @@ const getOrders = async (req, res) => {
     const params = [];
 
     if (!role || role.toString().toLowerCase() !== 'admin') {
-      // Use customer_id as permanent identity per requirements, fallback to phone for legacy records
       query += ' WHERE o.customer_id = ? OR (o.customer_id IS NULL AND o.user_phone = ?)';
       params.push(id, phone);
     }
@@ -31,7 +30,6 @@ const getOrders = async (req, res) => {
 
     const [rows] = await pool.query(query, params);
     
-    // Parse JSON string items back to array
     const formatted = rows.map(r => ({
       id: r.id,
       customerName: r.customer_name,
@@ -53,57 +51,121 @@ const getOrders = async (req, res) => {
 
     return res.json({ success: true, orders: formatted });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to retrieve orders.', error: error.message });
+    console.error('getOrders error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve orders.' });
   }
 };
 
 const createOrder = async (req, res) => {
   const connection = await pool.getConnection();
   try {
-    const { id, items, total, shippingAddress, paymentMethod, email } = req.body;
-    const { name, phone } = req.user;
+    const { id, items, shippingAddress, paymentMethod, email } = req.body;
+    const { id: customerId, name, phone } = req.user;
 
-    if (!id || !items || !items.length || !total || !shippingAddress) {
+    if (!id || !items || !Array.isArray(items) || items.length === 0 || !shippingAddress) {
       return res.status(400).json({ success: false, message: 'Invalid order request payload.' });
+    }
+
+    if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.pincode) {
+      return res.status(400).json({ success: false, message: 'Complete shipping address is required.' });
     }
 
     await connection.beginTransaction();
 
-    // Update customer's email in database if provided
-    if (email) {
-      await connection.query('UPDATE users SET email = ? WHERE phone = ?', [email, phone]);
+    // Verify each product and calculate authoritative price server-side
+    const productIds = items.map(item => item.productId || item.id).filter(Boolean);
+    if (productIds.length === 0) {
+      await connection.rollback();
+      connection.release();
+      return res.status(400).json({ success: false, message: 'No valid products in order.' });
     }
 
-    // Insert order header
+    // Query products table for authoritative pricing
+    const [dbProducts] = await connection.query(
+      'SELECT id, name, price FROM products WHERE id IN (?)',
+      [productIds]
+    );
+
+    const productMap = new Map();
+    dbProducts.forEach(p => productMap.set(p.id, p));
+
+    let authoritativeSubtotal = 0;
+    const validatedItems = [];
+
+    for (const item of items) {
+      const pId = item.productId || item.id;
+      const dbProduct = productMap.get(pId);
+
+      if (!dbProduct) {
+        await connection.rollback();
+        connection.release();
+        return res.status(400).json({ success: false, message: `Product ${pId} not found in catalog.` });
+      }
+
+      const quantity = Math.max(1, parseInt(item.quantity, 10) || 1);
+      const unitPrice = Number(dbProduct.price);
+      const itemTotal = unitPrice * quantity;
+
+      authoritativeSubtotal += itemTotal;
+      validatedItems.push({
+        productId: dbProduct.id,
+        quantity,
+        unitPrice,
+        total: itemTotal
+      });
+    }
+
+    // Authoritative volume discount rule: > 5000 qualifies for 10% discount
+    const discount = authoritativeSubtotal > 5000 ? Math.round(authoritativeSubtotal * 0.1) : 0;
+    const authoritativeTotal = Math.max(0, authoritativeSubtotal - discount);
+
+    // Update customer's email in database if provided
+    if (email && typeof email === 'string') {
+      await connection.query('UPDATE users SET email = ? WHERE id = ?', [email.trim(), customerId]);
+    }
+
+    // Check if order ID already exists to prevent duplicate submission
+    const [existingOrder] = await connection.query('SELECT id FROM orders WHERE id = ?', [id]);
+    if (existingOrder.length > 0) {
+      await connection.rollback();
+      connection.release();
+      return res.status(409).json({ success: false, message: 'Order ID already exists. Please retry.' });
+    }
+
+    // Use shipping address recipient name if provided, else fallback to user name
+    const recipientName = (shippingAddress.name || name || '').trim().slice(0, 100);
+
+    // Insert order header with server-computed authoritative total
     await connection.query(
-      'INSERT INTO orders (id, user_phone, customer_name, total, status, payment_status, shipping_address, shipping_city, shipping_pincode, payment_method, customer_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      `INSERT INTO orders 
+        (id, user_phone, customer_name, total, status, payment_status, shipping_address, shipping_city, shipping_pincode, payment_method, customer_id) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         phone,
-        name,
-        total,
+        recipientName,
+        authoritativeTotal,
         'Processing',
         'Pending',
-        shippingAddress.address,
-        shippingAddress.city,
-        shippingAddress.pincode,
-        paymentMethod,
-        req.user.id
+        shippingAddress.address.trim().slice(0, 255),
+        shippingAddress.city.trim().slice(0, 100),
+        shippingAddress.pincode.trim().slice(0, 20),
+        paymentMethod || 'Online',
+        customerId
       ]
     );
 
-    // Insert items
-    for (const item of items) {
-      const unitPrice = item.unitPrice || (item.total / (item.quantity || 1));
+    // Insert order items with authoritative prices
+    for (const item of validatedItems) {
       await connection.query(
         'INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES (?, ?, ?, ?)',
-        [id, item.productId || item.id, item.quantity || 1, unitPrice]
+        [id, item.productId, item.quantity, item.unitPrice]
       );
     }
 
     // Auto-create notification for admin
     const notifId = `not-${Date.now()}`;
-    const notifMessage = `${name} (${phone}) placed an order for ₹${total} to ${shippingAddress.city}.`;
+    const notifMessage = `${recipientName} (${phone}) placed an order for ₹${authoritativeTotal} to ${shippingAddress.city}.`;
     await connection.query(
       'INSERT INTO notifications (id, title, message, order_id) VALUES (?, ?, ?, ?)',
       [notifId, 'New Customer Order', notifMessage, id]
@@ -112,11 +174,17 @@ const createOrder = async (req, res) => {
     await connection.commit();
     connection.release();
 
-    return res.status(201).json({ success: true, message: 'Order created successfully.', orderId: id });
+    return res.status(201).json({
+      success: true,
+      message: 'Order created successfully.',
+      orderId: id,
+      total: authoritativeTotal
+    });
   } catch (error) {
     await connection.rollback();
     connection.release();
-    return res.status(500).json({ success: false, message: 'Failed to place order.', error: error.message });
+    console.error('createOrder error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to place order.' });
   }
 };
 
@@ -136,19 +204,25 @@ const updateOrderStatus = async (req, res) => {
     }
     const order = existing[0];
 
-    // Enforce role permission: customers can only transition to 'Completed' (when marking Delivered) or 'Cancelled' (if status is Processing)
-    const { role, phone } = req.user;
+    // Enforce role permission: customers can only cancel or mark completed
+    const { role, id: customerId, phone } = req.user;
+    const isOwner = (order.customer_id && String(order.customer_id) === String(customerId)) || order.user_phone === phone;
+
     if (role !== 'admin') {
-      if (order.user_phone !== phone) {
+      if (!isOwner) {
         return res.status(403).json({ success: false, message: 'Unauthorized status modification.' });
       }
 
       if (status === 'Cancelled' && order.status !== 'Processing') {
-        return res.status(400).json({ success: false, message: 'Cannot cancel order once dispatched.' });
+        return res.status(400).json({ success: false, message: 'Cannot cancel order once dispatched or completed.' });
       }
 
       if (status === 'Completed' && order.status !== 'Dispatched') {
         return res.status(400).json({ success: false, message: 'Can only mark as completed once dispatched.' });
+      }
+
+      if (status !== 'Cancelled' && status !== 'Completed') {
+        return res.status(403).json({ success: false, message: 'Customers can only cancel or mark delivered.' });
       }
     }
 
@@ -165,7 +239,8 @@ const updateOrderStatus = async (req, res) => {
 
     return res.json({ success: true, message: `Order status updated to ${status} successfully.` });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to update order status.', error: error.message });
+    console.error('updateOrderStatus error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update order status.' });
   }
 };
 
@@ -173,25 +248,56 @@ const verifyPayment = async (req, res) => {
   try {
     const { id } = req.params;
     const { transactionId, paymentMethod } = req.body;
+    const { role, id: customerId, phone } = req.user;
 
-    if (!transactionId || !paymentMethod) {
-      return res.status(400).json({ success: false, message: 'Transaction ID and Payment Method are required.' });
+    if (!transactionId || typeof transactionId !== 'string' || !transactionId.trim()) {
+      return res.status(400).json({ success: false, message: 'Valid transaction ID or UTR reference is required.' });
     }
+
+    if (!paymentMethod || typeof paymentMethod !== 'string') {
+      return res.status(400).json({ success: false, message: 'Payment method is required.' });
+    }
+
+    const cleanTxnId = transactionId.trim().slice(0, 100);
+    const cleanMethod = paymentMethod.trim().slice(0, 50);
 
     const [existing] = await pool.query('SELECT * FROM orders WHERE id = ?', [id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: 'Order not found.' });
     }
 
+    const order = existing[0];
+    const isOwner = (order.customer_id && String(order.customer_id) === String(customerId)) || order.user_phone === phone;
+
+    // Strict IDOR check
+    if (role !== 'admin' && !isOwner) {
+      return res.status(403).json({ success: false, message: 'Unauthorized: Order does not belong to you.' });
+    }
+
+    if (order.payment_status === 'Paid') {
+      return res.json({
+        success: true,
+        message: 'Payment was already verified and recorded.',
+        order: {
+          id: order.id,
+          status: 'Paid',
+          paymentStatus: 'Paid',
+          paymentMethod: order.payment_method,
+          transactionId: order.transaction_id,
+          paymentTime: order.payment_time
+        }
+      });
+    }
+
     const paymentTime = new Date();
     await pool.query(
       'UPDATE orders SET status = "Paid", payment_status = "Paid", payment_method = ?, transaction_id = ?, payment_time = ? WHERE id = ?',
-      [paymentMethod, transactionId, paymentTime, id]
+      [cleanMethod, cleanTxnId, paymentTime, id]
     );
 
     // Auto-create notification for admin
     const notifId = `not-${Date.now()}`;
-    const notifMessage = `Payment of ₹${existing[0].total} verified for Order #${id} via ${paymentMethod}. Transaction ID: ${transactionId}.`;
+    const notifMessage = `Payment of ₹${order.total} verified for Order #${id} via ${cleanMethod}. Transaction ID: ${cleanTxnId}.`;
     await pool.query(
       'INSERT INTO notifications (id, title, message, order_id) VALUES (?, ?, ?, ?)',
       [notifId, 'Order Paid Successfully', notifMessage, id]
@@ -204,23 +310,28 @@ const verifyPayment = async (req, res) => {
         id,
         status: 'Paid',
         paymentStatus: 'Paid',
-        paymentMethod,
-        transactionId,
+        paymentMethod: cleanMethod,
+        transactionId: cleanTxnId,
         paymentTime
       }
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to verify payment.', error: error.message });
+    console.error('verifyPayment error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to verify payment.' });
   }
 };
 
 const deleteOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM orders WHERE id = ?', [id]);
+    const [result] = await pool.query('DELETE FROM orders WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Order not found.' });
+    }
     return res.json({ success: true, message: 'Order deleted successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to delete order.', error: error.message });
+    console.error('deleteOrder error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete order.' });
   }
 };
 

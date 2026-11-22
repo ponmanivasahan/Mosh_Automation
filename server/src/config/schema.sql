@@ -157,9 +157,9 @@ CREATE TABLE IF NOT EXISTS product_offers (
 -- -- ==========================================
 
 -- -- Seed Admin User (phone: '9514714441', password: 'adminpassword', role: 'admin')
--- Bcrypt Hash of 'adminpassword': $2a$12$K.Fw6cEXQ1w7vQJ/M/gHbeVexYFqRscN06mKzF6i608JzWwW39pM2
+-- Bcrypt Hash of 'adminpassword': $2a$12$qxaCBAHBEfsirzNJyAjJM.zXPh6snnJH0IpjoaCKcZhVclESKhA3W
 INSERT INTO users (name, phone, password_hash, role)
-VALUES ('System Admin', '9514714441', '$2a$12$K.Fw6cEXQ1w7vQJ/M/gHbeVexYFqRscN06mKzF6i608JzWwW39pM2', 'admin')
+VALUES ('System Admin', '9514714441', '$2a$12$qxaCBAHBEfsirzNJyAjJM.zXPh6snnJH0IpjoaCKcZhVclESKhA3W', 'admin')
 ON DUPLICATE KEY UPDATE name=name;
 
 -- Seed Billing Defaults
@@ -231,3 +231,20 @@ CREATE TABLE IF NOT EXISTS `invoice_items` (
   `amount` DECIMAL(12, 2) NOT NULL DEFAULT 0.00,
   FOREIGN KEY (`invoice_id`) REFERENCES `invoices`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+-- Table structure for table `refresh_tokens` (Secure Session Management)
+-- --------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `refresh_tokens` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `token_hash` VARCHAR(64) NOT NULL UNIQUE,
+  `expires_at` TIMESTAMP NOT NULL,
+  `revoked` BOOLEAN DEFAULT FALSE,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  INDEX `idx_user_id` (`user_id`),
+  INDEX `idx_token_hash` (`token_hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+

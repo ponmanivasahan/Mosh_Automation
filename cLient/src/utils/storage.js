@@ -517,7 +517,12 @@ export const addReview = async (review) => {
     body: JSON.stringify(review),
     credentials: 'include'
   });
-  const data = await res.json();
+  let data = {};
+  try {
+    data = await res.json();
+  } catch (_) {
+    throw new Error('Unable to submit review. Server response was invalid.');
+  }
   if (!res.ok || !data.success) {
     throw new Error(data.message || 'Unable to submit review. Please try again.');
   }
@@ -548,7 +553,12 @@ export const updateReview = async (review) => {
       credentials: 'include'
     });
   }
-  const data = await res.json();
+  let data = {};
+  try {
+    data = await res.json();
+  } catch (_) {
+    throw new Error('Unable to update review. Server response was invalid.');
+  }
   if (!res.ok || !data.success) {
     throw new Error(data.message || 'Unable to update review. Please try again.');
   }
@@ -561,7 +571,12 @@ export const deleteReview = async (id) => {
     method: 'DELETE',
     credentials: 'include'
   });
-  const data = await res.json();
+  let data = {};
+  try {
+    data = await res.json();
+  } catch (_) {
+    throw new Error('Unable to delete review. Server response was invalid.');
+  }
   if (!res.ok || !data.success) {
     throw new Error(data.message || 'Unable to delete review. Please try again.');
   }

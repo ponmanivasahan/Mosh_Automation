@@ -23,7 +23,8 @@ const getCart = async (req, res) => {
     );
     return res.json({ success: true, cart: items });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to retrieve cart.', error: error.message });
+    console.error('getCart error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve cart.' });
   }
 };
 
@@ -39,14 +40,22 @@ const syncCart = async (req, res) => {
     // Delete all current items
     await pool.query('DELETE FROM cart_items WHERE cart_id = ?', [cartId]);
     
-    // Insert new items
-    if (items.length > 0) {
-      const values = items.map(item => [cartId, item.id, item.quantity || 1]);
-      await pool.query('INSERT INTO cart_items (cart_id, product_id, quantity) VALUES ?', [values]);
+    // Filter and sanitize items
+    const validItems = items
+      .filter(item => item && (item.id || item.productId))
+      .map(item => [
+        cartId,
+        String(item.id || item.productId).slice(0, 50),
+        Math.max(1, parseInt(item.quantity, 10) || 1)
+      ]);
+
+    if (validItems.length > 0) {
+      await pool.query('INSERT INTO cart_items (cart_id, product_id, quantity) VALUES ?', [validItems]);
     }
     return res.json({ success: true, message: 'Cart synced successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to sync cart.', error: error.message });
+    console.error('syncCart error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to sync cart.' });
   }
 };
 

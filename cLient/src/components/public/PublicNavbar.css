@@ -1,0 +1,308 @@
+/* ==========================================================================
+   MOSH AUTOMATION - PUBLIC NAVBAR STYLES
+   ========================================================================== */
+
+.public-navbar-root {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+  transition: all 0.2s ease;
+}
+
+.public-navbar-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+/* Brand Link */
+.public-brand-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.public-brand-logo-card {
+  width: 44px;
+  height: 44px;
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+}
+
+.public-brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.public-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.public-brand-name {
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.public-brand-name .navy {
+  color: #0f172a;
+}
+
+.public-brand-name .red {
+  color: #dc2626;
+}
+
+.public-brand-tagline {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: -0.01em;
+}
+
+/* Desktop Navigation */
+.public-nav-desktop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.public-nav-link {
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.public-nav-link:hover {
+  color: #0080ff;
+  background: #f0f7ff;
+}
+
+.public-nav-link.active {
+  color: #0080ff;
+  background: #e6f2ff;
+}
+
+/* Solutions Dropdown */
+.solutions-dropdown-wrapper {
+  position: relative;
+}
+
+.dropdown-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.chevron-arrow {
+  transition: transform 0.2s ease;
+}
+
+.chevron-arrow.rotated {
+  transform: rotate(180deg);
+}
+
+.solutions-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 6px;
+  width: 320px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 14px;
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.04);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: dropdownFadeIn 0.18s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  text-decoration: none;
+  border-radius: 10px;
+  transition: all 0.15s ease;
+}
+
+.dropdown-item-icon {
+  color: #0080ff;
+  flex-shrink: 0;
+}
+
+.dropdown-item:hover {
+  background: #f0f7ff;
+  color: #0080ff;
+  transform: translateX(2px);
+}
+
+/* Actions */
+.public-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.public-portal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #0080ff;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px -2px rgba(0, 128, 255, 0.35);
+  transition: all 0.2s ease;
+}
+
+.public-portal-btn:hover {
+  background: #0070e0;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px -2px rgba(0, 128, 255, 0.45);
+}
+
+.public-portal-btn.portal-active {
+  background: #0f172a;
+  box-shadow: 0 4px 14px -2px rgba(15, 23, 42, 0.3);
+}
+
+.public-portal-btn.portal-active:hover {
+  background: #1e293b;
+}
+
+/* Mobile Toggle */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #334155;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.mobile-menu-toggle:hover {
+  background: #f1f5f9;
+}
+
+/* Mobile Drawer */
+.mobile-nav-drawer {
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 18px 24px 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-nav-link {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  text-decoration: none;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.mobile-nav-link.active {
+  background: #f0f7ff;
+  color: #0080ff;
+}
+
+.mobile-section-header {
+  font-size: 11px;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 12px 12px 4px;
+}
+
+.mobile-sub-link {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+  padding: 8px 12px 8px 24px;
+  border-radius: 8px;
+}
+
+.mobile-sub-link:hover {
+  color: #0080ff;
+  background: #f8fafc;
+}
+
+.mobile-portal-wrap {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.mobile-portal-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  background: #0080ff;
+  color: #ffffff;
+  font-weight: 700;
+  border-radius: 12px;
+  text-decoration: none;
+}
+
+@media (max-width: 900px) {
+  .public-nav-desktop {
+    display: none;
+  }
+
+  .mobile-menu-toggle {
+    display: inline-flex;
+  }
+}

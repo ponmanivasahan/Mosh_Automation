@@ -6,8 +6,11 @@ const ProtectedRoute = ({ role, children }) => {
 
   if (authLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#14b8a6' }}>
-        <p>Loading...</p>
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-semibold text-slate-600">Verifying session...</p>
+        </div>
       </div>
     );
   }

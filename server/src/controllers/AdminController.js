@@ -24,7 +24,7 @@ const getCustomers = async (req, res) => {
       id: r.id,
       name: r.name,
       phone: r.phone,
-      email: r.email || `${r.name.toLowerCase().replace(/\s+/g, '') || 'customer'}@example.com`,
+      email: r.email || null,
       status: r.status || 'Active',
       createdAt: r.createdAt,
       numOrders: Number(r.numOrders || 0),
@@ -37,10 +37,10 @@ const getCustomers = async (req, res) => {
       customers: formattedCustomers
     });
   } catch (error) {
+    console.error('getCustomers error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to retrieve customers.',
-      error: error.message
+      message: 'Failed to retrieve customers.'
     });
   }
 };

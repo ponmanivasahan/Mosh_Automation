@@ -15,7 +15,8 @@ const getStories = async (req, res) => {
     }));
     return res.json({ success: true, stories: formatted });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to retrieve success stories.', error: error.message });
+    console.error('getStories error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve success stories.' });
   }
 };
 
@@ -29,7 +30,15 @@ const createStory = async (req, res) => {
 
     const [result] = await pool.query(
       'INSERT INTO stories (id, title, subtitle, description, image, youtube_url, instagram_url) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, title, subtitle || '', description, image, youtubeUrl || '', instagramUrl || '']
+      [
+        String(id).slice(0, 50),
+        String(title).slice(0, 200),
+        (subtitle || '').slice(0, 200),
+        (description || '').slice(0, 2000),
+        String(image).slice(0, 500),
+        (youtubeUrl || '').slice(0, 500),
+        (instagramUrl || '').slice(0, 500)
+      ]
     );
 
     if (result.affectedRows === 0) {
@@ -38,7 +47,8 @@ const createStory = async (req, res) => {
 
     return res.status(201).json({ success: true, message: 'Success story created successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to create success story.', error: error.message });
+    console.error('createStory error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to create success story.' });
   }
 };
 
@@ -49,7 +59,15 @@ const updateStory = async (req, res) => {
 
     const [result] = await pool.query(
       'UPDATE stories SET title = ?, subtitle = ?, description = ?, image = ?, youtube_url = ?, instagram_url = ? WHERE id = ?',
-      [title, subtitle || '', description, image, youtubeUrl || '', instagramUrl || '', id]
+      [
+        String(title).slice(0, 200),
+        (subtitle || '').slice(0, 200),
+        (description || '').slice(0, 2000),
+        String(image).slice(0, 500),
+        (youtubeUrl || '').slice(0, 500),
+        (instagramUrl || '').slice(0, 500),
+        id
+      ]
     );
 
     if (result.affectedRows === 0) {
@@ -58,7 +76,8 @@ const updateStory = async (req, res) => {
 
     return res.json({ success: true, message: 'Success story updated successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to update success story.', error: error.message });
+    console.error('updateStory error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update success story.' });
   }
 };
 
@@ -71,7 +90,8 @@ const deleteStory = async (req, res) => {
     }
     return res.json({ success: true, message: 'Success story deleted successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to delete success story.', error: error.message });
+    console.error('deleteStory error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete success story.' });
   }
 };
 

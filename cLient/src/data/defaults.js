@@ -77,15 +77,6 @@ export const defaultProducts = [
     wire: { baseFee: 350, baseMeters: 30, extraPerMeter: 12 }
   },
   {
-    id: 'p-3',
-    name: 'Wireless Tank Module',
-    description: 'Remote tank module for connected water level tracking and control.',
-    price: 2700,
-    image: productImageOptions[2].value,
-    floatFee: 0,
-    wire: { baseFee: 250, baseMeters: 30, extraPerMeter: 8 }
-  },
-  {
     id: 'p-4',
     name: 'GSM Based On-Off with Dry Run',
     description: 'GSM enabled automation with dry run protection for safer operation.',
@@ -227,32 +218,4 @@ export const defaultStories = [
   }
 ];
 
-export const defaultReviews = [
-  {
-    id: 'rev-1',
-    customerName: 'Aravind Kumar',
-    productName: 'Auto Change Water Level Controller',
-    rating: 5,
-    comment: 'Superb product! Installed it last month and my water overflow issues are completely gone. Highly recommended.',
-    createdAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
-    featured: true
-  },
-  {
-    id: 'rev-2',
-    customerName: 'Meera Nair',
-    productName: 'Double Tank Fully Automated',
-    rating: 4,
-    comment: 'Works very well for my dual tank setup. The automation logic is smart. Installation was quick.',
-    createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
-    featured: false
-  },
-  {
-    id: 'rev-3',
-    customerName: 'Vijay Ram',
-    productName: 'GSM Based On-Off with Dry Run',
-    rating: 5,
-    comment: 'Amazing convenience to turn my pump on and off using SMS dry run alert. Solved my agricultural needs.',
-    createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
-    featured: true
-  }
-];
+export const defaultReviews = [];

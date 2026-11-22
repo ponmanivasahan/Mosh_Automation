@@ -5,6 +5,7 @@ import AppShell from '../../../components/AppShell';
 import { getCart, getProducts, setCart, getDbStatus } from '../../../utils/storage';
 import { formatCurrency } from '../../../utils/format';
 import { API_URL } from '../../../utils/api';
+import { trackAddToCart } from '../../../utils/analytics';
 import { customerLinks } from '../../../utils/customerLinks';
 import ProductsToolbar from '../../../components/products/ProductsToolbar';
 import ProductModal from '../../../components/products/ProductModal';
@@ -128,6 +129,7 @@ const CustomerProductsPage = () => {
 
     setCart(nextCart);
     setCartItems(nextCart);
+    trackAddToCart(product, 1);
     setMessage(`Added ${product.name} to cart successfully.`);
     setAddedToCart(product.id);
     setTimeout(() => setAddedToCart(null), 2000);
@@ -166,6 +168,7 @@ const CustomerProductsPage = () => {
     const nextCart = [item, ...currentCart];
     setCart(nextCart);
     setCartItems(nextCart);
+    trackAddToCart({ id: order.productId, name: order.name, price: order.unitPrice }, order.quantity);
     setMessage(`Order placed: ${item.name} x ${item.quantity} — ${formatCurrency(item.total)}`);
   };
 
@@ -283,14 +286,14 @@ const CustomerProductsPage = () => {
                 </div>
 
                 <div className="flex-1 flex flex-col p-5">
-                  <h3 className="text-lg font-bold text-neutral-900 line-clamp-1 group-hover:text-teal-700 transition-colors">{product.name}</h3>
+                  <h3 className="text-lg font-bold text-neutral-900 line-clamp-1 group-hover:text-blue-600 transition-colors">{product.name}</h3>
                   <p className="text-sm text-neutral-500 mt-2 line-clamp-2 leading-relaxed">{product.description}</p>
                   
                   {activeOffers.length > 0 && (
                     <div className="mt-4 flex flex-col gap-2">
                         {activeOffers.map((offer, idx) => (
                           <div key={idx} className="flex flex-col items-start gap-1">
-                            <span className="text-xs font-semibold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-teal-100">
+                            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md flex items-center gap-1.5 border border-blue-100">
                               <Gift size={12} /> {offer.title}
                             </span>
                             {offer.validUntil && (
@@ -308,7 +311,7 @@ const CustomerProductsPage = () => {
                   <div className="flex flex-wrap items-baseline gap-2 pt-4 mb-5">
                     {promoPrice ? (
                       <>
-                        <span className="text-2xl font-black text-teal-700 tracking-tight">
+                        <span className="text-2xl font-black text-blue-600 tracking-tight">
                           {formatCurrency(promoPrice)}
                         </span>
                         <span className="text-sm text-neutral-400 line-through decoration-red-400 decoration-2 font-semibold">
@@ -321,7 +324,7 @@ const CustomerProductsPage = () => {
                         )}
                       </>
                     ) : (
-                      <span className="text-2xl font-black text-teal-700 tracking-tight">
+                      <span className="text-2xl font-black text-blue-600 tracking-tight">
                         {formatCurrency(product.price)}
                       </span>
                     )}
@@ -366,11 +369,11 @@ const CustomerProductsPage = () => {
           />
         )}
 
-        {/* Alert Notification Toast */}
+        {/* Alert Notification Toast (Top Center) */}
         {message && (
-          <div className="fixed bottom-6 right-6 bg-teal-800 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 z-50 animate-in slide-in-from-bottom-5">
-            <Award size={20} className="text-teal-200" />
-            <span className="font-medium text-sm">{message}</span>
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 z-50 animate-in fade-in slide-in-from-top-4">
+            <Award size={20} className="text-blue-100" />
+            <span className="font-semibold text-sm">{message}</span>
           </div>
         )}
 

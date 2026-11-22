@@ -10,8 +10,13 @@ const dbUrl = process.env.DATABASE_URL || process.env.JAWSDB_URL || process.env.
 const rawHost = process.env.DB_HOST || process.env.MYSQLHOST || 'localhost';
 const rawPort = process.env.DB_PORT || process.env.MYSQLPORT || '3306';
 const rawUser = process.env.DB_USER || process.env.MYSQLUSER || 'root';
-const rawPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || 'tonystark';
+const rawPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || (process.env.NODE_ENV === 'production' ? '' : 'tonystark');
 const rawDatabase = process.env.DB_NAME || process.env.MYSQLDATABASE || 'mosh_automation';
+
+if (process.env.NODE_ENV === 'production' && !dbUrl && !process.env.DB_PASSWORD) {
+  console.error('FATAL: Database credentials (DB_PASSWORD or DATABASE_URL) must be set in production environment.');
+  process.exit(1);
+}
 
 let connectionConfig = {
   host: rawHost,
@@ -22,7 +27,7 @@ let connectionConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  multipleStatements: true
+  multipleStatements: false
 };
 
 if (rawHost !== 'localhost' && rawHost !== '127.0.0.1') {
@@ -44,7 +49,7 @@ if (dbUrl) {
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
-      multipleStatements: true,
+      multipleStatements: false,
       ssl: {
         rejectUnauthorized: false
       }
@@ -342,12 +347,49 @@ const initDB = async () => {
         console.log("Migration INFO (syncing user ids):", e.message);
       }
 
+      // Ensure razorpay columns exist on orders table
+      try {
+        await connection.query("ALTER TABLE orders ADD COLUMN razorpay_order_id VARCHAR(100) DEFAULT NULL;");
+      } catch(e) {}
+      try {
+        await connection.query("ALTER TABLE orders ADD COLUMN razorpay_signature VARCHAR(255) DEFAULT NULL;");
+      } catch(e) {}
+
+      // Ensure refresh_tokens table exists for secure session management
+      try {
+        await connection.query(`
+          CREATE TABLE IF NOT EXISTS refresh_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            token_hash VARCHAR(64) NOT NULL UNIQUE,
+            expires_at TIMESTAMP NOT NULL,
+            revoked BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            INDEX idx_user_id (user_id),
+            INDEX idx_token_hash (token_hash)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        `);
+        console.log("Migration SUCCESS: Ensured 'refresh_tokens' table.");
+      } catch(e) {
+        console.log("Migration INFO (refresh_tokens table):", e.message);
+      }
+
+      // Ensure seeded admin user has valid password_hash and role
+      try {
+        await connection.query("UPDATE users SET password_hash = '$2a$12$qxaCBAHBEfsirzNJyAjJM.zXPh6snnJH0IpjoaCKcZhVclESKhA3W', role = 'admin' WHERE phone = '9514714441';");
+      } catch(e) {}
+
       console.log('Database schema verified & seeded successfully.');
     } else {
       console.warn('Database schema.sql file not found. Skipping auto-seeding.');
     }
     
     connection.release();
+
+    // Reconfigure the runtime pool to strictly disable multipleStatements to prevent stacked SQL injection
+    config.multipleStatements = false;
+    pool = mysql.createPool(config);
   } catch (error) {
     console.error('Critical Database initialization failure:', error.message);
   }

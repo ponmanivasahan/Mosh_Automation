@@ -1,16 +1,57 @@
-.customer-success-stories-page {
-  display: grid;
-  gap: 24px;
+/* ==========================================================================
+   MOSH AUTOMATION - SUCCESS STORIES PAGE STYLES (MATCHES IMAGE 2)
+   ========================================================================== */
+
+.css-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8px 0 48px;
+  animation: cssFadeIn 0.3s ease;
 }
 
-.story-hero {
-  padding: 20px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(37, 99, 235, 0.08));
+@keyframes cssFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.story-hero h2 {
-  margin-top: 16px;
+/* Header Section matching Image 2 */
+.css-header-section {
+  margin-bottom: 26px;
+}
+
+.css-header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.css-accent-bar {
+  width: 3px;
+  height: 26px;
+  background: #0f172a;
+  border-radius: 2px;
+}
+
+.css-main-heading {
+  font-size: 28px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+
+.css-subheading {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
 }
 
 .story-grid {
@@ -19,26 +60,42 @@
   gap: 20px;
 }
 
+@media (max-width: 1024px) {
+  .story-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .story-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .story-card {
-  display: grid;
-  gap: 18px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 28px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: var(--shadow-soft);
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.story-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
 }
 
 .story-image {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
-  border-radius: 22px;
+  border-radius: 12px;
 }
 
 .story-body {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .story-card h3 {
@@ -46,12 +103,6 @@
 }
 
 .story-subtitle {
-  color: var(--accent);
+  color: #0080ff;
   font-weight: 700;
-}
-
-@media (max-width: 980px) {
-  .story-grid {
-    grid-template-columns: 1fr;
-  }
 }

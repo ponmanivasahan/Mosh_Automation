@@ -11,7 +11,6 @@ import {
   Wifi,
   AlertCircle
 } from 'lucide-react';
-import { loginPhones } from '../../data/defaults';
 import { useAuth } from '../../utils/AuthContext';
 import { API_URL } from '../../utils/api';
 import './LoginPage.css';
@@ -19,60 +18,32 @@ import './LoginPage.css';
 const LoginPage = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
+
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Map registered phone to role fallback (local cache mode only)
-  const getRoleFromPhone = (value) => {
-    const rawUsers = localStorage.getItem('mosh_users');
-    if (rawUsers) {
-      try {
-        const users = JSON.parse(rawUsers);
-        const existing = users.find(u => u.phone === value);
-        if (existing) return existing.role;
-      } catch {}
-    }
-
-    if (value === '9514714441' || value === loginPhones.admin) {
-      return 'admin';
-    }
-
-    return 'customer';
-  };
-
-  const completeUserLogin = (user, token) => {
+  const completeUserLogin = (user) => {
     const payload = {
-      role: user.role || getRoleFromPhone(user.phone),
+      id: user.id,
+      role: user.role || 'customer',
       name: user.name,
       phone: user.phone,
-      token,
+      email: user.email || null,
       loggedInAt: new Date().toISOString()
     };
-
-    try {
-      const rawUsers = localStorage.getItem('mosh_users');
-      const usersList = rawUsers ? JSON.parse(rawUsers) : [];
-      const existingIdx = usersList.findIndex(u => u.phone === payload.phone);
-      if (existingIdx > -1) {
-        usersList[existingIdx] = payload;
-      } else {
-        usersList.push(payload);
-      }
-      localStorage.setItem('mosh_users', JSON.stringify(usersList));
-    } catch {}
 
     login(payload);
     navigate(payload.role === 'admin' ? '/admin/dashboard' : '/customer/dashboard');
   };
 
-  // Submit Name & Phone to backend directly for single-step passwordless login/register
-  const handleLogin = async (event) => {
-    event?.preventDefault?.();
+  // Direct Inbuilt-Checked Portal Login (Name + Phone)
+  const handleDirectLogin = async (targetName, targetPhone) => {
     setError('');
-    const cleanedName = name.trim();
-    const cleanedPhone = phone.trim().replace(/\D/g, '');
+
+    const cleanedName = (targetName || '').trim();
+    const cleanedPhone = (targetPhone || '').trim().replace(/\D/g, '');
 
     if (!cleanedName) {
       setError('Please enter your full name.');
@@ -87,38 +58,38 @@ const LoginPage = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      const endpoint = API_URL ? `${API_URL}/api/auth/login` : '/api/auth/login';
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: cleanedName, phone: cleanedPhone }),
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+          name: cleanedName,
+          phone: cleanedPhone
+        }),
         credentials: 'include'
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.user) {
-          completeUserLogin(data.user, data.token);
-          return;
-        }
-      }
+      const data = await response.json();
 
-      if (response.status === 401 || response.status === 403) {
-        const errData = await response.json().catch(() => ({}));
-        setError(errData.message || 'Access restricted. Please verify credentials.');
-        setIsSubmitting(false);
-        return;
+      if (response.ok && data.success && data.user) {
+        completeUserLogin(data.user);
+      } else {
+        setError(data.message || 'Unable to sign in. Please verify your details.');
       }
-
-      // Offline / server fallback mode
-      const fallbackRole = getRoleFromPhone(cleanedPhone);
-      completeUserLogin({ name: cleanedName, phone: cleanedPhone, role: fallbackRole }, 'mock-token-' + Date.now());
     } catch (e) {
-      console.warn('Backend unavailable, proceeding with local authenticated session:', e);
-      const fallbackRole = getRoleFromPhone(cleanedPhone);
-      completeUserLogin({ name: cleanedName, phone: cleanedPhone, role: fallbackRole }, 'mock-token-' + Date.now());
+      console.error('Portal login error:', e);
+      setError('Unable to connect to portal service. Please check your network connection.');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handlePortalSubmit = (event) => {
+    event?.preventDefault?.();
+    handleDirectLogin(name, phone);
   };
 
   return (
@@ -209,8 +180,8 @@ const LoginPage = () => {
               Access your orders, quotation requests, and system telemetry.
             </p>
 
-            {/* Sign In Form */}
-            <form onSubmit={handleLogin} className="card-form">
+            {/* Main Portal Login Form (Inbuilt checked - Name + Phone) */}
+            <form onSubmit={handlePortalSubmit} className="card-form">
               {/* Full Name Field */}
               <div className="form-field-group">
                 <label className="field-label" htmlFor="portal-user-name">

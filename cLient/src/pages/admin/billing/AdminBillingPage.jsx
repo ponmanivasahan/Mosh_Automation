@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Package, HelpCircle, Check, AlertCircle, Edit, DollarSign, Clock, ListFilter } from 'lucide-react';
+import { Package, HelpCircle, Check, AlertCircle, Edit, DollarSign, Clock, ListFilter, FileText } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import Tabs from '../../../components/ui/Tabs';
 import CustomSelect from '../../../components/CustomSelect';
@@ -88,7 +88,7 @@ const AdminBillingPage = () => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.type !== 'application/pdf') {
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
       setToast({ type: 'error', message: 'Only PDF files are allowed.' });
       e.target.value = '';
       return;
@@ -100,8 +100,16 @@ const AdminBillingPage = () => {
       return;
     }
 
-    setEditAttachment(file);
-    setEditAttachmentName(file.name);
+    // Convert file to Base64 Data URL for 100% persistent storage (immune to Render ephemeral disk wipes)
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setEditAttachment(event.target.result);
+      setEditAttachmentName(file.name);
+    };
+    reader.onerror = () => {
+      setToast({ type: 'error', message: 'Failed to read the selected PDF file.' });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleUpdateEstimation = async (estId) => {
@@ -261,9 +269,10 @@ const AdminBillingPage = () => {
                             <div className="mt-2">
                               <button
                                 onClick={(e) => { e.preventDefault(); openPdfBase64(est.attachmentUrl); }}
-                                className="inline-flex items-center gap-1 bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition shadow-sm font-bold"
+                                className="inline-flex items-center gap-1.5 bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition shadow-sm font-bold text-xs"
                               >
-                                📄 View Attached PDF
+                                <FileText size={14} className="shrink-0" />
+                                <span>View Attached PDF</span>
                               </button>
                             </div>
                           )}

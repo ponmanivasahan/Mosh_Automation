@@ -7,7 +7,7 @@
 
 /* ── Page header ── */
 .products-page-header {
-  background: linear-gradient(135deg, rgba(15, 118, 110, 0.06) 0%, rgba(37, 99, 235, 0.04) 100%);
+  background: linear-gradient(135deg, rgba(0, 128, 255, 0.06) 0%, rgba(37, 99, 235, 0.04) 100%);
   padding: 30px;
   border-radius: 24px;
   border: 1px solid rgba(15, 23, 42, 0.05);
@@ -34,27 +34,28 @@
 /* ── Toast notification ── */
 .toast-alert {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 100;
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(13, 148, 136, 0.95);
+  background: #0080ff;
   backdrop-filter: blur(12px);
   color: white;
   padding: 14px 24px;
   border-radius: 16px;
   font-weight: 600;
   font-size: 0.9rem;
-  box-shadow: 0 10px 30px rgba(13, 148, 136, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 128, 255, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+@keyframes slideDown {
+  from { transform: translate(-50%, -20px); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
 }
 
 /* ──────────────────────────────────────────────
@@ -86,8 +87,8 @@
 
 .premium-product-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(15, 118, 110, 0.10);
-  border-color: rgba(15, 118, 110, 0.12);
+  box-shadow: 0 12px 32px rgba(0, 128, 255, 0.10);
+  border-color: rgba(0, 128, 255, 0.15);
 }
 
 /* ── Badge row (ABOVE image) ── */
@@ -97,15 +98,15 @@
 
 .card-badge {
   display: inline-block;
-  background: rgba(13, 148, 136, 0.08);
-  color: #0d9488;
+  background: rgba(0, 128, 255, 0.08);
+  color: #0080ff;
   padding: 5px 14px;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  border: 1px solid rgba(13, 148, 136, 0.12);
+  border: 1px solid rgba(0, 128, 255, 0.15);
 }
 
 /* ── Image container ── */
@@ -209,7 +210,7 @@
 .price-value {
   font-size: 1.3rem;
   font-weight: 800;
-  color: #0d9488;
+  color: #0080ff;
 }
 
 /* ── Buttons ── */
@@ -241,7 +242,7 @@
 }
 
 .btn-card-add {
-  background: linear-gradient(135deg, #0d9488, #0891b2);
+  background: linear-gradient(135deg, #0080ff, #0284c7);
   color: #ffffff;
   border: none;
   padding: 10px 12px;
@@ -254,11 +255,11 @@
   gap: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(13, 148, 136, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 128, 255, 0.2);
 }
 
 .btn-card-add:hover {
-  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.25);
+  box-shadow: 0 8px 20px rgba(0, 128, 255, 0.35);
   transform: translateY(-1px);
 }
 

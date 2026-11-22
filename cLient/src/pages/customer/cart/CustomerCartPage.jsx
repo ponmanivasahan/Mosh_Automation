@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CustomSelect from '../../../components/CustomSelect';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -21,7 +22,8 @@ import {
   AlertCircle,
   Clock,
   Check,
-  ShieldCheck
+  ShieldCheck,
+  ArrowRight
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import Tabs from '../../../components/ui/Tabs';
@@ -40,9 +42,11 @@ import {
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import { customerLinks } from '../../../utils/customerLinks';
 import { API_URL } from '../../../utils/api';
+import { trackBeginCheckout, trackPurchase } from '../../../utils/analytics';
 import './CustomerCartPage.css';
 
 const CustomerCartPage = () => {
+  const navigate = useNavigate();
   const { session } = useAuth();
   const [cartItems, setCartItems] = useState(getCart());
   const [cartTab, setCartTab] = useState('cart');
@@ -200,6 +204,7 @@ const CustomerCartPage = () => {
       setMessage('Cart is empty. Add products before placing an order.');
       return;
     }
+    trackBeginCheckout(cartItems, priceDetails.finalAmount);
     setShowCheckoutModal(true);
   };
 
@@ -228,7 +233,7 @@ const CustomerCartPage = () => {
         description: `Order ${orderToPay.id}`,
         order_id: data.razorpayOrderId,
         theme: {
-          color: '#2563eb', // Mosh teal
+          color: '#2563eb', // Mosh blue
           backdrop_color: 'rgba(0,0,0,0.6)'
         },
         config: {
@@ -266,6 +271,13 @@ const CustomerCartPage = () => {
             if (verifyData.success) {
               setPaymentStatusState('success');
               
+              // GA4 Verified E-commerce Purchase Event
+              trackPurchase({
+                transactionId: response.razorpay_payment_id,
+                value: orderToPay.total,
+                items: orderToPay.items || []
+              });
+
               addNotification({
                 id: `not-${Date.now()}`,
                 title: 'Payment Received & Verified',
@@ -429,6 +441,13 @@ const CustomerCartPage = () => {
     if (result.success) {
       setPaymentStatusState('success');
       
+      // GA4 Verified E-commerce Purchase Event
+      trackPurchase({
+        transactionId: cleanTxnId,
+        value: activePaymentOrder.total,
+        items: activePaymentOrder.items || []
+      });
+
       // Notify Admin with exact telemetry
       addNotification({
         id: `not-${Date.now()}`,
@@ -499,14 +518,15 @@ const CustomerCartPage = () => {
     <AppShell title="Shopping Cart & Order History" links={customerLinks}>
       <div className="cart-page-wrapper">
         
-        {/* Toast Alert Feedback */}
+        {/* Toast Alert Feedback - Centered Top */}
         <AnimatePresence>
           {message && (
             <motion.div
-              initial={{ opacity: 0, y: -20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border backdrop-blur-xl bg-blue-600 text-white border-blue-500"
+              initial={{ opacity: 0, y: -20, x: '-50%' }}
+              animate={{ opacity: 1, y: 0, x: '-50%' }}
+              exit={{ opacity: 0, y: -20, x: '-50%' }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="fixed top-6 left-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-xl bg-blue-600 text-white border-blue-500 font-bold text-sm"
             >
               <CheckCircle size={20} />
               <span className="font-semibold text-sm">{message}</span>
@@ -539,51 +559,49 @@ const CustomerCartPage = () => {
         </div>
 
         {cartTab === 'cart' ? (
-          <div className="cart-layout-grid">
-            {/* Left Side: Cart Items List */}
-            <div className="cart-left-section">
-              <div className="section-card-panel bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
-                <div className="panel-header-row mb-4 flex items-center justify-between">
-                  <h3 className="text-base font-bold text-slate-800">
-                    Cart Items ({cartItems.length})
-                  </h3>
-                  {cartItems.length > 0 && (
+          !cartItems.length ? (
+            <div className="flex flex-col items-center justify-center py-20 px-4 text-center my-6">
+              <div className="w-20 h-20 rounded-3xl bg-slate-100 flex items-center justify-center mx-auto mb-5 text-slate-400">
+                <ShoppingBag size={36} strokeWidth={1.75} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Your Cart is Empty</h3>
+              <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto leading-relaxed">
+                Explore our automation catalog to select controllers, wireless modules, and accessories.
+              </p>
+              <div className="flex items-center justify-center gap-3 mt-7">
+                <button
+                  type="button"
+                  onClick={() => navigate('/customer/products')}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
+                >
+                  Explore Products
+                </button>
+                {orders.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setCartTab('orders')}
+                    className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl transition"
+                  >
+                    View Past Orders ({orders.length})
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="cart-layout-grid">
+              {/* Left Side: Cart Items List */}
+              <div className="cart-left-section">
+                <div className="section-card-panel bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
+                  <div className="panel-header-row mb-4 flex items-center justify-between">
+                    <h3 className="text-base font-bold text-slate-800">
+                      Cart Items ({cartItems.length})
+                    </h3>
                     <span className="shipping-banner text-xs font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1.5 border border-blue-200/60">
                       <Truck size={14} />
                       {priceDetails.subtotal > 3000 ? 'Free Shipping Active!' : `Add ₹${3000 - priceDetails.subtotal} more for Free Delivery`}
                     </span>
-                  )}
-                </div>
-
-                {!cartItems.length ? (
-                  <div className="empty-cart-view text-center py-16">
-                    <div className="empty-icon-wrap w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4 text-slate-400">
-                      <ShoppingBag size={32} />
-                    </div>
-                    <h3 className="text-base font-bold text-slate-800">Your Cart is Empty</h3>
-                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                      Explore our automation catalog to select controllers, wireless modules, and accessories.
-                    </p>
-                    <div className="flex items-center justify-center gap-3 mt-6">
-                      <button
-                        type="button"
-                        onClick={() => navigate('/customer/products')}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
-                      >
-                        Explore Products
-                      </button>
-                      {orders.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setCartTab('orders')}
-                          className="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold rounded-xl transition"
-                        >
-                          View Past Orders ({orders.length})
-                        </button>
-                      )}
-                    </div>
                   </div>
-                ) : (
+
                   <div className="cart-items-divider-list divide-y divide-slate-100">
                     {cartItems.map((item) => (
                       <article className="cart-item-card py-4 flex gap-4 items-center justify-between" key={item.id}>
@@ -629,9 +647,8 @@ const CustomerCartPage = () => {
                       </article>
                     ))}
                   </div>
-                )}
+                </div>
               </div>
-            </div>
 
             {/* Right Side: Price Details Card */}
             {cartItems.length > 0 && (
@@ -669,7 +686,10 @@ const CustomerCartPage = () => {
 
                   <button
                     type="button"
-                    onClick={() => setShowCheckoutModal(true)}
+                    onClick={() => {
+                      trackBeginCheckout(cartItems, priceDetails.grandTotal);
+                      setShowCheckoutModal(true);
+                    }}
                     className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-xs transition duration-200 flex items-center justify-center gap-2"
                   >
                     <span>Proceed to Checkout</span>
@@ -679,30 +699,36 @@ const CustomerCartPage = () => {
               </aside>
             )}
           </div>
-        ) : (
+        ) ) : (
           /* Order History View Tab */
-          <div className="order-history-view-container bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-5">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div>
-                <h3 className="text-lg font-bold text-slate-800">My Orders ({orders.length})</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Real-time status tracking and tax receipts</p>
+          !orders.length ? (
+            <div className="flex flex-col items-center justify-center py-20 px-4 text-center my-6">
+              <div className="w-20 h-20 rounded-3xl bg-slate-100 flex items-center justify-center mx-auto mb-5 text-slate-400">
+                <Package size={36} strokeWidth={1.75} />
               </div>
-            </div>
-
-            {!orders.length ? (
-              <div className="text-center py-16">
-                <Package size={40} className="text-slate-300 mx-auto mb-3" />
-                <p className="text-sm font-semibold text-slate-600">No previous orders found.</p>
-                <p className="text-xs text-slate-400 mt-1">Orders you place will appear here with live tracking.</p>
+              <h3 className="text-xl font-bold text-slate-900">No previous orders found.</h3>
+              <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto leading-relaxed">
+                Orders you place will appear here with live tracking.
+              </p>
+              <div className="flex items-center justify-center gap-3 mt-7">
                 <button
                   type="button"
                   onClick={() => navigate('/customer/products')}
-                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 transition"
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
                 >
                   Browse Products
                 </button>
               </div>
-            ) : (
+            </div>
+          ) : (
+            <div className="order-history-view-container bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-5">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">My Orders ({orders.length})</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">Real-time status tracking and tax receipts</p>
+                </div>
+              </div>
+
               <div className="orders-timeline-list space-y-4">
                 {orders.map((order) => (
                   <article
@@ -788,8 +814,8 @@ const CustomerCartPage = () => {
                   </article>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )
         )}
       </div>
 

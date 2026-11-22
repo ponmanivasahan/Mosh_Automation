@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+Allow: /products
+Allow: /products/
+Allow: /solutions/
+Allow: /blog/
+Allow: /login
+
+# Prevent search indexing of private authenticated dashboards and APIs
+Disallow: /admin/
+Disallow: /admin/*
+Disallow: /customer/
+Disallow: /customer/*
+Disallow: /api/admin/
+Disallow: /api/auth/
+
+Sitemap: https://moshautomation.com/sitemap.xml

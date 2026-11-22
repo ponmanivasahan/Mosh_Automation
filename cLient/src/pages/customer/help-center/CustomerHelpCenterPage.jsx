@@ -13,7 +13,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   AlertTriangle,
-  HelpCircle
+  HelpCircle,
+  ExternalLink
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import Tabs from '../../../components/ui/Tabs';
@@ -92,6 +93,27 @@ const troubleshootingSteps = {
   }
 };
 
+const locations = [
+  {
+    id: 'hq',
+    title: 'Headquarters & Factory',
+    shortName: 'Varadharajapuram (HQ)',
+    address: '162 ABC-164, Andal Complex, Kamarajar Rd, Varadharajapuram, Coimbatore - 641015, TN',
+    landmark: 'Varadharajapuram',
+    mapUrl: 'https://maps.google.com/maps?q=Mosh%20Automation%20Varadharajapuram%20Coimbatore&t=&z=15&ie=UTF8&iwloc=&output=embed',
+    directionsUrl: 'https://maps.google.com/?q=Mosh+Automation+Varadharajapuram+Coimbatore'
+  },
+  {
+    id: 'branch',
+    title: 'Branch Office (Star Lodge)',
+    shortName: 'Kaleeswara Mill Rd',
+    address: '10/9, Kaleeswara Mill Rd, Coimbatore, 641009, TN, IN (Star Lodge)',
+    landmark: 'Star Lodge, Kaleeswara Mill Rd',
+    mapUrl: 'https://maps.google.com/maps?q=10%2F9%2C+Kaleeswara+Mill+Rd%2C+Coimbatore%2C+Tamil+Nadu+641009&t=&z=15&ie=UTF8&iwloc=&output=embed',
+    directionsUrl: 'https://maps.google.com/?q=10/9,+Kaleeswara+Mill+Rd,+Coimbatore,+Tamil+Nadu+641009'
+  }
+];
+
 const CustomerHelpCenterPage = () => {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -99,6 +121,10 @@ const CustomerHelpCenterPage = () => {
   
   // Troubleshooting Wizard States
   const [wizardSelection, setWizardSelection] = useState(null);
+
+  // Active Map Location State
+  const [activeLocationId, setActiveLocationId] = useState('hq');
+  const activeLocation = locations.find((l) => l.id === activeLocationId) || locations[0];
 
   const filteredFaq = useMemo(() => {
     return faqItems.filter((item) => {
@@ -113,26 +139,29 @@ const CustomerHelpCenterPage = () => {
 
   return (
     <AppShell title="Help Center" links={customerLinks}>
-      <section className="customer-help-center-container">
+      <div className="ch-container">
         
-        {/* Support Hero Header */}
-        <div className="help-hero-banner">
-          <div className="hero-content">
-            
-            <h2>How can we help you today?</h2>
-            <p className="text-slate-500 text-sm max-w-xl mx-auto mt-2">Search our knowledge base or troubleshoot issues using our interactive wizard.</p>
-            
-            {/* Search Input bar */}
-            <div className="search-bar-wrap">
-              <Search className="search-icon" size={20} />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search FAQs, error codes, and troubleshooting topics..."
-              />
-            </div>
+        {/* Header Section matching Image 2 */}
+        <div className="ch-header-section">
+          <div className="ch-header-title-row">
+            <span className="ch-accent-bar"></span>
+            <h1 className="ch-main-heading">Help Center</h1>
           </div>
+          <p className="ch-subheading">
+            Search our knowledge base or troubleshoot issues using our interactive wizard.
+          </p>
+        </div>
+
+        {/* Search Input bar */}
+        <div className="ch-search-wrap">
+          <Search className="ch-search-icon" size={18} />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search FAQs, error codes, and troubleshooting topics..."
+            className="ch-search-input"
+          />
         </div>
 
         {/* Core Layout Grid */}
@@ -298,19 +327,60 @@ const CustomerHelpCenterPage = () => {
               </div>
             </div>
 
-            {/* Google Map Location */}
+            {/* Google Map Locations */}
             <div className="location-map-card">
               <div className="location-head">
-                <MapPin className="text-blue-600" size={20} />
-                <div>
-                  <h4 className="location-title">Visit Mosh Automation</h4>
-                  <p className="location-address">Varadharajapuram, Coimbatore, Tamil Nadu</p>
+                <MapPin className="text-blue-600 shrink-0 mt-0.5" size={20} />
+                <div className="flex-1 min-w-0">
+                  <h4 className="location-title">Visit MOSH Automation</h4>
+                  <p className="location-subtitle">2 Official Facilities in Coimbatore</p>
                 </div>
               </div>
+
+              {/* Location Switcher Tabs */}
+              <div className="location-switcher-tabs">
+                {locations.map((loc) => {
+                  const isActive = loc.id === activeLocationId;
+                  return (
+                    <button
+                      key={loc.id}
+                      type="button"
+                      onClick={() => setActiveLocationId(loc.id)}
+                      className={`location-tab-btn ${isActive ? 'active' : ''}`}
+                    >
+                      <span className="location-tab-dot"></span>
+                      <span>{loc.shortName}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active Location Address Card */}
+              <div className="location-address-box">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <span className="location-branch-badge">{activeLocation.title}</span>
+                    <p className="location-address-text">{activeLocation.address}</p>
+                  </div>
+                  <a
+                    href={activeLocation.directionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="location-directions-btn shrink-0"
+                    title="Open in Google Maps"
+                  >
+                    <ExternalLink size={13} />
+                    <span>Directions</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Interactive Google Map Embed */}
               <div className="map-iframe-container">
                 <iframe
-                  title="Mosh Automation Location"
-                  src="https://maps.google.com/maps?q=Mosh%20Automation%20Varadharajapuram%20Coimbatore&t=&z=15&ie=UTF8&iwloc=&output=embed"
+                  key={activeLocation.id}
+                  title={`MOSH Automation Location - ${activeLocation.title}`}
+                  src={activeLocation.mapUrl}
                   width="100%"
                   height="220"
                   style={{ border: 0 }}
@@ -319,12 +389,27 @@ const CustomerHelpCenterPage = () => {
                   referrerPolicy="no-referrer-when-downgrade"
                 />
               </div>
+
+              {/* Quick links to both locations */}
+              <div className="location-footer-chips">
+                {locations.map((loc) => (
+                  <button
+                    key={loc.id}
+                    type="button"
+                    onClick={() => setActiveLocationId(loc.id)}
+                    className={`location-chip ${loc.id === activeLocationId ? 'active' : ''}`}
+                  >
+                    <MapPin size={11} />
+                    <span className="truncate">{loc.landmark}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
           </div>
 
         </div>
-      </section>
+      </div>
     </AppShell>
   );
 };

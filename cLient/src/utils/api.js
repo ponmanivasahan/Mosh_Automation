@@ -9,8 +9,8 @@ const getApiUrl = () => {
   const isPageLocal = hostname === 'localhost' || hostname === '127.0.0.1';
   const isPageIp = /^(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)$/.test(hostname);
   const isPageRender = hostname.endsWith('.onrender.com');
+  const isPageVercel = hostname.endsWith('.vercel.app') || hostname === 'moshautomation.com' || hostname === 'www.moshautomation.com';
   
-  // A URL is local/private if it contains localhost, 127.0.0.1, or a private LAN IP pattern
   const isUrlLocal = (url) => {
     if (!url) return false;
     const cleanUrl = url.toLowerCase();
@@ -20,30 +20,30 @@ const getApiUrl = () => {
            /https?:\/\/(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)/.test(cleanUrl);
   };
   
-  // 3. Resolve the API URL
-  // If we are on a public deployment (like Vercel or Render) but the envUrl is local/private,
-  // we MUST ignore the envUrl and force the public Render backend URL to prevent Private Network Access (PNA) blocks.
-  if (isBrowser && !isPageLocal && !isPageIp) {
-    if (isUrlLocal(envUrl)) {
-      // Discard misconfigured local envUrl on production deployment
+  // 3. Resolve API URL
+  // If explicitly configured, use it (sanitized for production)
+  if (envUrl) {
+    if (isBrowser && !isPageLocal && !isPageIp && isUrlLocal(envUrl)) {
       return isPageRender ? window.location.origin : 'https://mosh-automation.onrender.com';
     }
+    return envUrl.replace(/\/+$/, '');
   }
-  
-  // If envUrl is valid and not misconfigured, use it
-  if (envUrl) {
-    return envUrl;
+
+  // When deployed on Vercel with rewrites, use same-origin relative URL
+  if (isBrowser && isPageVercel) {
+    return '';
   }
-  
-  // Fallbacks:
+
+  // When developing locally with Vite dev proxy, use same-origin relative URL
+  if (isBrowser && isPageLocal) {
+    return '';
+  }
+
   if (isPageRender) {
     return window.location.origin;
   }
   if (isPageIp) {
     return `http://${hostname}:5001`;
-  }
-  if (isPageLocal) {
-    return 'http://localhost:5001';
   }
   
   return 'https://mosh-automation.onrender.com';
@@ -51,29 +51,52 @@ const getApiUrl = () => {
 
 export const API_URL = getApiUrl();
 
+// Helper to extract CSRF token from document.cookie
+export const getCsrfToken = () => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(^|;\s*)mosh_csrf_token=([^;]+)/);
+  return match ? decodeURIComponent(match[2]) : null;
+};
+
 // Shared promise for concurrent requests waiting on a token refresh
 let refreshPromise = null;
 
-// Silently re-login to get a fresh JWT with the correct role from DB
-const _refreshToken = async () => {
+// Execute silent refresh using HttpOnly refresh token cookie
+export const executeRefresh = async () => {
   try {
-    const rawSession = localStorage.getItem('mosh_session');
-    if (!rawSession) return null;
-    const session = JSON.parse(rawSession);
-    if (!session || !session.phone) return null;
-
-    const res = await originalFetch.call(window, `${API_URL}/api/auth/login`, {
+    const refreshEndpoint = API_URL ? `${API_URL}/api/auth/refresh` : '/api/auth/refresh';
+    const res = await originalFetch.call(window, refreshEndpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: session.name || 'User', phone: session.phone }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
       credentials: 'include'
     });
-    if (!res.ok) return null;
+
+    if (!res.ok) {
+      return null;
+    }
+
     const data = await res.json();
-    if (data.success && data.token && data.user) {
-      const updated = { ...session, token: data.token, role: data.user.role };
-      localStorage.setItem('mosh_session', JSON.stringify(updated));
-      return data.token;
+    if (data.success && data.user) {
+      const rawSession = localStorage.getItem('mosh_session');
+      if (rawSession) {
+        try {
+          const session = JSON.parse(rawSession);
+          const updated = {
+            ...session,
+            id: data.user.id,
+            name: data.user.name,
+            phone: data.user.phone,
+            role: data.user.role,
+            email: data.user.email
+          };
+          delete updated.token; // Sensitive tokens are managed exclusively in HttpOnly cookies
+          localStorage.setItem('mosh_session', JSON.stringify(updated));
+        } catch {}
+      }
+      return data.user;
     }
     return null;
   } catch {
@@ -81,62 +104,81 @@ const _refreshToken = async () => {
   }
 };
 
-// Automatically attach Bearer token to all requests heading to our API
+// Globally intercept fetch to attach credentials, CSRF token, and handle silent refresh
 let originalFetch;
 if (typeof window !== 'undefined') {
   originalFetch = window.fetch;
-  window.fetch = async function () {
-    let [resource, config] = arguments;
-    
-    // Only intercept requests to our API
-    if (typeof resource === 'string' && resource.startsWith(API_URL)) {
-      try {
-        const rawSession = localStorage.getItem('mosh_session');
-        if (rawSession) {
-          const session = JSON.parse(rawSession);
-          if (session && session.token) {
-            config = config || {};
-            if (config.headers instanceof Headers) {
-              config.headers.set('Authorization', `Bearer ${session.token}`);
-            } else {
-              config.headers = {
-                ...config.headers,
-                'Authorization': `Bearer ${session.token}`
-              };
-            }
-          }
-        }
-      } catch (e) {}
+  window.fetch = async function (resource, config = {}) {
+    // Intercept all requests targeting our API (absolute or relative)
+    const isTargetApi = typeof resource === 'string' && (
+      (API_URL && resource.startsWith(API_URL)) ||
+      resource.startsWith('/api') ||
+      resource.startsWith('http://localhost:5001/api') ||
+      resource.startsWith('http://127.0.0.1:5001/api') ||
+      resource.startsWith('https://mosh-automation.onrender.com/api')
+    );
 
+    if (isTargetApi) {
+      config = config || {};
+      config.credentials = 'include';
+
+      // Attach CSRF protection headers for mutating requests
+      const method = (config.method || 'GET').toUpperCase();
+      const isMutating = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+
+      const csrfToken = getCsrfToken();
+      if (isMutating) {
+        if (config.headers instanceof Headers) {
+          if (csrfToken && !config.headers.has('X-CSRF-Token')) {
+            config.headers.set('X-CSRF-Token', csrfToken);
+          }
+          if (!config.headers.has('X-Requested-With')) {
+            config.headers.set('X-Requested-With', 'XMLHttpRequest');
+          }
+        } else {
+          config.headers = {
+            ...config.headers,
+            ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}),
+            'X-Requested-With': 'XMLHttpRequest'
+          };
+        }
+      }
+
+      // Execute request
       let response = await originalFetch.call(this, resource, config);
 
-      if (response.status === 401 || response.status === 403) {
+      // On 401 Unauthorized, perform silent token refresh and retry once
+      const isAuthEndpoint = resource.includes('/api/auth/refresh') || 
+                             resource.includes('/api/auth/login') ||
+                             resource.includes('/api/auth/logout');
+
+      if (response.status === 401 && !isAuthEndpoint) {
         if (!refreshPromise) {
-          refreshPromise = _refreshToken().finally(() => {
+          refreshPromise = executeRefresh().finally(() => {
             refreshPromise = null;
           });
         }
-        
-        const newToken = await refreshPromise;
-        if (newToken) {
-          try {
-            config = config || {};
+
+        const refreshedUser = await refreshPromise;
+        if (refreshedUser) {
+          const updatedCsrfToken = getCsrfToken();
+          if (isMutating && updatedCsrfToken) {
             if (config.headers instanceof Headers) {
-              config.headers.set('Authorization', `Bearer ${newToken}`);
+              config.headers.set('X-CSRF-Token', updatedCsrfToken);
             } else {
               config.headers = {
                 ...config.headers,
-                'Authorization': `Bearer ${newToken}`
+                'X-CSRF-Token': updatedCsrfToken
               };
             }
-          } catch {}
+          }
           return originalFetch.call(this, resource, config);
         }
       }
 
       return response;
     }
-    
+
     return originalFetch.call(this, resource, config);
   };
 }

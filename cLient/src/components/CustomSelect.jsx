@@ -98,8 +98,8 @@ const CustomSelect = ({
           className={`w-full flex items-center justify-between px-4 py-3 min-h-[48px] rounded-xl border transition-all duration-200 outline-none
             ${disabled ? 'bg-slate-50 text-slate-400 cursor-not-allowed border-slate-200' : 
               error ? 'bg-rose-50/50 border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20' : 
-              isOpen ? 'bg-white border-teal-500 ring-2 ring-teal-500/20' : 
-              'bg-white border-slate-200 hover:border-slate-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 hover:bg-slate-50/50'
+              isOpen ? 'bg-white border-blue-500 ring-2 ring-blue-500/20' : 
+              'bg-white border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:bg-slate-50/50'
             }`}
         >
           <div className="flex items-center gap-3 overflow-hidden">
@@ -124,7 +124,7 @@ const CustomSelect = ({
           <ChevronDown 
             className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
               disabled ? 'text-slate-300' : 'text-slate-400'
-            } ${isOpen ? 'rotate-180 text-teal-600' : ''}`} 
+            } ${isOpen ? 'rotate-180 text-blue-600' : ''}`} 
           />
         </button>
 
@@ -149,7 +149,7 @@ const CustomSelect = ({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search..."
-                      className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all"
+                      className="w-full bg-white border border-slate-200 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
                     />
                   </div>
                 </div>
@@ -166,7 +166,7 @@ const CustomSelect = ({
                         onClick={() => handleSelect(opt.value)}
                         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-colors mb-0.5 last:mb-0
                           ${isSelected 
-                            ? 'bg-teal-50 text-teal-900' 
+                            ? 'bg-blue-50 text-blue-900' 
                             : 'hover:bg-slate-50 text-slate-700'
                           }`}
                       >
@@ -175,17 +175,17 @@ const CustomSelect = ({
                             <img src={opt.image} alt="" className="w-8 h-8 object-contain rounded bg-white p-1 border border-slate-100 shrink-0" />
                           )}
                           <div className="flex flex-col min-w-0">
-                            <span className={`text-sm truncate ${isSelected ? 'font-bold text-teal-800' : 'font-semibold'}`}>
+                            <span className={`text-sm truncate ${isSelected ? 'font-bold text-blue-800' : 'font-semibold'}`}>
                               {opt.label}
                             </span>
                             {opt.description && (
-                              <span className={`text-[10px] truncate ${isSelected ? 'text-teal-600/80' : 'text-slate-500'}`}>
+                              <span className={`text-[10px] truncate ${isSelected ? 'text-blue-600/80' : 'text-slate-500'}`}>
                                 {opt.description}
                               </span>
                             )}
                           </div>
                         </div>
-                        {isSelected && <Check className="h-4 w-4 shrink-0 text-teal-600 ml-2" />}
+                        {isSelected && <Check className="h-4 w-4 shrink-0 text-blue-600 ml-2" />}
                       </button>
                     );
                   })

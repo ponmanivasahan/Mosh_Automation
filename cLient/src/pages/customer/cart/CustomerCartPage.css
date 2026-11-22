@@ -48,8 +48,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(13, 148, 136, 0.08);
-  color: #0d9488;
+  background: rgba(0, 128, 255, 0.08);
+  color: #0080ff;
   padding: 4px 12px;
   border-radius: 99px;
   font-size: 11.5px;
@@ -345,7 +345,7 @@
   background: transparent;
 }
 .orders-timeline-list::-webkit-scrollbar-thumb {
-  background-color: rgba(15, 118, 110, 0.15);
+  background-color: rgba(0, 128, 255, 0.15);
   border-radius: 99px;
 }
 
@@ -425,7 +425,7 @@
 
 .grand-total-val {
   font-size: 1.15rem;
-  color: #0d9488;
+  color: #0080ff;
   font-weight: 800;
 }
 
@@ -487,7 +487,7 @@
 
 .total-amount-row strong {
   font-size: 1.35rem;
-  color: #0d9488;
+  color: #0080ff;
   font-weight: 800;
 }
 

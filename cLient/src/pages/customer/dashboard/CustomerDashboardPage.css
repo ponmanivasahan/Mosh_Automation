@@ -38,7 +38,7 @@
   opacity: 0.08;
 }
 
-.dash-stat-products::after { background: #0d9488; }
+.dash-stat-products::after { background: #0080ff; }
 .dash-stat-cart::after     { background: #0ea5e9; }
 .dash-stat-rating::after   { background: #f59e0b; }
 .dash-stat-revenue::after  { background: #10b981; }
@@ -54,7 +54,7 @@
   color: #fff;
 }
 
-.dash-stat-products .dash-stat-icon { background: linear-gradient(135deg, #0d9488, #14b8a6); }
+.dash-stat-products .dash-stat-icon { background: linear-gradient(135deg, #0080ff, #3b82f6); }
 .dash-stat-cart     .dash-stat-icon { background: linear-gradient(135deg, #0284c7, #0ea5e9); }
 .dash-stat-rating   .dash-stat-icon { background: linear-gradient(135deg, #d97706, #f59e0b); }
 .dash-stat-revenue  .dash-stat-icon { background: linear-gradient(135deg, #059669, #10b981); }
@@ -165,12 +165,12 @@
 }
 
 .product-scroll-wrapper::-webkit-scrollbar-thumb {
-  background: rgba(15, 118, 110, 0.2);
+  background: rgba(0, 128, 255, 0.2);
   border-radius: 9px;
 }
 
 .product-scroll-wrapper::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 118, 110, 0.4);
+  background: rgba(0, 128, 255, 0.4);
 }
 
 .product-scroll-track {
@@ -210,7 +210,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: linear-gradient(135deg, #0d9488, #0ea5e9);
+  background: linear-gradient(135deg, #0080ff, #0284c7);
   color: #fff;
   font-size: 12px;
   font-weight: 800;
@@ -223,7 +223,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(15, 118, 110, 0.04), rgba(14, 165, 233, 0.04));
+  background: linear-gradient(135deg, rgba(0, 128, 255, 0.04), rgba(14, 165, 233, 0.04));
   padding: 16px;
   overflow: hidden;
 }
@@ -278,14 +278,14 @@
 .reliable-price {
   font-size: 1.05rem;
   font-weight: 800;
-  color: #0d9488;
+  color: #0080ff;
 }
 
 .reliable-sales {
   font-size: 12px;
   font-weight: 700;
-  color: var(--muted);
-  background: rgba(15, 118, 110, 0.06);
+  color: #0080ff;
+  background: rgba(0, 128, 255, 0.08);
   padding: 3px 10px;
   border-radius: 999px;
 }
@@ -324,7 +324,7 @@
   margin-top: auto;
   padding: 8px 14px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #0d9488, #0ea5e9);
+  background: linear-gradient(135deg, #0080ff, #0284c7);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -389,7 +389,7 @@
 }
 
 .pie-icon {
-  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  background: linear-gradient(135deg, #0080ff, #38bdf8);
 }
 
 /* ── Bar Chart SVG ── */

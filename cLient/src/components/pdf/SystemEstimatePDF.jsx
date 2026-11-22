@@ -150,7 +150,7 @@ const SystemEstimatePDF = ({ estimation }) => {
             <Text style={styles.companyText}>Varadharajapuram, Uppilipalayam, Coimbatore - 641015.</Text>
             <Text style={styles.companyText}>State: Tamilnadu, Code: 33</Text>
             <Text style={styles.contactRow}>
-              ✆ Mobile: 7397103576, 9514714441   |   ✉ Email: admin@moshautomation.com   |   <Text style={{ fontFamily: 'Helvetica-Bold' }}>GSTIN: 33DLCPP0458M1ZW</Text>
+              Mobile: 7397103576, 9514714441   |   Email: admin@moshautomation.com   |   <Text style={{ fontFamily: 'Helvetica-Bold' }}>GSTIN: 33DLCPP0458M1ZW</Text>
             </Text>
           </View>
           <View style={styles.metaCol}>

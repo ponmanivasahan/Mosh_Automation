@@ -17,7 +17,8 @@ const getBillingSettings = async (req, res) => {
     };
     return res.json({ success: true, settings: formatted });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to retrieve billing settings.', error: error.message });
+    console.error('getBillingSettings error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve billing settings.' });
   }
 };
 
@@ -27,12 +28,20 @@ const updateBillingSettings = async (req, res) => {
 
     await pool.query(
       'UPDATE billing_settings SET float_sensor_fee = ?, wire_cost_per_meter = ?, base_installation_rate = ?, tax_rate = ?, miscellaneous_fee = ?, notes = ? WHERE id = 1',
-      [floatSensorFee, wireCostPerMeter, InstallationRate, taxRate, miscellaneousFee, notes || '']
+      [
+        Number(floatSensorFee) || 0,
+        Number(wireCostPerMeter) || 0,
+        Number(InstallationRate) || 0,
+        Number(taxRate) || 0,
+        Number(miscellaneousFee) || 0,
+        (notes || '').slice(0, 1000)
+      ]
     );
 
     return res.json({ success: true, message: 'Billing settings updated successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to update billing settings.', error: error.message });
+    console.error('updateBillingSettings error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update billing settings.' });
   }
 };
 
@@ -49,11 +58,19 @@ const createBillingSettings = async (req, res) => {
        tax_rate = VALUES(tax_rate), 
        miscellaneous_fee = VALUES(miscellaneous_fee), 
        notes = VALUES(notes)`,
-      [floatSensorFee || 1000.00, wireCostPerMeter || 45.00, InstallationRate || 1500.00, taxRate || 18.00, miscellaneousFee || 1000.00, notes || '']
+      [
+        Number(floatSensorFee) || 1000.00,
+        Number(wireCostPerMeter) || 45.00,
+        Number(InstallationRate) || 1500.00,
+        Number(taxRate) || 18.00,
+        Number(miscellaneousFee) || 1000.00,
+        (notes || '').slice(0, 1000)
+      ]
     );
     return res.status(201).json({ success: true, message: 'Billing settings created/initialized successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to create billing settings.', error: error.message });
+    console.error('createBillingSettings error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to create billing settings.' });
   }
 };
 
@@ -62,7 +79,8 @@ const deleteBillingSettings = async (req, res) => {
     await pool.query('DELETE FROM billing_settings WHERE id = 1');
     return res.json({ success: true, message: 'Billing settings deleted successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to delete billing settings.', error: error.message });
+    console.error('deleteBillingSettings error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete billing settings.' });
   }
 };
 

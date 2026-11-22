@@ -79,6 +79,7 @@ const AppShell = ({ title, links, children }) => {
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const roleLabel = session?.role === 'admin' ? 'Admin Portal' : 'Customer Portal';
   const effectiveLinks = links || (session?.role === 'admin' ? defaultAdminLinks : defaultCustomerLinks);
 
   // Cart listener
@@ -116,8 +117,6 @@ const AppShell = ({ title, links, children }) => {
     };
   }, [isSidebarOpen]);
 
-  const roleLabel = session?.role === 'admin' ? 'Admin Portal' : 'Customer Portal';
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
       
@@ -136,7 +135,7 @@ const AppShell = ({ title, links, children }) => {
             <img src="/logo background.png" alt="Mosh Logo" className="h-7 w-7 rounded-lg object-contain border border-slate-200/60" />
             <div>
               <span className="font-extrabold text-xs tracking-wider text-slate-900 block leading-tight">MOSH AUTOMATION</span>
-              <span className="text-[10px] text-blue-700 font-semibold leading-none">{roleLabel}</span>
+            
             </div>
           </div>
         </div>
@@ -217,17 +216,6 @@ const AppShell = ({ title, links, children }) => {
             >
               <X size={18} />
             </button>
-          </div>
-
-          {/* Role Pill Banner */}
-          <div className="px-4 pt-3 pb-1">
-            <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200/60 text-xs">
-              <div className="flex items-center gap-1.5">
-                <span className={`h-2 w-2 rounded-full ${session?.role === 'admin' ? 'bg-indigo-500' : 'bg-blue-500'} animate-pulse`} />
-                <span className="font-semibold text-slate-700">{roleLabel}</span>
-              </div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">v1.2</span>
-            </div>
           </div>
 
           {/* Navigation Links List */}
@@ -312,82 +300,12 @@ const AppShell = ({ title, links, children }) => {
           </div>
         </div>
       </aside>
-
-      {/* ─── Main Content Container ─── */}
       <div className="lg:ml-64 flex flex-col min-h-screen">
-        
-        {/* Top Header Bar for Desktop */}
-        <header className="sticky top-0 z-30 hidden lg:flex items-center justify-between px-8 py-3.5 bg-white/90 backdrop-blur-md border-b border-slate-200/70 shadow-xs">
-          {/* Breadcrumb & Section Info */}
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <span className="font-semibold text-slate-500">{roleLabel}</span>
-            <ChevronRight size={14} className="text-slate-300" />
-            <span className="font-bold text-slate-800">{title}</span>
-          </div>
-
-          {/* Quick Header Actions */}
-          <div className="flex items-center gap-3">
-            {/* Live Status indicator */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100/90 border border-slate-200/70 text-xs font-medium text-slate-600">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>System Live</span>
-            </div>
-
-            {/* Admin notifications button */}
-            {session?.role === 'admin' && (
-              <NavLink
-                to="/admin/notifications"
-                className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
-                title="Notifications Center"
-              >
-                <Bell size={18} />
-                {unreadNotifications > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs">
-                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                  </span>
-                )}
-              </NavLink>
-            )}
-
-            {/* Customer Cart Quick Button */}
-            {session?.role !== 'admin' && (
-              <NavLink
-                to="/customer/cart"
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs font-bold hover:bg-blue-100 transition-colors shadow-xs"
-              >
-                <ShoppingCart size={15} />
-                <span>Cart</span>
-                {cartCount > 0 && (
-                  <span className="h-5 min-w-5 px-1.5 inline-flex items-center justify-center rounded-full bg-blue-700 text-white text-[10px] font-extrabold">
-                    {cartCount}
-                  </span>
-                )}
-              </NavLink>
-            )}
-
-            {/* Role switch / account preview */}
-            <div className="h-5 w-px bg-slate-200" />
-
-            <div className="flex items-center gap-2 text-xs">
-              <div className="text-right">
-                <span className="block font-bold text-slate-800 leading-tight">{session?.name || 'User'}</span>
-                <span className="text-[10px] text-slate-400 capitalize">{session?.role || 'Guest'}</span>
-              </div>
-              <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-xs ${
-                session?.role === 'admin' ? 'bg-indigo-600' : 'bg-blue-600'
-              }`}>
-                {session?.name ? session.name[0].toUpperCase() : 'U'}
-              </div>
-            </div>
-          </div>
-        </header>
-
         {/* Page Content Body */}
         <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-12 max-w-7xl w-full mx-auto">
           {children}
         </main>
       </div>
-
       {/* ─── Mobile Bottom Navigation Bar ─── */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-3 py-1.5 flex items-center justify-around shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
         {effectiveLinks.slice(0, 4).map((link) => {

@@ -94,7 +94,7 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
         {/* Modal Header */}
         <div className="flex items-start justify-between border-b border-slate-100 pb-3">
           <div>
-            <span className="text-[10px] bg-teal-50 text-teal-700 px-3 py-1 rounded-full font-bold uppercase tracking-wider">{product.category || 'Automation'}</span>
+            <span className="text-[10px] bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-bold uppercase tracking-wider">{product.category || 'Automation'}</span>
             <h2 className="text-xl font-bold text-slate-800 mt-2">{product.name}</h2>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 transition">
@@ -117,8 +117,8 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
                 <button
                   key={i}
                   onClick={() => setSelectedImage(img)}
-                  className={`w-14 h-14 p-1 bg-white border rounded-xl flex items-center justify-center hover:border-teal-500 transition ${
-                    selectedImage === img ? 'border-teal-500 ring-2 ring-teal-100' : 'border-slate-200'
+                  className={`w-14 h-14 p-1 bg-white border rounded-xl flex items-center justify-center hover:border-blue-500 transition ${
+                    selectedImage === img ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'
                   }`}
                 >
                   <img src={img} alt="thumb" className="max-h-full max-w-full object-contain" />
@@ -129,12 +129,12 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
             {/* Meta badges */}
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="bg-slate-50 p-3 rounded-xl border flex flex-col items-center justify-center text-center">
-                <ShieldAlert size={16} className="text-teal-600 mb-1" />
+                <ShieldAlert size={16} className="text-blue-600 mb-1" />
                 <span className="text-[9px] text-slate-400 font-bold uppercase">Warranty</span>
                 <span className="text-xs font-bold text-slate-700">{product.warranty || '1 Year Warranty'}</span>
               </div>
               <div className="bg-slate-50 p-3 rounded-xl border flex flex-col items-center justify-center text-center">
-                <Award size={16} className="text-teal-600 mb-1" />
+                <Award size={16} className="text-blue-600 mb-1" />
                 <span className="text-[9px] text-slate-400 font-bold uppercase">Availability</span>
                 <span className="text-xs font-bold text-emerald-600">{product.availability || 'In Stock'}</span>
               </div>
@@ -154,7 +154,7 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
                     <strong className="text-3xl font-extrabold text-rose-600 drop-shadow-sm scale-105 origin-left transition-transform animate-pulse">{formatCurrency(promoPrice)}</strong>
                   </div>
                 ) : (
-                  <strong className="text-2xl font-extrabold text-teal-600">{formatCurrency(product.price)}</strong>
+                  <strong className="text-2xl font-extrabold text-blue-600">{formatCurrency(product.price)}</strong>
                 )}
               </div>
               <button
@@ -162,7 +162,7 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
                   onAdd && onAdd(product);
                   onClose();
                 }}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow-lg shadow-teal-200 hover:shadow-teal-300 transition-all flex items-center gap-2"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center gap-2"
               >
                 <ShoppingCart size={14} /> Add to Cart
               </button>
@@ -266,7 +266,7 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
             {relatedProducts.length > 0 && (
               <div className="space-y-3 pt-4 border-t border-slate-100">
                 <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1">
-                  <Layers size={12} className="text-teal-600" />
+                  <Layers size={12} className="text-blue-600" />
                   Related Products
                 </h4>
                 <div className="grid grid-cols-3 gap-3">
@@ -274,7 +274,7 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
                     <div key={p.id} className="bg-slate-50 border p-2.5 rounded-xl flex flex-col items-center text-center gap-1.5 hover:shadow transition">
                       <img src={p.image} alt={p.name} className="h-10 object-contain" />
                       <span className="text-[10px] font-bold text-slate-800 truncate w-full">{p.name}</span>
-                      <strong className="text-[10px] text-teal-600 font-bold">{formatCurrency(p.price)}</strong>
+                      <strong className="text-[10px] text-blue-600 font-bold">{formatCurrency(p.price)}</strong>
                     </div>
                   ))}
                 </div>

@@ -47,7 +47,8 @@ const getProducts = async (req, res) => {
     }));
     return res.json({ success: true, products: formatted });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to retrieve products.', error: error.message });
+    console.error('getProducts error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve products.' });
   }
 };
 
@@ -121,7 +122,8 @@ const createProduct = async (req, res) => {
       product: formatted
     });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to create product.', error: error.message });
+    console.error('createProduct error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to create product.' });
   }
 };
 
@@ -145,8 +147,6 @@ const updateProduct = async (req, res) => {
     );
     
     if (offers && Array.isArray(offers)) {
-      // For simplicity in updating, if offers array is provided, we can sync it (delete missing, insert new, update existing)
-      // Or simply delete all and re-insert to ensure exact match of the provided array
       await pool.query('DELETE FROM product_offers WHERE product_id = ?', [id]);
       for (const offer of offers) {
         await pool.query(
@@ -156,11 +156,9 @@ const updateProduct = async (req, res) => {
       }
     }
 
-    // Retrieve updated record directly from MySQL
     const [rows] = await pool.query('SELECT * FROM products WHERE id = ?', [id]);
     const updated = rows[0];
 
-    // Retrieve offers
     const [offerRows] = await pool.query('SELECT * FROM product_offers WHERE product_id = ?', [id]);
     const formattedOffers = offerRows.map(offer => ({
       id: offer.id,
@@ -195,7 +193,66 @@ const updateProduct = async (req, res) => {
 
     return res.json({ success: true, message: 'Product updated successfully.', product: formatted });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to update product.', error: error.message });
+    console.error('updateProduct error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update product.' });
+  }
+};
+
+const getProductByIdOrSlug = async (req, res) => {
+  try {
+    const { idOrSlug } = req.params;
+    let query = 'SELECT * FROM products WHERE id = ? LIMIT 1';
+    let params = [idOrSlug];
+
+    if (isNaN(idOrSlug)) {
+      // Clean slug match by converting hyphens to spaces or wildcard name match
+      const searchPattern = `%${idOrSlug.replace(/-/g, '%')}%`;
+      query = 'SELECT * FROM products WHERE name LIKE ? LIMIT 1';
+      params = [searchPattern];
+    }
+
+    const [rows] = await pool.query(query, params);
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Product not found.' });
+    }
+
+    const p = rows[0];
+    const [offers] = await pool.query('SELECT * FROM product_offers WHERE product_id = ?', [p.id]);
+    const formattedOffers = (offers || []).map(o => ({
+      id: o.id,
+      title: o.title,
+      description: o.description,
+      type: o.offer_type,
+      value: Number(o.offer_value),
+      validUntil: o.valid_until,
+      showOffer: Boolean(o.show_offer)
+    }));
+
+    const formatted = {
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      price: Number(p.price),
+      image: p.image,
+      category: p.category || 'Automation',
+      features: p.features || '',
+      stock: p.stock !== null ? Number(p.stock) : 10,
+      warranty: p.warranty || '1 Year Warranty',
+      specifications: p.specifications || '',
+      availability: p.availability || 'In Stock',
+      floatFee: Number(p.float_fee),
+      wire: {
+        baseFee: Number(p.wire_base_fee),
+        baseMeters: Number(p.wire_base_meters),
+        extraPerMeter: Number(p.wire_extra_per_meter)
+      },
+      offers: formattedOffers
+    };
+
+    return res.json({ success: true, product: formatted });
+  } catch (error) {
+    console.error('getProductByIdOrSlug error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve product.' });
   }
 };
 
@@ -205,12 +262,14 @@ const deleteProduct = async (req, res) => {
     await pool.query('DELETE FROM products WHERE id = ?', [id]);
     return res.json({ success: true, message: 'Product deleted successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to delete product.', error: error.message });
+    console.error('deleteProduct error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete product.' });
   }
 };
 
 module.exports = {
   getProducts,
+  getProductByIdOrSlug,
   createProduct,
   updateProduct,
   deleteProduct

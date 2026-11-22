@@ -11,67 +11,112 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     ensureInitialData();
 
-    // Abort controller so we can cancel on timeout (handles Render cold-start on mobile)
+    let isMounted = true;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
 
-    // Validate session on mount
-    fetch(`${API_URL}/api/auth/me`, { credentials: 'include', signal: controller.signal })
-      .then(res => {
-        clearTimeout(timeoutId);
-        // Only 401 means "token invalid / expired" — log out
-        // 403/404/5xx are server-side errors, keep local session alive
+    const checkSession = async () => {
+      try {
+        // Step 1: Check active session with /api/auth/me
+        let res = await fetch(`${API_URL}/api/auth/me`, {
+          credentials: 'include',
+          signal: controller.signal
+        });
+
+        // Step 2: If 401 (access token expired), attempt silent refresh via /api/auth/refresh
         if (res.status === 401) {
-          clearSession();
-          setSessionState(null);
-          return null;
+          const refreshRes = await fetch(`${API_URL}/api/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            signal: controller.signal
+          });
+
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            if (refreshData.success && refreshData.user) {
+              const payload = {
+                id: refreshData.user.id,
+                name: refreshData.user.name,
+                phone: refreshData.user.phone,
+                role: refreshData.user.role,
+                email: refreshData.user.email || null,
+                loggedInAt: new Date().toISOString()
+              };
+              if (isMounted) {
+                setSession(payload);
+                setSessionState(payload);
+                setAuthLoading(false);
+              }
+              return;
+            }
+          }
+
+          // Both /api/auth/me and /api/auth/refresh failed — session is genuinely invalid
+          if (isMounted) {
+            clearSession();
+            setSessionState(null);
+            setAuthLoading(false);
+          }
+          return;
         }
-        if (!res.ok) return null; // server error — preserve session
-        return res.json().catch(() => null);
-      })
-      .then(data => {
-        if (data && data.success && data.user) {
-          const currentSession = getSession();
-          const payload = {
-            ...currentSession, // keep existing fields
-            name: data.user.name,
-            phone: data.user.phone,
-            role: data.user.role,
-            // Always update token if server returned a fresher one
-            ...(data.token ? { token: data.token } : {}),
-            loggedInAt: new Date().toISOString()
-          };
-          setSession(payload);
-          setSessionState(payload);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.user) {
+            const currentSession = getSession();
+            const payload = {
+              ...currentSession,
+              id: data.user.id,
+              name: data.user.name,
+              phone: data.user.phone,
+              role: data.user.role,
+              email: data.user.email || null,
+              loggedInAt: new Date().toISOString()
+            };
+            if (isMounted) {
+              setSession(payload);
+              setSessionState(payload);
+            }
+          }
         }
-      })
-      .catch((err) => {
-        clearTimeout(timeoutId);
-        // Network error (offline, Render cold-start timeout, etc.) — keep local session
+      } catch (err) {
         if (err.name !== 'AbortError') {
-          console.warn('[Auth] Session check failed, keeping local session:', err.message);
+          console.warn('[Auth] Session check failed, preserving cached state:', err.message);
         }
-      })
-      .finally(() => {
-        setAuthLoading(false);
-      });
+      } finally {
+        if (isMounted) {
+          setAuthLoading(false);
+        }
+      }
+    };
+
+    checkSession();
 
     return () => {
+      isMounted = false;
       clearTimeout(timeoutId);
       controller.abort();
     };
   }, []);
 
   const login = async (payload) => {
-    setSession(payload);
-    setSessionState(payload);
-    // After logging in, force a re-fetch of user-specific data from the server
+    const cleanPayload = { ...payload };
+    delete cleanPayload.token; // Sensitive tokens are managed exclusively in HttpOnly cookies
+    setSession(cleanPayload);
+    setSessionState(cleanPayload);
     await forceUserSync().catch(err => console.warn('Failed to sync user data after login:', err));
   };
 
   const logout = async () => {
     try {
-      await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+      await fetch(`${API_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include'
+      });
     } catch (e) {
       console.error('Logout request failed', e);
     }

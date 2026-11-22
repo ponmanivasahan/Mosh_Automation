@@ -85,7 +85,7 @@ const OfferManager = ({ offers, onChange }) => {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <Tag size={16} className="text-teal-600" /> OFFERS & BENEFITS
+            <Tag size={16} className="text-blue-600" /> OFFERS & BENEFITS
           </h4>
           <p className="text-[10px] text-slate-400 mt-1">Add special offers and benefits that will be displayed to customers.</p>
         </div>
@@ -93,7 +93,7 @@ const OfferManager = ({ offers, onChange }) => {
           <button
             type="button"
             onClick={() => setIsAdding(true)}
-            className="text-xs font-bold text-teal-600 flex items-center gap-1 bg-teal-50 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition-colors"
+            className="text-xs font-bold text-blue-600 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
           >
             <Plus size={14} /> Add Offer
           </button>
@@ -149,7 +149,7 @@ const OfferManager = ({ offers, onChange }) => {
                   type="checkbox"
                   checked={newOffer.showOffer}
                   onChange={(e) => setNewOffer({ ...newOffer, showOffer: e.target.checked })}
-                  className="w-4 h-4 text-teal-600 rounded"
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                 />
                 <span className="text-xs font-bold text-slate-700">Show Offer</span>
               </label>
@@ -167,7 +167,7 @@ const OfferManager = ({ offers, onChange }) => {
               type="button"
               onClick={handleAdd}
               disabled={!newOffer.title || !newOffer.type || ((newOffer.type === 'Flat Discount' || newOffer.type === 'Percentage Discount') && !newOffer.value)}
-              className="text-xs font-bold text-white bg-teal-600 px-4 py-2 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50"
+              className="text-xs font-bold text-white bg-blue-600 px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               Save Offer
             </button>
@@ -185,7 +185,7 @@ const OfferManager = ({ offers, onChange }) => {
             isExpired = until < new Date();
           }
           return (
-            <div key={index} className={`p-4 rounded-xl border relative ${offer.showOffer ? 'bg-white border-teal-100 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-75'}`}>
+            <div key={index} className={`p-4 rounded-xl border relative ${offer.showOffer ? 'bg-white border-blue-100 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-75'}`}>
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
                   <h5 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">{offer.title}</h5>
@@ -213,7 +213,7 @@ const OfferManager = ({ offers, onChange }) => {
                 <button
                   type="button"
                   onClick={() => handleToggleShow(index)}
-                  className={`w-10 h-5 rounded-full relative transition-colors ${offer.showOffer ? 'bg-teal-500' : 'bg-slate-300'}`}
+                  className={`w-10 h-5 rounded-full relative transition-colors ${offer.showOffer ? 'bg-blue-600' : 'bg-slate-300'}`}
                 >
                   <span className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${offer.showOffer ? 'left-6' : 'left-1'}`} />
                 </button>

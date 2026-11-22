@@ -1,3 +1,4 @@
+const fs = require('fs');
 const { pool } = require('../config/db');
 
 const getEstimations = async (req, res) => {
@@ -14,7 +15,6 @@ const getEstimations = async (req, res) => {
     const params = [];
 
     if (!role || role.toString().toLowerCase() !== 'admin') {
-      // Use customer_id as permanent identity per requirements, fallback to phone for legacy records
       query += ' WHERE e.customer_id = ? OR (e.customer_id IS NULL AND e.customer_phone = ?)';
       params.push(id, phone);
     }
@@ -51,7 +51,8 @@ const getEstimations = async (req, res) => {
 
     return res.json({ success: true, estimations: formatted });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to retrieve estimations.', error: error.message });
+    console.error('getEstimations error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve estimations.' });
   }
 };
 
@@ -59,18 +60,15 @@ const createEstimation = async (req, res) => {
   try {
     const {
       id,
-      customerName,
-      customerPhone,
       productId,
       productName,
       productImage,
       requirement,
       total,
       quantity,
-      complexity,
-      stage
+      complexity
     } = req.body;
-    const { name, phone } = req.user;
+    const { id: customerId, name, phone } = req.user;
 
     if (!id || !productId) {
       return res.status(400).json({ success: false, message: 'Please fill all required inquiry fields.' });
@@ -81,12 +79,12 @@ const createEstimation = async (req, res) => {
     const finalStage = 'requested';
 
     const queryDetails = {
-      productName: productName || '',
-      productImage: productImage || '',
-      requirement: requirement || '',
-      total: total || 0,
-      quantity: quantity || 1,
-      complexity: complexity || 'medium',
+      productName: (productName || '').slice(0, 200),
+      productImage: (productImage || '').slice(0, 500),
+      requirement: (requirement || '').slice(0, 2000),
+      total: Number(total) || 0,
+      quantity: Math.max(1, parseInt(quantity, 10) || 1),
+      complexity: (complexity || 'medium').slice(0, 50),
       stage: finalStage,
       adminResponse: null,
       seen: false
@@ -96,7 +94,7 @@ const createEstimation = async (req, res) => {
       'INSERT INTO estimations (id, customer_id, customer_name, customer_phone, selected_product_id, query_details, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
         id,
-        req.user.id,
+        customerId,
         finalCustomerName,
         finalCustomerPhone,
         productId,
@@ -115,7 +113,8 @@ const createEstimation = async (req, res) => {
 
     return res.status(201).json({ success: true, message: 'Inquiry submitted successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to submit inquiry.', error: error.message });
+    console.error('createEstimation error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to submit inquiry.' });
   }
 };
 
@@ -123,7 +122,6 @@ const updateEstimation = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Get the existing query details first
     const [existing] = await pool.query('SELECT * FROM estimations WHERE id = ?', [id]);
     if (!existing.length) {
       return res.status(404).json({ success: false, message: 'Estimation inquiry not found.' });
@@ -136,7 +134,6 @@ const updateEstimation = async (req, res) => {
       details = {};
     }
 
-    // Merge updates from req.body
     const updatedDetails = {
       productName: req.body.productName !== undefined ? req.body.productName : (details.productName || ''),
       productImage: req.body.productImage !== undefined ? req.body.productImage : (details.productImage || ''),
@@ -149,24 +146,51 @@ const updateEstimation = async (req, res) => {
       seen: req.body.seen !== undefined ? req.body.seen : (details.seen || false)
     };
     
-    // Status Logic
-    // If an adminResponse or attachmentUrl is provided, it must be a reply.
     let status = row.status;
-    
     let attachmentUrl = row.attachment_url;
-    if (req.file) {
-      // If a file was uploaded via multipart/form-data, use its path
-      const hostUrl = req.protocol + '://' + req.get('host');
-      attachmentUrl = `${hostUrl}/uploads/${req.file.filename}`;
-    } else if (req.body.attachmentUrl !== undefined) {
-      // Fallback if sent as string (e.g. from JSON payload if still used)
-      attachmentUrl = req.body.attachmentUrl;
-    }
-    
-    if ((req.body.adminResponse && req.body.adminResponse.trim().length > 0) ||
-        (attachmentUrl && attachmentUrl.trim().length > 0)) {
-      status = 'replied';
-      updatedDetails.stage = 'replied';
+
+    // Security & Role check
+    const isAdmin = req.user && req.user.role === 'admin';
+    if (!isAdmin) {
+      if (row.customer_id && req.user && row.customer_id !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Unauthorized to edit this inquiry.' });
+      }
+
+      const isReplied =
+        row.status === 'replied' ||
+        details.stage === 'replied' ||
+        Boolean(details.adminResponse && details.adminResponse.trim().length > 0) ||
+        Boolean(row.attachment_url);
+
+      if (isReplied) {
+        return res.status(400).json({ success: false, message: 'Replied queries cannot be modified.' });
+      }
+
+      // Customer cannot forge adminResponse, stage, status, or attachment
+      updatedDetails.adminResponse = details.adminResponse || null;
+      updatedDetails.stage = details.stage || 'requested';
+      status = row.status || 'pending';
+      attachmentUrl = row.attachment_url || null;
+    } else {
+      if (req.file) {
+        try {
+          const fileBuffer = fs.readFileSync(req.file.path);
+          const mimeType = req.file.mimetype || 'application/pdf';
+          attachmentUrl = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
+        } catch (err) {
+          console.error('Failed to encode uploaded file to base64:', err);
+          const hostUrl = req.protocol + '://' + req.get('host');
+          attachmentUrl = `${hostUrl}/uploads/${req.file.filename}`;
+        }
+      } else if (req.body.attachmentUrl !== undefined) {
+        attachmentUrl = req.body.attachmentUrl;
+      }
+      
+      if ((req.body.adminResponse && req.body.adminResponse.trim().length > 0) ||
+          (attachmentUrl && attachmentUrl.trim().length > 0)) {
+        status = 'replied';
+        updatedDetails.stage = 'replied';
+      }
     }
 
     await pool.query(
@@ -176,17 +200,22 @@ const updateEstimation = async (req, res) => {
 
     return res.json({ success: true, message: 'Inquiry updated successfully.', attachmentUrl });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to update inquiry.', error: error.message });
+    console.error('updateEstimation error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update inquiry.' });
   }
 };
 
 const deleteEstimation = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM estimations WHERE id = ?', [id]);
+    const [result] = await pool.query('DELETE FROM estimations WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Inquiry not found.' });
+    }
     return res.json({ success: true, message: 'Inquiry deleted successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to delete inquiry.', error: error.message });
+    console.error('deleteEstimation error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete inquiry.' });
   }
 };
 

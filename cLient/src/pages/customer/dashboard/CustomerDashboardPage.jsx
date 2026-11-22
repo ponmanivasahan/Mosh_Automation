@@ -62,7 +62,7 @@ const CustomerDashboardPage = () => {
       .filter((o) => o.paymentStatus === "Paid")
       .reduce((acc, curr) => acc + Number(curr.total), 0);
     return [
-      { label: "Total Orders", value: orders.length, icon: ShoppingCart, bg: "bg-teal-50", color: "text-teal-700" },
+      { label: "Total Orders", value: orders.length, icon: ShoppingCart, bg: "bg-blue-50", color: "text-blue-600" },
       { label: "Active Orders", value: active.length, icon: Clock, bg: "bg-amber-50", color: "text-amber-600" },
       { label: "Total Spent", value: formatCurrency(totalSpent), icon: TrendingUp, bg: "bg-green-50", color: "text-green-600" },
     ];
@@ -136,13 +136,13 @@ const CustomerDashboardPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl font-bold text-neutral-900">
-              Welcome back, {session?.name || "Customer"} <span className="inline-block animate-wave origin-[70%_70%]">👋</span>
+              Welcome back, {session?.name || "Customer"}
             </h2>
             <p className="text-sm text-neutral-500 mt-0.5">Here is your account overview.</p>
           </div>
           <Link
             to="/customer/products"
-            className="hidden sm:inline-flex items-center gap-1.5 bg-teal-700 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-teal-800 transition-colors shadow-sm"
+            className="hidden sm:inline-flex items-center gap-1.5 bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
           >
             <ShoppingCart size={15} /> Shop Now
           </Link>
@@ -168,7 +168,7 @@ const CustomerDashboardPage = () => {
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-semibold text-neutral-900">Recent Orders</h3>
-              <Link to="/customer/cart" className="text-xs font-medium text-teal-700 hover:text-teal-900 flex items-center gap-0.5">
+              <Link to="/customer/cart" className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-0.5">
                 View all <ChevronRight size={13} />
               </Link>
             </div>
@@ -187,7 +187,7 @@ const CustomerDashboardPage = () => {
                 <div className="divide-y divide-neutral-100">
                   {recentOrders.map((order) => (
                     <div key={order.id} className="flex items-center gap-3 p-4 hover:bg-neutral-50 transition-colors">
-                      <div className="h-10 w-10 bg-teal-50 text-teal-700 flex items-center justify-center rounded-xl shrink-0">
+                      <div className="h-10 w-10 bg-blue-50 text-blue-600 flex items-center justify-center rounded-xl shrink-0">
                         <Package size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -208,7 +208,7 @@ const CustomerDashboardPage = () => {
                   </div>
                   <p className="text-sm font-semibold text-neutral-700 mb-1">No orders yet</p>
                   <p className="text-xs text-neutral-400 mb-4">Your orders will appear here after your first purchase.</p>
-                  <Link to="/customer/products" className="text-xs font-semibold text-teal-700 bg-teal-50 px-4 py-2 rounded-lg hover:bg-teal-100 transition-colors">Browse Products</Link>
+                  <Link to="/customer/products" className="text-xs font-semibold text-blue-600 bg-blue-50 px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors">Browse Products</Link>
                 </div>
               )}
             </Card>
@@ -217,7 +217,7 @@ const CustomerDashboardPage = () => {
           {/* Help Card */}
           <div>
             <h3 className="text-base font-semibold text-neutral-900 mb-3">Support</h3>
-            <div className="rounded-2xl shadow-sm border border-teal-800 p-6 bg-teal-700 text-white overflow-hidden relative">
+            <div className="rounded-2xl shadow-sm border border-blue-700 p-6 bg-blue-600 text-white overflow-hidden relative">
               <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
               <div className="absolute -bottom-8 -left-6 w-20 h-20 rounded-full bg-white/5 pointer-events-none" />
               <div className="relative z-10">
@@ -225,8 +225,8 @@ const CustomerDashboardPage = () => {
                   <HelpCircle size={22} className="text-white" />
                 </div>
                 <h4 className="text-base font-bold mb-1">Need Technical Support?</h4>
-                <p className="text-teal-100 text-xs leading-relaxed mb-5">Questions about installation, wiring, or need a custom estimation for your setup?</p>
-                <Link to="/customer/query-section" className="flex items-center justify-center w-full py-2.5 bg-white text-teal-700 text-sm font-bold rounded-xl hover:bg-teal-50 transition-colors">Ask a Query</Link>
+                <p className="text-blue-100 text-xs leading-relaxed mb-5">Questions about installation, wiring, or need a custom estimation for your setup?</p>
+                <Link to="/customer/query-section" className="flex items-center justify-center w-full py-2.5 bg-white text-blue-600 text-sm font-bold rounded-xl hover:bg-blue-50 transition-colors">Ask a Query</Link>
               </div>
             </div>
           </div>
@@ -242,7 +242,7 @@ const CustomerDashboardPage = () => {
               </h3>
               <p className="text-xs text-neutral-400 mt-0.5">Most popular products from our catalog</p>
             </div>
-            <Link to="/customer/products" className="text-xs font-medium text-teal-700 hover:text-teal-900 flex items-center gap-0.5">
+            <Link to="/customer/products" className="text-xs font-medium text-blue-600 hover:text-blue-800 flex items-center gap-0.5">
               View all <ChevronRight size={13} />
             </Link>
           </div>
@@ -264,7 +264,7 @@ const CustomerDashboardPage = () => {
                           className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
                         />
                         {/* Rank badge */}
-                        <span className="absolute top-3 left-3 bg-teal-700 text-white text-[11px] font-bold px-2 py-0.5 rounded-lg shadow">
+                        <span className="absolute top-3 left-3 bg-blue-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-lg shadow">
                           #{idx + 1}
                         </span>
                         {/* Offer badge */}
@@ -292,7 +292,7 @@ const CustomerDashboardPage = () => {
                         {/* Price + Sold count */}
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-baseline gap-1.5">
-                            <span className="font-bold text-lg text-teal-700">
+                            <span className="font-bold text-lg text-blue-600">
                               {formatCurrency(discountedPrice ?? product.price)}
                             </span>
                             {discountedPrice && (
@@ -325,7 +325,7 @@ const CustomerDashboardPage = () => {
                           <Link
                             to="/customer/query-section"
                             state={{ productId: product.id }}
-                            className="flex items-center justify-center w-full py-2.5 bg-teal-700 hover:bg-teal-800 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
+                            className="flex items-center justify-center w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
                           >
                             Get Estimate →
                           </Link>

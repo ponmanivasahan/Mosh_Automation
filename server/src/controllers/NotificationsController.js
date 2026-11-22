@@ -13,27 +13,36 @@ const getNotifications = async (req, res) => {
     }));
     return res.json({ success: true, notifications: formatted });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to retrieve notifications.', error: error.message });
+    console.error('getNotifications error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to retrieve notifications.' });
   }
 };
 
 const markAsRead = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('UPDATE notifications SET is_read = TRUE WHERE id = ?', [id]);
+    const [result] = await pool.query('UPDATE notifications SET is_read = TRUE WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Notification not found.' });
+    }
     return res.json({ success: true, message: 'Notification marked as read.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to update notification.', error: error.message });
+    console.error('markAsRead error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to update notification.' });
   }
 };
 
 const deleteNotification = async (req, res) => {
   try {
     const { id } = req.params;
-    await pool.query('DELETE FROM notifications WHERE id = ?', [id]);
+    const [result] = await pool.query('DELETE FROM notifications WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ success: false, message: 'Notification not found.' });
+    }
     return res.json({ success: true, message: 'Notification deleted.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to delete notification.', error: error.message });
+    console.error('deleteNotification error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to delete notification.' });
   }
 };
 
@@ -45,11 +54,12 @@ const createNotification = async (req, res) => {
     }
     await pool.query(
       'INSERT INTO notifications (id, title, message, order_id, is_read) VALUES (?, ?, ?, ?, FALSE)',
-      [id, title, message, orderId || null]
+      [String(id).slice(0, 50), String(title).slice(0, 150), String(message).slice(0, 1000), orderId ? String(orderId).slice(0, 50) : null]
     );
     return res.status(201).json({ success: true, message: 'Notification created successfully.' });
   } catch (error) {
-    return res.status(500).json({ success: false, message: 'Failed to create notification.', error: error.message });
+    console.error('createNotification error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to create notification.' });
   }
 };
 

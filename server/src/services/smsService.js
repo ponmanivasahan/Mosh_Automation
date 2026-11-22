@@ -8,7 +8,7 @@ const sendSMS = async (phone, otpCode, textMessage) => {
   const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   console.log('\n==================================================');
-  console.log(`📱 [SMS GATEWAY DISPATCH] ${timestamp}`);
+  console.log(`[SMS GATEWAY DISPATCH] ${timestamp}`);
   console.log(`   Recipient Mobile : +91 ${cleanPhone}`);
   console.log(`   OTP Code         : ${otpCode}`);
   console.log(`   Message Payload  : "${textMessage}"`);

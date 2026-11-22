@@ -94,12 +94,12 @@ const CheckoutModal = ({ open, onClose, product, onPlace }) => {
               <div><strong>Product:</strong> {product?.name || '—'}</div>
               <div><strong>Unit price:</strong> ₹{product?.price ?? '—'}</div>
               <div><strong>Quantity:</strong> {quantity}</div>
-              <div className="mt-2 text-teal-700 font-bold">Total: ₹{(Number(product?.price || 0) * Number(quantity)).toFixed(2)}</div>
+              <div className="mt-2 text-blue-600 font-bold">Total: ₹{(Number(product?.price || 0) * Number(quantity)).toFixed(2)}</div>
             </div>
           </div>
 
           <div className="flex gap-3 mt-4">
-            <button type="submit" className="rounded-lg bg-teal-600 text-white px-4 py-3">Place Order</button>
+            <button type="submit" className="rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-3 transition-colors">Place Order</button>
             <button type="button" onClick={onClose} className="rounded-lg border px-4 py-3">Cancel</button>
           </div>
         </form>
