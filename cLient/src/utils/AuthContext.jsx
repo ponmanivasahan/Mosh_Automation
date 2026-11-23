@@ -23,6 +23,14 @@ export const AuthProvider = ({ children }) => {
           signal: controller.signal
         });
 
+        // If rate limited, preserve existing session state and finish loading
+        if (res.status === 429) {
+          if (isMounted) {
+            setAuthLoading(false);
+          }
+          return;
+        }
+
         // Step 2: If 401 (access token expired), attempt silent refresh via /api/auth/refresh
         if (res.status === 401) {
           const refreshRes = await fetch(`${API_URL}/api/auth/refresh`, {
@@ -36,7 +44,7 @@ export const AuthProvider = ({ children }) => {
           });
 
           if (refreshRes.ok) {
-            const refreshData = await refreshRes.json();
+            const refreshData = await refreshRes.json().catch(() => ({}));
             if (refreshData.success && refreshData.user) {
               const payload = {
                 id: refreshData.user.id,
@@ -65,7 +73,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (res.ok) {
-          const data = await res.json();
+          const data = await res.json().catch(() => ({}));
           if (data && data.success && data.user) {
             const currentSession = getSession();
             const payload = {

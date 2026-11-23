@@ -63,9 +63,15 @@ let originalFetch = typeof window !== 'undefined' ? window.fetch : null;
 
 // Shared promise for concurrent requests waiting on a token refresh
 let refreshPromise = null;
+let lastRefreshFailedAt = 0;
 
 // Execute silent refresh using HttpOnly refresh token cookie
 export const executeRefresh = async () => {
+  // If recent refresh attempt failed within last 15 seconds, don't spam the endpoint
+  if (Date.now() - lastRefreshFailedAt < 15000) {
+    return null;
+  }
+
   try {
     if (!originalFetch && typeof window !== 'undefined') {
       originalFetch = window.fetch;
@@ -81,10 +87,11 @@ export const executeRefresh = async () => {
     });
 
     if (!res.ok) {
+      lastRefreshFailedAt = Date.now();
       return null;
     }
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (data.success && data.user) {
       const rawSession = localStorage.getItem('mosh_session');
       if (rawSession) {
@@ -104,8 +111,10 @@ export const executeRefresh = async () => {
       }
       return data.user;
     }
+    lastRefreshFailedAt = Date.now();
     return null;
   } catch {
+    lastRefreshFailedAt = Date.now();
     return null;
   }
 };
@@ -155,7 +164,8 @@ if (typeof window !== 'undefined') {
       // On 401 Unauthorized, perform silent token refresh and retry once
       const isAuthEndpoint = resource.includes('/api/auth/refresh') || 
                              resource.includes('/api/auth/login') ||
-                             resource.includes('/api/auth/logout');
+                             resource.includes('/api/auth/logout') ||
+                             resource.includes('/api/auth/me');
 
       if (response.status === 401 && !isAuthEndpoint) {
         if (!refreshPromise) {

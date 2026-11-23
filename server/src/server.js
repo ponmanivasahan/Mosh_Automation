@@ -36,7 +36,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Trust reverse proxy (Render, Vercel, Nginx, Cloudflare) for secure cookies and accurate rate limiting
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 // HTTP Security Headers via Helmet (with resilient fallback)
 if (helmet) {
@@ -120,10 +120,13 @@ const isLocalOrDev = (req) => {
 
 const globalApiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: 5000,
   standardHeaders: true,
   legacyHeaders: false,
   skip: isLocalOrDev,
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).json(options.message);
+  },
   message: {
     success: false,
     message: 'Too many requests from this client. Please try again after 15 minutes.'
@@ -132,11 +135,14 @@ const globalApiLimiter = rateLimit({
 
 const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 300,
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
   skip: isLocalOrDev,
+  handler: (req, res, next, options) => {
+    res.status(options.statusCode).json(options.message);
+  },
   message: {
     success: false,
     message: 'Too many authentication attempts. Please try again after 15 minutes.'

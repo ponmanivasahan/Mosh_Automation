@@ -134,45 +134,41 @@ export async function ensureInitialData() {
       if (session && session.role === 'admin') {
         const invRes = await fetch(`${API_URL}/api/invoices`, { credentials: 'include' });
         if (invRes.ok) {
-          const invData = await invRes.json();
+          const invData = await invRes.json().catch(() => ({}));
           if (invData.success && invData.invoices) {
             write(KEYS.invoices, invData.invoices);
           }
         }
       }
 
-    const orderRes = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
-    if (orderRes.ok) {
-      const orderData = await orderRes.json();
-      if (orderData.success && orderData.orders) {
-        write(KEYS.orders, orderData.orders);
-      }
-    } else if (orderRes.status !== 401 && orderRes.status !== 403) {
-      throw new Error('Orders request failed');
-    }
-
-    const estRes = await fetch(`${API_URL}/api/estimations`, { credentials: 'include' });
-    if (estRes.ok) {
-      const estData = await estRes.json();
-      if (estData.success && estData.estimations) {
-        write(KEYS.estimations, estData.estimations);
-      }
-    } else if (estRes.status !== 401 && estRes.status !== 403) {
-      throw new Error('Estimations request failed');
-    }
-
-    const isAdmin = session && session.role === 'admin';
-    if (isAdmin) {
-      const notifRes = await fetch(`${API_URL}/api/notifications`, { credentials: 'include' });
-      if (notifRes.ok) {
-        const notifData = await notifRes.json();
-        if (notifData.success && notifData.notifications) {
-          write(KEYS.notifications, notifData.notifications);
+      if (session) {
+        const orderRes = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
+        if (orderRes.ok) {
+          const orderData = await orderRes.json().catch(() => ({}));
+          if (orderData.success && orderData.orders) {
+            write(KEYS.orders, orderData.orders);
+          }
         }
-      } else if (notifRes.status !== 401 && notifRes.status !== 403) {
-        throw new Error('Notifications request failed');
+
+        const estRes = await fetch(`${API_URL}/api/estimations`, { credentials: 'include' });
+        if (estRes.ok) {
+          const estData = await estRes.json().catch(() => ({}));
+          if (estData.success && estData.estimations) {
+            write(KEYS.estimations, estData.estimations);
+          }
+        }
       }
-    }
+
+      const isAdmin = session && session.role === 'admin';
+      if (isAdmin) {
+        const notifRes = await fetch(`${API_URL}/api/notifications`, { credentials: 'include' });
+        if (notifRes.ok) {
+          const notifData = await notifRes.json().catch(() => ({}));
+          if (notifData.success && notifData.notifications) {
+            write(KEYS.notifications, notifData.notifications);
+          }
+        }
+      }
 
     localStorage.setItem('mosh_db_connected', 'true');
   } catch (e) {

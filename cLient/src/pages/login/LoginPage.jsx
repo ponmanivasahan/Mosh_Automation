@@ -72,7 +72,12 @@ const LoginPage = () => {
         credentials: 'include'
       });
 
-      const data = await response.json();
+      if (response.status === 429) {
+        setError('Too many sign-in attempts. Please wait a moment and try again.');
+        return;
+      }
+
+      const data = await response.json().catch(() => ({}));
 
       if (response.ok && data.success && data.user) {
         completeUserLogin(data.user);
