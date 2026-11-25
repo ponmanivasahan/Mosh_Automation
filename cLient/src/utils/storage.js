@@ -101,8 +101,7 @@ export async function ensureInitialData() {
   initialDataPromise = (async () => {
     try {
       const prodRes = await fetch(`${API_URL}/api/products?t=${Date.now()}`, { 
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } 
+        cache: 'no-store'
       });
       if (!prodRes.ok) throw new Error('Products request failed');
       const prodData = await prodRes.json();
