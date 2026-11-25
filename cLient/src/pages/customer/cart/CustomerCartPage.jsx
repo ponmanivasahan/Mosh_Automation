@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import Tabs from '../../../components/ui/Tabs';
+import Pagination from '../../../components/ui/Pagination';
 import { useAuth } from '../../../utils/AuthContext';
 import {
   addNotification,
@@ -50,6 +51,8 @@ const CustomerCartPage = () => {
   const { session } = useAuth();
   const [cartItems, setCartItems] = useState(getCart());
   const [cartTab, setCartTab] = useState('cart');
+  const [ordersPage, setOrdersPage] = useState(1);
+  const ORDERS_PAGE_SIZE = 6;
   const [message, setMessage] = useState('');
   
   // Checkout & Payment Modal states
@@ -482,14 +485,14 @@ const CustomerCartPage = () => {
         addNotification({
           id: `not-${Date.now()}`,
           title: 'Order Cancelled',
-          message: `${session.name} cancelled order #${order.id} totaling ${formatCurrency(order.total)}.`,
+          message: `${session.name}${session.phone ? ` (${session.phone})` : ''} cancelled order for ${order.items?.[0]?.name || 'items'} totaling ${formatCurrency(order.total)}.`,
           createdAt: new Date().toISOString(),
           read: false,
           orderId: order.id
         });
         
         setSelectedOrder(null);
-        setMessage(`Order #${order.id} has been cancelled successfully.`);
+        setMessage(`Order for ${order.items?.[0]?.name || 'your items'} has been cancelled successfully.`);
       }
     );
   };
@@ -504,14 +507,14 @@ const CustomerCartPage = () => {
     addNotification({
       id: `not-${Date.now()}`,
       title: 'Order Completed (Delivered)',
-      message: `${session.name} marked order #${order.id} as delivered successfully.`,
+      message: `${session.name}${session.phone ? ` (${session.phone})` : ''} marked order for ${order.items?.[0]?.name || 'items'} as delivered successfully.`,
       createdAt: new Date().toISOString(),
       read: false,
       orderId: order.id
     });
 
     setSelectedOrder(null);
-    setMessage(`Order #${order.id} marked as Delivered! Thank you.`);
+    setMessage(`Order for ${order.items?.[0]?.name || 'your items'} marked as Delivered! Thank you.`);
   };
 
   return (
@@ -526,7 +529,7 @@ const CustomerCartPage = () => {
               animate={{ opacity: 1, y: 0, x: '-50%' }}
               exit={{ opacity: 0, y: -20, x: '-50%' }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="fixed top-6 left-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-xl bg-blue-600 text-white border-blue-500 font-bold text-sm"
+              className="fixed top-6 left-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl border bg-emerald-200 text-emerald-950 border-emerald-300 font-bold text-sm"
             >
               <CheckCircle size={20} />
               <span className="font-semibold text-sm">{message}</span>
@@ -572,7 +575,7 @@ const CustomerCartPage = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/customer/products')}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition"
                 >
                   Explore Products
                 </button>
@@ -589,77 +592,83 @@ const CustomerCartPage = () => {
             </div>
           ) : (
             <div className="cart-layout-grid">
-              {/* Left Side: Cart Items List */}
-              <div className="cart-left-section">
-                <div className="section-card-panel bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
-                  <div className="panel-header-row mb-4 flex items-center justify-between">
-                    <h3 className="text-base font-bold text-slate-800">
-                      Cart Items ({cartItems.length})
-                    </h3>
-                    <span className="shipping-banner text-xs font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1.5 border border-blue-200/60">
-                      <Truck size={14} />
-                      {priceDetails.subtotal > 3000 ? 'Free Shipping Active!' : `Add ₹${3000 - priceDetails.subtotal} more for Free Delivery`}
-                    </span>
-                  </div>
+              {/* Left Side: Cart Items Cards (no external wrapper box) */}
+              <div className="cart-left-section space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h3 className="text-lg font-bold text-slate-800">
+                    Cart Items ({cartItems.length})
+                  </h3>
+                  <span className="shipping-banner text-xs font-semibold text-blue-700 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1.5 border border-blue-200/60">
+                    <Truck size={14} />
+                    {priceDetails.subtotal > 3000 ? 'Free Shipping Active!' : `Add ₹${3000 - priceDetails.subtotal} more for Free Delivery`}
+                  </span>
+                </div>
 
-                  <div className="cart-items-divider-list divide-y divide-slate-100">
-                    {cartItems.map((item) => (
-                      <article className="cart-item-card py-4 flex gap-4 items-center justify-between" key={item.id}>
-                        <div className="item-img-container h-20 w-20 rounded-xl bg-slate-50 border border-slate-100 p-2 shrink-0 flex items-center justify-center">
-                          <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
-                        </div>
-                        
-                        <div className="item-details flex-1 min-w-0">
-                          <h4 className="item-name font-bold text-sm text-slate-900 truncate">{item.name}</h4>
-                          <p className="item-desc text-xs text-slate-500 line-clamp-1 mt-0.5">{item.description}</p>
-                          
-                          <div className="item-price-quantity-row flex items-center gap-4 mt-3">
-                            <span className="price-tag font-extrabold text-sm text-slate-900">{formatCurrency(item.unitPrice)}</span>
-                            
-                            <div className="quantity-control-group inline-flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white">
-                              <button
-                                type="button"
-                                onClick={() => updateQuantity(item.id, -1)}
-                                className="qty-btn p-1.5 hover:bg-slate-100 text-slate-600 transition"
-                              >
-                                <Minus size={12} />
-                              </button>
-                              <span className="qty-value px-3 text-xs font-bold text-slate-800">{item.quantity || 1}</span>
-                              <button
-                                type="button"
-                                onClick={() => updateQuantity(item.id, 1)}
-                                className="qty-btn p-1.5 hover:bg-slate-100 text-slate-600 transition"
-                              >
-                                <Plus size={12} />
-                              </button>
-                            </div>
+                <div className="space-y-3">
+                  {cartItems.map((item) => (
+                    <article
+                      className="border border-slate-200/90 rounded-2xl p-2.5 sm:p-5 bg-white hover:border-blue-300 transition-all flex gap-4 items-center justify-between"
+                      key={item.id}
+                    >
+                      <div className="h-20 w-20 rounded-xl bg-slate-50 border border-slate-100 p-2 shrink-0 flex items-center justify-center">
+                        <img src={item.image} alt={item.name} className="max-h-full max-w-full object-contain" />
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-sm text-slate-900 truncate">{item.name}</h4>
+                        <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{item.description}</p>
+
+                        <div className="flex items-center gap-4 mt-3 flex-wrap">
+                          <span className="font-extrabold text-sm text-slate-900">
+                            {formatCurrency(item.unitPrice || item.price || 0)}
+                          </span>
+
+                          <div className="inline-flex items-center border border-slate-200 rounded-lg overflow-hidden bg-white">
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="p-1.5 hover:bg-slate-100 text-slate-600 transition"
+                              aria-label="Decrease quantity"
+                            >
+                              <Minus size={12} />
+                            </button>
+                            <span className="px-3 text-xs font-bold text-slate-800">{item.quantity || 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => updateQuantity(item.id, 1)}
+                              className="p-1.5 hover:bg-slate-100 text-slate-600 transition"
+                              aria-label="Increase quantity"
+                            >
+                              <Plus size={12} />
+                            </button>
                           </div>
                         </div>
+                      </div>
 
-                        <button
-                          type="button"
-                          onClick={() => removeItem(item.id, item.name)}
-                          className="btn-item-remove p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition"
-                          title="Remove item"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </article>
-                    ))}
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id, item.name)}
+                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition shrink-0"
+                        title="Remove item"
+                        aria-label="Remove item"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </article>
+                  ))}
                 </div>
               </div>
 
             {/* Right Side: Price Details Card */}
             {cartItems.length > 0 && (
               <aside className="cart-right-sidebar">
-                <div className="price-details-card bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-4">
+                <div className="price-details-card bg-white border border-slate-200/80 rounded-2xl p-5 space-y-4">
                   <h3 className="sidebar-title text-base font-bold text-slate-900 pb-3 border-b border-slate-100">
                     Price Details
                   </h3>
                   <div className="price-breakdown-list space-y-2.5 text-xs">
                     <div className="price-row flex justify-between text-slate-600">
-                      <span>Price ({priceDetails.totalItems} items)</span>
+                      <span>Price ({priceDetails.totalItems} {priceDetails.totalItems === 1 ? 'item' : 'items'})</span>
                       <span className="font-semibold text-slate-800">{formatCurrency(priceDetails.subtotal)}</span>
                     </div>
                     <div className="price-row flex justify-between text-emerald-600 font-semibold">
@@ -668,29 +677,23 @@ const CustomerCartPage = () => {
                     </div>
                     <div className="price-row flex justify-between text-slate-600">
                       <span>Delivery Charges</span>
-                      <span className={priceDetails.shippingFee === 0 ? 'text-emerald-600 font-bold' : 'font-semibold text-slate-800'}>
-                        {priceDetails.shippingFee === 0 ? 'FREE' : formatCurrency(priceDetails.shippingFee)}
+                      <span className={priceDetails.deliveryCharges === 0 ? 'text-emerald-600 font-bold' : 'font-semibold text-slate-800'}>
+                        {priceDetails.deliveryCharges === 0 ? 'FREE' : formatCurrency(priceDetails.deliveryCharges)}
                       </span>
                     </div>
-                    {priceDetails.wireFee > 0 && (
-                      <div className="price-row flex justify-between text-slate-600">
-                        <span>Wire & Sensor Accessories</span>
-                        <span className="font-semibold text-slate-800">{formatCurrency(priceDetails.wireFee)}</span>
-                      </div>
-                    )}
                     <div className="price-total-row flex justify-between pt-3 border-t border-slate-200 text-sm font-extrabold text-slate-900">
                       <span>Total Amount</span>
-                      <span className="text-blue-700">{formatCurrency(priceDetails.grandTotal)}</span>
+                      <span className="text-blue-700">{formatCurrency(priceDetails.finalAmount)}</span>
                     </div>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => {
-                      trackBeginCheckout(cartItems, priceDetails.grandTotal);
+                      trackBeginCheckout(cartItems, priceDetails.finalAmount);
                       setShowCheckoutModal(true);
                     }}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-xs transition duration-200 flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl transition duration-200 flex items-center justify-center gap-2"
                   >
                     <span>Proceed to Checkout</span>
                     <ArrowRight size={16} />
@@ -714,51 +717,60 @@ const CustomerCartPage = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/customer/products')}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition"
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition"
                 >
                   Browse Products
                 </button>
               </div>
             </div>
           ) : (
-            <div className="order-history-view-container bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-5">
-              <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-bold text-slate-800">My Orders ({orders.length})</h3>
                   <p className="text-xs text-slate-400 mt-0.5">Real-time status tracking and tax receipts</p>
                 </div>
               </div>
 
-              <div className="orders-timeline-list space-y-4">
-                {orders.map((order) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+                {orders.slice((Math.min(ordersPage, Math.max(1, Math.ceil(orders.length / ORDERS_PAGE_SIZE))) - 1) * ORDERS_PAGE_SIZE, Math.min(ordersPage, Math.max(1, Math.ceil(orders.length / ORDERS_PAGE_SIZE))) * ORDERS_PAGE_SIZE).map((order) => (
                   <article
-                    className="order-history-card border border-slate-200/90 rounded-2xl p-5 hover:border-blue-300 hover:shadow-md transition-all duration-200 bg-white"
+                    className="border border-slate-200/90 rounded-2xl p-2.5 hover:border-blue-300 transition-all duration-200 bg-white flex flex-col justify-between h-full cursor-pointer"
                     key={order.id}
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <div className="order-history-top flex justify-between items-start flex-wrap gap-2">
-                      <div className="order-meta-info">
-                        <span className="order-id-label font-bold text-sm text-slate-900 block">Order #{order.id}</span>
-                        <span className="order-date-text text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                    <div className="flex justify-between items-start gap-2 pb-3 border-b border-slate-100">
+                      <div className="min-w-0">
+                        <span className="font-bold text-sm text-slate-900 block truncate">
+                          {order.items?.[0]?.name || 'Order'}
+                          {order.items?.length > 1 ? ` +${order.items.length - 1} more` : ''}
+                        </span>
+                        <span className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
                           <Calendar size={12} /> {formatDateTime(order.createdAt)}
                         </span>
                       </div>
-                      <span className={`order-status-badge text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-wider ${
-                        order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                        order.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
-                        order.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
-                      }`}>
+                      <span className={`shrink-0 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
+ order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+ order.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
+ order.status === 'Cancelled' ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+ }`}>
                         {order.paymentStatus === 'Paid' || order.status === 'Paid' ? 'Paid' : order.status === 'Processing' ? 'Payment Pending' : order.status}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3 py-4 overflow-x-auto pr-2">
+                    <div className="py-3 space-y-2.5 flex-1">
                       {order.items?.map((oItem, oIdx) => (
-                        <div key={oIdx} className="relative shrink-0 border border-slate-200 rounded-xl p-2 bg-slate-50 flex items-center justify-center">
-                          <img src={oItem.image} alt={oItem.name} className="w-12 h-12 object-contain" />
-                          <span className="absolute -top-1.5 -right-1.5 bg-slate-800 text-white text-[9px] h-4.5 w-4.5 rounded-full flex items-center justify-center font-bold">
-                            {oItem.quantity || 1}
-                          </span>
+                        <div key={oIdx} className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+                          <div className="relative shrink-0 border border-slate-200 rounded-lg p-1.5 bg-white flex items-center justify-center">
+                            <img src={oItem.image} alt={oItem.name} className="w-10 h-10 object-contain" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-slate-800 truncate">{oItem.name}</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                              Qty: {oItem.quantity || 1}
+                              {oItem.price ? ` · ${formatCurrency(oItem.price)}` : ''}
+                            </p>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -779,7 +791,7 @@ const CustomerCartPage = () => {
                               e.stopPropagation();
                               startRazorpayPayment(order);
                             }}
-                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-xs disabled:opacity-50"
+                            className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all disabled:opacity-50"
                           >
                             {paymentStatusState === 'initializing' && activePaymentOrder?.id === order.id ? 'Initializing...' : 'Pay Now'}
                           </button>
@@ -791,7 +803,7 @@ const CustomerCartPage = () => {
                               e.stopPropagation();
                               handleMarkDelivered(order);
                             }}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all animate-pulse shadow-xs"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all animate-pulse"
                           >
                             Mark Delivered
                           </button>
@@ -803,7 +815,7 @@ const CustomerCartPage = () => {
                                 e.stopPropagation();
                                 handleCancelOrder(order);
                               }}
-                              className="bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-rose-100 transition-all shadow-xs"
+                              className="bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold px-3.5 py-2 rounded-xl hover:bg-rose-100 transition-all"
                             >
                               Cancel
                             </button>
@@ -814,6 +826,12 @@ const CustomerCartPage = () => {
                   </article>
                 ))}
               </div>
+              <Pagination
+                currentPage={Math.min(ordersPage, Math.max(1, Math.ceil(orders.length / ORDERS_PAGE_SIZE)))}
+                totalItems={orders.length}
+                pageSize={ORDERS_PAGE_SIZE}
+                onPageChange={setOrdersPage}
+              />
             </div>
           )
         )}
@@ -822,13 +840,13 @@ const CustomerCartPage = () => {
       {/* Checkout Modal */}
       <AnimatePresence>
         {showCheckoutModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowCheckoutModal(false)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="fixed inset-0 !mt-0 bg-slate-900/60 backdrop-blur-sm"
             />
 
             <motion.div
@@ -836,7 +854,7 @@ const CustomerCartPage = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="relative z-10 w-full max-w-lg overflow-hidden rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 md:p-8"
+              className="relative z-10 w-full max-w-lg overflow-hidden rounded-3xl bg-white p-6 border border-slate-100 md:p-8"
             >
               <button
                 type="button"
@@ -870,7 +888,7 @@ const CustomerCartPage = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
                     <label htmlFor="checkout-phone" className="mb-1 text-xs font-semibold text-slate-700">Phone Number (Read-only)</label>
                     <input
@@ -895,7 +913,7 @@ const CustomerCartPage = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
                     <label htmlFor="checkout-address" className="mb-1 text-xs font-semibold text-slate-700">Delivering Address *</label>
                     <input
@@ -946,7 +964,7 @@ const CustomerCartPage = () => {
                     </button>
                     <button
                       type="submit"
-                      className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-200/50 hover:bg-blue-700 hover:shadow-blue-300/50 transition-all"
+                      className="rounded-2xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white -blue-200/50 hover:bg-blue-700 -blue-300/50 transition-all"
                     >
                       Proceed to Payment
                     </button>
@@ -961,19 +979,19 @@ const CustomerCartPage = () => {
       {/* UPI QR Payment Modal Screen */}
       <AnimatePresence>
         {activePaymentOrder && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="fixed inset-0 !mt-0 bg-slate-900/60 backdrop-blur-sm"
             />
 
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 flex flex-col items-center"
+              className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl bg-white p-6 border border-slate-100 flex flex-col items-center"
             >
               {/* Premium Header */}
               <div className="w-full flex items-center justify-between border-b pb-3 mb-4">
@@ -1006,11 +1024,11 @@ const CustomerCartPage = () => {
                   </div>
 
                   {/* QR Card Frame */}
-                  <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl flex flex-col items-center shadow-inner relative max-w-[240px] w-full">
+                  <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl flex flex-col items-center relative max-w-[240px] w-full">
                     <img 
                       src={qrImageUrl} 
                       alt="UPI QR Code" 
-                      className="w-full aspect-square object-contain bg-white p-2 rounded-lg border shadow-sm" 
+                      className="w-full aspect-square object-contain bg-white p-2 rounded-lg border" 
                     />
                     <span className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-2">Scan with Google Pay / PhonePe / Paytm</span>
                   </div>
@@ -1043,7 +1061,7 @@ const CustomerCartPage = () => {
 
                     <button
                       type="submit"
-                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg transition"
+                      className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition"
                     >
                       I have completed the payment
                     </button>
@@ -1079,7 +1097,7 @@ const CustomerCartPage = () => {
                   {/* Progress Bar */}
                   <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border">
                     <div 
-                      className="bg-gradient-to-r from-blue-500 to-emerald-500 h-full transition-all duration-500 rounded-full" 
+                      className="bg-blue-600 h-full transition-all duration-500 rounded-full" 
                       style={{ width: `${verificationProgress}%` }}
                     />
                   </div>
@@ -1113,7 +1131,7 @@ const CustomerCartPage = () => {
               {paymentStatusState === 'success' && (
                 <div className="w-full flex flex-col items-center justify-center py-4 px-1 space-y-4 text-center">
                   <div className="relative">
-                    <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center animate-bounce shadow-md">
+                    <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center animate-bounce">
                       <CheckCircle size={40} strokeWidth={2.5} />
                     </div>
                   </div>
@@ -1155,7 +1173,7 @@ const CustomerCartPage = () => {
                   <button
                     type="button"
                     onClick={() => setActivePaymentOrder(null)}
-                    className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-bold transition shadow-md"
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl text-xs font-bold transition"
                   >
                     View Order Details
                   </button>
@@ -1196,13 +1214,13 @@ const CustomerCartPage = () => {
       {/* Order Details Modal */}
       <AnimatePresence>
         {selectedOrder && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedOrder(null)}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="fixed inset-0 !mt-0 bg-slate-900/60 backdrop-blur-sm"
             />
 
             <motion.div
@@ -1210,7 +1228,7 @@ const CustomerCartPage = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="relative z-10 w-full max-w-xl overflow-hidden rounded-3xl bg-white p-6 shadow-2xl border border-slate-100 md:p-8"
+              className="relative z-10 w-full max-w-xl overflow-hidden rounded-3xl bg-white p-6 border border-slate-100 md:p-8"
             >
               <button
                 type="button"
@@ -1223,14 +1241,14 @@ const CustomerCartPage = () => {
               <div className="mb-6 flex items-start justify-between">
                 <div>
                   <span className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">Order Details</span>
-                  <h3 className="text-xl font-bold text-slate-900 leading-tight">Order #{selectedOrder.id}</h3>
+                  <h3 className="text-xl font-bold text-slate-900 leading-tight">Order Details</h3>
                   <p className="mt-1 text-xs text-slate-500">Ordered on {formatDateTime(selectedOrder.createdAt)}</p>
                 </div>
                 <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase ${
-                  selectedOrder.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' : 
-                  selectedOrder.status === 'Paid' ? 'bg-blue-50 text-blue-600' :
-                  selectedOrder.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
-                }`}>
+ selectedOrder.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' : 
+ selectedOrder.status === 'Paid' ? 'bg-blue-50 text-blue-600' :
+ selectedOrder.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'
+ }`}>
                   {selectedOrder.status}
                 </span>
               </div>
@@ -1302,7 +1320,7 @@ const CustomerCartPage = () => {
                     <button
                       type="button"
                       onClick={() => handleMarkDelivered(selectedOrder)}
-                      className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-200/50 hover:bg-emerald-700 transition-all animate-pulse"
+                      className="rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white -emerald-200/50 hover:bg-emerald-700 transition-all animate-pulse"
                     >
                       Delivered
                     </button>
@@ -1311,7 +1329,7 @@ const CustomerCartPage = () => {
                       <button
                         type="button"
                         onClick={() => handleCancelOrder(selectedOrder)}
-                        className="rounded-2xl bg-rose-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-rose-200/50 hover:bg-rose-700 transition-all"
+                        className="rounded-2xl bg-rose-600 px-5 py-3 text-sm font-bold text-white -rose-200/50 hover:bg-rose-700 transition-all"
                       >
                         Cancel Order
                       </button>
@@ -1325,14 +1343,14 @@ const CustomerCartPage = () => {
       </AnimatePresence>
       {/* Themed Confirmation & Alert Modal Overlay */}
       {confirmModal.isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 flex flex-col text-left space-y-4 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 !mt-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 border border-slate-100 flex flex-col text-left space-y-4 animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-lg font-extrabold text-slate-900 leading-tight">{confirmModal.title}</h3>
             <p className="text-xs text-slate-500 font-semibold leading-relaxed">{confirmModal.message}</p>
             <div className="flex gap-3 pt-2">
               <button
                 onClick={confirmModal.onConfirm}
-                className="flex-1 rounded-2xl bg-blue-700 px-4 py-3 text-xs font-bold text-white hover:bg-blue-700 shadow-md shadow-blue-600/10 transition"
+                className="flex-1 rounded-2xl bg-blue-700 px-4 py-3 text-xs font-bold text-white hover:bg-blue-700 -blue-600/10 transition"
               >
                 OK
               </button>

@@ -30,6 +30,7 @@ const queriesRoutes = require('./routes/queriesRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -188,6 +189,7 @@ app.use('/api/queries', queriesRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Secure static uploads directory & Dynamic Attachment Fallback
 const uploadDir = path.join(__dirname, '..', 'uploads');

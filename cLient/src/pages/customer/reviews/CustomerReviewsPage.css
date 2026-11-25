@@ -72,7 +72,7 @@
   grid-template-columns: 200px 1fr 180px;
   align-items: center;
   gap: 40px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow: none;
 }
 
 .cr-stats-left {
@@ -144,7 +144,7 @@
 }
 
 .cr-bar-fill {
-  background: #0f172a;
+  background: #2563eb;
   height: 100%;
   border-radius: 999px;
   transition: width 0.4s ease;
@@ -249,7 +249,7 @@
 
 .cr-select-pill:focus {
   border-color: #0080ff;
-  box-shadow: 0 0 0 3px rgba(0, 128, 255, 0.1);
+  box-shadow: none;
 }
 
 .cr-select-arrow {
@@ -272,7 +272,7 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 128, 255, 0.25);
+  box-shadow: none;
   transition: all 0.2s ease;
   outline: none;
 }
@@ -280,7 +280,7 @@
 .cr-btn-write-review:hover {
   background: #0066cc;
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 128, 255, 0.35);
+  box-shadow: none;
 }
 
 .cr-btn-write-review:active {
@@ -335,12 +335,12 @@
   display: flex;
   flex-direction: column;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow: none;
 }
 
 .cr-review-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
   border-color: #cbd5e1;
 }
 
@@ -540,7 +540,7 @@
   background: #0080ff;
   color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(0, 128, 255, 0.3);
+  box-shadow: none;
 }
 
 .cr-page-num-btn:hover:not(.active) {

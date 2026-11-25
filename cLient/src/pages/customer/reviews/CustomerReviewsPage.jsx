@@ -253,7 +253,7 @@ const CustomerReviewsPage = () => {
               animate={{ opacity: 1, y: 0, x: '-50%' }}
               exit={{ opacity: 0, y: -20, x: '-50%' }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="fixed top-6 left-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-xl bg-blue-600 text-white border-blue-500 text-sm font-bold"
+              className="fixed top-6 left-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl border bg-emerald-200 text-emerald-950 border-emerald-300 text-sm font-bold"
             >
               <CheckCircle size={18} />
               <span>{feedback}</span>
@@ -537,12 +537,12 @@ const CustomerReviewsPage = () => {
         {/* Custom Confirmation Modal for Deletion */}
         <AnimatePresence>
           {deleteTargetId && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
+            <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-xs">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full mx-4 p-6 shadow-2xl space-y-5 text-center relative"
+                className="bg-white border border-slate-200 rounded-3xl max-w-sm w-full mx-4 p-6 space-y-5 text-center relative"
               >
                 <button
                   onClick={() => setDeleteTargetId(null)}
@@ -572,7 +572,7 @@ const CustomerReviewsPage = () => {
                   </button>
                   <button
                     onClick={confirmDelete}
-                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition shadow-sm shadow-red-600/10"
+                    className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold transition -red-600/10"
                   >
                     Delete
                   </button>

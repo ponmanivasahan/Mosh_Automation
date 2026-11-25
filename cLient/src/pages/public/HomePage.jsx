@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Zap, 
@@ -20,12 +20,35 @@ import {
 } from 'lucide-react';
 import PublicNavbar from '../../components/public/PublicNavbar';
 import PublicFooter from '../../components/public/PublicFooter';
+import HomeSignInModal from '../../components/public/HomeSignInModal';
+import { useAuth } from '../../utils/AuthContext';
 import { defaultProducts } from '../../data/defaults';
 import { productSlugMap, productTechnicalData } from '../../data/productSlugs';
 import { setSEO, getOrganizationSchema, getWebSiteSchema, getFAQSchema } from '../../utils/seoHelper';
 import './HomePage.css';
 
 const HomePage = () => {
+  const { session, authLoading } = useAuth();
+  const [showSignInPopup, setShowSignInPopup] = useState(false);
+
+  useEffect(() => {
+    if (authLoading || session) return;
+    if (sessionStorage.getItem('mosh_home_signin_dismissed') === '1') return;
+
+    const timer = setTimeout(() => {
+      setShowSignInPopup(true);
+    }, 10000);
+
+    return () => clearTimeout(timer);
+  }, [authLoading, session]);
+
+  const handleCloseSignInPopup = () => {
+    setShowSignInPopup(false);
+    try {
+      sessionStorage.setItem('mosh_home_signin_dismissed', '1');
+    } catch {}
+  };
+
   const homeFaqs = [
     {
       question: 'What is an automatic water level controller and how does it work?',
@@ -450,6 +473,8 @@ const HomePage = () => {
       </main>
 
       <PublicFooter />
+
+      <HomeSignInModal isOpen={showSignInPopup} onClose={handleCloseSignInPopup} />
     </div>
   );
 };

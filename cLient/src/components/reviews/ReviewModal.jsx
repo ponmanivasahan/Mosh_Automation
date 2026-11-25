@@ -38,12 +38,12 @@ const ReviewModal = ({ open, onClose, onSave, initial }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
+    <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-xs">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
-        className="bg-white rounded-2xl max-w-lg w-full mx-4 p-6 shadow-xl relative"
+        className="bg-white rounded-2xl max-w-lg w-full mx-4 p-6 relative"
       >
         <div className="flex items-start justify-between pb-3 border-b border-slate-100">
           <h3 className="text-base font-bold text-slate-900">{initial ? 'Update your review' : 'Write a review'}</h3>
@@ -95,7 +95,7 @@ const ReviewModal = ({ open, onClose, onSave, initial }) => {
             </button>
             <button 
               type="submit" 
-              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 text-xs font-bold transition shadow-sm shadow-blue-500/20"
+              className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 text-xs font-bold transition -blue-500/20"
             >
               {initial ? 'Update Review' : 'Submit Review'}
             </button>

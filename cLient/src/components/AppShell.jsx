@@ -21,12 +21,14 @@ import {
   ChevronRight,
   ShieldCheck,
   User,
-  MoreHorizontal
+  MoreHorizontal,
+  Bot
 } from 'lucide-react';
 import { useAuth } from '../utils/AuthContext';
 import { useEffect, useState } from 'react';
 import { getCart, getNotifications } from '../utils/storage';
 import { customerLinks as defaultCustomerLinks, adminLinks as defaultAdminLinks } from '../utils/customerLinks';
+import FloatingChatWidget from './chat/FloatingChatWidget';
 
 const iconMap = {
   Dashboard: LayoutDashboard,
@@ -62,7 +64,9 @@ const iconMap = {
   'Admin Settings': Settings,
   'Portal Settings': Settings,
   Help: LifeBuoy,
-  'Help Center': LifeBuoy
+  'Help Center': LifeBuoy,
+  Chat: Bot,
+  'AI Assistant': Bot
 };
 
 const AppShell = ({ title, links, children }) => {
@@ -78,6 +82,7 @@ const AppShell = ({ title, links, children }) => {
     }
   });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarHovered, setIsSidebarHovered] = useState(false);
 
   const roleLabel = session?.role === 'admin' ? 'Admin Portal' : 'Customer Portal';
   const effectiveLinks = links || (session?.role === 'admin' ? defaultAdminLinks : defaultCustomerLinks);
@@ -121,7 +126,7 @@ const AppShell = ({ title, links, children }) => {
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
       
       {/* ─── Mobile Top Header ─── */}
-      <header className="lg:hidden flex items-center justify-between bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 sticky top-0 z-40 shadow-xs">
+      <header className="lg:hidden flex items-center justify-between bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 sticky top-0 z-40">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setIsSidebarOpen(true)}
@@ -149,7 +154,7 @@ const AppShell = ({ title, links, children }) => {
             >
               <Bell size={20} />
               {unreadNotifications > 0 && (
-                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white shadow-xs">
+                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white">
                   {unreadNotifications > 9 ? '9+' : unreadNotifications}
                 </span>
               )}
@@ -162,7 +167,7 @@ const AppShell = ({ title, links, children }) => {
             >
               <ShoppingCart size={20} />
               {cartCount > 0 && (
-                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white shadow-xs">
+                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white">
                   {cartCount}
                 </span>
               )}
@@ -191,18 +196,26 @@ const AppShell = ({ title, links, children }) => {
 
       {/* ─── Desktop Left Navigation Sidebar ─── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200/80 shadow-[1px_0_12px_rgba(0,0,0,0.02)] transition-transform duration-300 ease-in-out flex flex-col justify-between ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
+        onMouseEnter={() => setIsSidebarHovered(true)}
+        onMouseLeave={() => setIsSidebarHovered(false)}
+        className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-200/80 transition-all duration-300 ease-out flex flex-col justify-between overflow-hidden ${
+ isSidebarOpen ? 'translate-x-0 w-64 ' : '-translate-x-full w-64'
+ } lg:translate-x-0 ${
+ isSidebarHovered ? 'lg:w-64' : 'lg:w-[58px]'
+ }`}
       >
         <div className="flex flex-col h-full">
           {/* Brand Header */}
-          <div className="px-5 py-4.5 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center p-1 shadow-xs">
+          <div className="px-2.5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="h-9 w-9 shrink-0 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center p-1">
                 <img src="/logo background.png" alt="Mosh Logo" className="h-full w-full object-contain" />
               </div>
-              <div>
+              <div
+                className={`whitespace-nowrap transition-all duration-200 ${
+ isSidebarHovered ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0 lg:overflow-hidden'
+ }`}
+              >
                 <p className="font-extrabold text-sm tracking-wide text-slate-900 leading-tight">MOSH</p>
                 <p className="text-[10px] font-bold tracking-widest text-blue-700 uppercase">Automation</p>
               </div>
@@ -219,7 +232,7 @@ const AppShell = ({ title, links, children }) => {
           </div>
 
           {/* Navigation Links List */}
-          <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto no-scrollbar" aria-label="Sidebar navigation">
+          <nav className="flex-1 px-2 pt-5 pb-3 space-y-1.5 overflow-y-auto overflow-x-hidden no-scrollbar" aria-label="Sidebar navigation">
             {effectiveLinks.map((link) => {
               const Icon = iconMap[link.label] || LayoutDashboard;
               const isCartLink = link.to.includes('cart');
@@ -229,11 +242,12 @@ const AppShell = ({ title, links, children }) => {
                 <NavLink
                   key={link.to}
                   to={link.to}
+                  title={!isSidebarHovered ? link.label : undefined}
                   onClick={() => setIsSidebarOpen(false)}
                   className={({ isActive }) =>
-                    `group relative flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
+                    `group relative flex items-center justify-between px-2.5 py-2 rounded-xl text-xs font-semibold transition-all duration-150 ${
                       isActive
-                        ? 'bg-blue-50 text-blue-900 border border-blue-200/80 shadow-xs font-bold'
+                        ? 'bg-blue-50 text-blue-900 border border-blue-200/80 font-bold'
                         : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900'
                     }`
                   }
@@ -242,22 +256,40 @@ const AppShell = ({ title, links, children }) => {
                     <>
                       <div className="flex items-center gap-3 min-w-0">
                         <Icon
-                          className={`h-4.5 w-4.5 shrink-0 transition-colors ${
-                            isActive ? 'text-blue-700' : 'text-slate-400 group-hover:text-slate-600'
-                          }`}
+                          className={`h-4 w-4 shrink-0 transition-colors ${
+ isActive ? 'text-blue-700' : 'text-slate-400 group-hover:text-slate-600'
+ }`}
                         />
-                        <span className="truncate">{link.label}</span>
+                        <span
+                          className={`whitespace-nowrap truncate transition-all duration-200 ${
+ isSidebarHovered ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0 lg:overflow-hidden'
+ }`}
+                        >
+                          {link.label}
+                        </span>
                       </div>
 
                       {/* Dynamic item badges */}
                       {isCartLink && cartCount > 0 && (
-                        <span className="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white min-w-4.5 shadow-xs">
+                        <span
+                          className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold bg-blue-600 text-white transition-all ${
+ isSidebarHovered
+ ? 'ml-auto px-1.5 py-0.5 min-w-4.5'
+ : 'lg:absolute lg:top-1.5 lg:right-1.5 lg:h-2 lg:w-2 lg:p-0 lg:text-[0px] ml-auto px-1.5 py-0.5 min-w-4.5'
+ }`}
+                        >
                           {cartCount}
                         </span>
                       )}
 
                       {isNotifLink && unreadNotifications > 0 && (
-                        <span className="ml-auto inline-flex items-center justify-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500 text-white min-w-4.5 shadow-xs">
+                        <span
+                          className={`inline-flex items-center justify-center rounded-full text-[10px] font-bold bg-rose-500 text-white transition-all ${
+ isSidebarHovered
+ ? 'ml-auto px-1.5 py-0.5 min-w-4.5'
+ : 'lg:absolute lg:top-1.5 lg:right-1.5 lg:h-2 lg:w-2 lg:p-0 lg:text-[0px] ml-auto px-1.5 py-0.5 min-w-4.5'
+ }`}
+                        >
                           {unreadNotifications > 9 ? '9+' : unreadNotifications}
                         </span>
                       )}
@@ -269,15 +301,19 @@ const AppShell = ({ title, links, children }) => {
           </nav>
 
           {/* User Profile Footer */}
-          <div className="p-3 border-t border-slate-100 bg-white space-y-2">
-            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between gap-2.5">
+          <div className="p-2 border-t border-slate-100 bg-white space-y-2">
+            <div className="p-1.5 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-between gap-2 overflow-hidden">
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 text-white shadow-xs ${
-                  session?.role === 'admin' ? 'bg-indigo-600' : 'bg-blue-600'
-                }`}>
+                <div className={`h-8 w-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 text-white ${
+ session?.role === 'admin' ? 'bg-indigo-600' : 'bg-blue-600'
+ }`}>
                   {session?.name ? session.name[0].toUpperCase() : 'U'}
                 </div>
-                <div className="min-w-0">
+                <div
+                  className={`min-w-0 whitespace-nowrap transition-all duration-200 ${
+ isSidebarHovered ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0 lg:overflow-hidden'
+ }`}
+                >
                   <p className="text-xs font-bold text-slate-800 truncate leading-tight">
                     {session?.name || 'Authorized User'}
                   </p>
@@ -290,7 +326,9 @@ const AppShell = ({ title, links, children }) => {
               <button
                 type="button"
                 onClick={logout}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                className={`p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all shrink-0 ${
+ isSidebarHovered ? 'lg:opacity-100 lg:w-auto' : 'lg:opacity-0 lg:w-0 lg:p-0 lg:overflow-hidden'
+ }`}
                 title="Sign Out"
                 aria-label="Sign Out"
               >
@@ -300,14 +338,14 @@ const AppShell = ({ title, links, children }) => {
           </div>
         </div>
       </aside>
-      <div className="lg:ml-64 flex flex-col min-h-screen">
+      <div className="lg:ml-[58px] flex flex-col min-h-screen">
         {/* Page Content Body */}
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 pb-24 lg:pb-12 max-w-7xl w-full mx-auto">
+        <main className="flex-1 px-3 sm:px-4 lg:px-5 py-4 pb-24 lg:pb-8 w-full">
           {children}
         </main>
       </div>
       {/* ─── Mobile Bottom Navigation Bar ─── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-3 py-1.5 flex items-center justify-around shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 px-3 py-1.5 flex items-center justify-around">
         {effectiveLinks.slice(0, 4).map((link) => {
           const Icon = iconMap[link.label] || LayoutDashboard;
           return (
@@ -336,6 +374,9 @@ const AppShell = ({ title, links, children }) => {
           <span className="leading-tight">More</span>
         </button>
       </nav>
+
+      {/* Floating Animated AI Chat Icon for Customers */}
+      {session?.role !== 'admin' && <FloatingChatWidget />}
     </div>
   );
 };

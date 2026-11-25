@@ -2,13 +2,17 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Trash2, CheckCircle, Reply, Check, AlertCircle, X } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import Pagination from '../../../components/ui/Pagination';
 import { adminLinks } from '../../../utils/customerLinks';
 import { getReviews, updateReview, deleteReview } from '../../../utils/storage';
 import { formatDateTime } from '../../../utils/format';
 import { API_URL } from '../../../utils/api';
 
+const PAGE_SIZE = 6;
+
 const AdminReviewsPage = () => {
   const [reviews, setReviews] = useState(() => getReviews());
+  const [currentPage, setCurrentPage] = useState(1);
   const [replyText, setReplyText] = useState({});
   const [replyingId, setReplyingId] = useState('');
   const [deletingId, setDeletingId] = useState('');
@@ -92,37 +96,38 @@ const AdminReviewsPage = () => {
 
   return (
     <AppShell title="Customer Reviews Manager" links={adminLinks}>
-      <div className="max-w-6xl mx-auto space-y-6 pb-16">
+      <div className="space-y-6 pb-16">
         
         {/* Toast alerts */}
         {toast && (
-          <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border backdrop-blur-xl ${
-            toast.type === 'success' ? 'bg-blue-600 text-white border-blue-500' : 'bg-rose-600 text-white border-rose-500'
+          <div className={`fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl border ${
+            toast.type === 'success' ? 'bg-emerald-200 text-emerald-950 border-emerald-300' : 'bg-red-200 text-red-950 border-red-300'
           }`}>
             {toast.type === 'success' ? <Check size={20} /> : <AlertCircle size={20} />}
             <span className="font-semibold text-sm">{toast.message}</span>
           </div>
         )}
 
-        <div className="bg-white border border-slate-200/90 p-6 rounded-2xl space-y-6 max-h-[78vh] overflow-y-auto overflow-x-hidden shadow-xs">
-          <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+        <div className="space-y-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Customer Feedback & Reviews</h2>
+              <h2 className="text-xl font-extrabold text-slate-900">Customer Feedback & Reviews</h2>
               <p className="text-xs text-slate-500 mt-1">Manage ratings, reply to customer inquiries, and highlight key reviews on the storefront.</p>
             </div>
-            <span className="text-xs bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-full font-bold shadow-xs text-slate-700">
+            <span className="text-xs bg-white border border-slate-200 px-3.5 py-1.5 rounded-full font-bold text-slate-700 shrink-0">
               {reviews.length} Total Reviews
             </span>
           </div>
 
           {!reviews.length ? (
-            <div className="text-center py-16 bg-white border rounded-lg p-6">
+            <div className="text-center py-16 bg-white border border-slate-200 rounded-2xl p-6">
               <p className="text-xs text-slate-400 italic">No reviews submitted by customers yet.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6">
-              {reviews.map((rev) => (
-                <article key={rev.id} className="p-5 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4 flex flex-col justify-between">
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+                {reviews.slice((Math.min(currentPage, Math.max(1, Math.ceil(reviews.length / PAGE_SIZE))) - 1) * PAGE_SIZE, Math.min(currentPage, Math.max(1, Math.ceil(reviews.length / PAGE_SIZE))) * PAGE_SIZE).map((rev) => (
+                <article key={rev.id} className="p-2.5 bg-white border border-slate-200/90 rounded-2xl hover:border-blue-300 transition-all space-y-4 flex flex-col justify-between h-full">
                   <div>
                     {/* Header */}
                     <div className="flex justify-between items-start gap-4 border-b border-slate-100 pb-3">
@@ -192,10 +197,10 @@ const AdminReviewsPage = () => {
                     <button
                       onClick={() => handleToggleFeatured(rev)}
                       className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border transition ${
-                        rev.featured
-                          ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-                      }`}
+ rev.featured
+ ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+ : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+ }`}
                     >
                       {rev.featured ? 'Featured Highlighted' : 'Mark as Featured'}
                     </button>
@@ -219,7 +224,14 @@ const AdminReviewsPage = () => {
                   </div>
                 </article>
               ))}
-            </div>
+              </div>
+              <Pagination
+                currentPage={Math.min(currentPage, Math.max(1, Math.ceil(reviews.length / PAGE_SIZE)))}
+                totalItems={reviews.length}
+                pageSize={PAGE_SIZE}
+                onPageChange={setCurrentPage}
+              />
+            </>
           )}
         </div>
       </div>
@@ -227,12 +239,12 @@ const AdminReviewsPage = () => {
       {/* Delete Confirmation Modal Overlay */}
       <AnimatePresence>
         {deletingId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-lg max-w-sm w-full p-6 shadow-2xl border flex flex-col space-y-4"
+              className="bg-white rounded-lg max-w-sm w-full p-6 border flex flex-col space-y-4"
             >
               <div className="flex items-start justify-between">
                 <h3 className="text-base font-bold text-slate-800">Confirm Deletion</h3>

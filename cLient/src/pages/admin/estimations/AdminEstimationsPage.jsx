@@ -198,13 +198,13 @@ const AdminEstimationsPage = () => {
 
   return (
     <AppShell title="Estimation Calculator" links={adminLinks}>
-      <div className="max-w-7xl mx-auto space-y-8 pb-16">
+      <div className="space-y-8 pb-16">
         <header className="flex justify-between items-center flex-wrap-mobile">
           <div>
             <h2 className="text-xl font-bold text-slate-800">Admin Estimation Generator</h2>
             <p className="text-xs text-slate-500 mt-1">Configure smart water level controllers and compute exact billing parameters from database fields.</p>
           </div>
-          <div className="flex items-center gap-2 bg-white text-blue-700 px-4 py-2 rounded-xl border shadow-sm">
+          <div className="flex items-center gap-2 bg-white text-blue-700 px-4 py-2 rounded-xl border">
             <RefreshCw size={14} className="text-blue-600" />
             <strong className="text-xs font-bold">Live Catalog Connected</strong>
           </div>
@@ -212,7 +212,7 @@ const AdminEstimationsPage = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column: Selector & Details */}
-          <div className="lg:col-span-4 bg-white border border-slate-200/90 p-6 rounded-2xl space-y-6 shadow-xs">
+          <div className="lg:col-span-4 bg-white border border-slate-200/90 p-6 rounded-2xl space-y-6">
             <div>
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                 <Package size={16} className="text-blue-600" />
@@ -234,7 +234,7 @@ const AdminEstimationsPage = () => {
               />
 
               {selectedProduct && (
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-4 shadow-xs">
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-4">
                   <div className="h-44 bg-white rounded-lg p-3 border border-slate-100 flex items-center justify-center">
                     <img src={selectedProduct.image} alt={selectedProduct.name} className="max-h-full max-w-full object-contain" />
                   </div>
@@ -264,7 +264,7 @@ const AdminEstimationsPage = () => {
           </div>
 
           {/* Right Column: Calculator Configuration & Invoice */}
-          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white border border-slate-200/90 p-6 rounded-2xl shadow-xs">
+          <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6 bg-white border border-slate-200/90 p-6 rounded-2xl">
             {/* Config Fields */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2 border-b pb-2">
@@ -326,7 +326,7 @@ const AdminEstimationsPage = () => {
 
             {/* Calculations Breakdown */}
             {calculations && (
-              <div className="bg-white border rounded-lg p-5 flex flex-col justify-between shadow-sm space-y-4">
+              <div className="bg-white border rounded-lg p-5 flex flex-col justify-between space-y-4">
                 <div>
                   <div className="flex justify-between items-center border-b pb-2">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -471,7 +471,7 @@ const AdminEstimationsPage = () => {
                         estimationNumber: 'EST-NEW'
                       }} />}
                       fileName={`Estimation_${customerName || 'New'}.pdf`}
-                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow transition cursor-pointer"
+                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
                     >
                       {({ loading }) => (
                         <>
@@ -480,7 +480,7 @@ const AdminEstimationsPage = () => {
                       )}
                     </PDFDownloadLink>
                   ) : (
-                    <button disabled className="text-xs bg-slate-400 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 shadow cursor-not-allowed">
+                    <button disabled className="text-xs bg-slate-400 text-white font-bold py-1.5 px-3 rounded-lg flex items-center gap-1.5 cursor-not-allowed">
                       <Download size={13} /> PDF
                     </button>
                   )}
@@ -492,7 +492,7 @@ const AdminEstimationsPage = () => {
         </div>
 
         {/* Customer Details Form at the Bottom */}
-        <div className="mt-8 bg-slate-100 border border-slate-200/80 p-6 rounded-lg mb-8 shadow-sm">
+        <div className="mt-8 bg-slate-100 border border-slate-200/80 p-6 rounded-lg mb-8">
           <h3 className="text-base font-bold text-slate-800 flex items-center gap-2 mb-6 border-b pb-3">
             <ClipboardList size={18} className="text-blue-600" />
             Customer Details for Estimation (Optional)
@@ -500,27 +500,27 @@ const AdminEstimationsPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <label className="block text-sm font-bold text-slate-700">
               Customer Name
-              <input type="text" placeholder="Customer Name" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+              <input type="text" placeholder="Customer Name" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold" />
             </label>
             <label className="block text-sm font-bold text-slate-700">
               Address
-              <input type="text" placeholder="Full Address" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+              <input type="text" placeholder="Full Address" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold" />
             </label>
             <label className="block text-sm font-bold text-slate-700">
               Mobile No
-              <input type="text" placeholder="Mobile No" value={customerMobile} onChange={e => setCustomerMobile(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+              <input type="text" placeholder="Mobile No" value={customerMobile} onChange={e => setCustomerMobile(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold" />
             </label>
             <label className="block text-sm font-bold text-slate-700">
               GSTIN No
-              <input type="text" placeholder="GSTIN Number" value={customerGstin} onChange={e => setCustomerGstin(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+              <input type="text" placeholder="GSTIN Number" value={customerGstin} onChange={e => setCustomerGstin(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold" />
             </label>
             <label className="block text-sm font-bold text-slate-700">
               State Name
-              <input type="text" placeholder="State Name" value={customerState} onChange={e => setCustomerState(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+              <input type="text" placeholder="State Name" value={customerState} onChange={e => setCustomerState(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold" />
             </label>
             <label className="block text-sm font-bold text-slate-700">
               State Code
-              <input type="text" placeholder="State Code" value={customerStateCode} onChange={e => setCustomerStateCode(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold shadow-sm" />
+              <input type="text" placeholder="State Code" value={customerStateCode} onChange={e => setCustomerStateCode(e.target.value)} className="w-full text-sm rounded-lg border border-slate-200 bg-white px-3 py-2.5 outline-none mt-1.5 font-bold" />
             </label>
           </div>
         </div>

@@ -4,7 +4,7 @@ import CustomSelect from '../CustomSelect';
 
 const ProductsToolbar = ({ filters, onChange, categories }) => {
   return (
-    <div className="w-full bg-white rounded-2xl p-3 sm:p-4 shadow-xs border border-slate-200/80 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+    <div className="w-full bg-white rounded-2xl p-3 sm:p-4 border border-slate-200/80 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
       <div className="flex items-center gap-2 flex-1 border border-slate-200 rounded-xl px-3 py-2 bg-slate-50 focus-within:bg-white focus-within:border-blue-500 transition-colors">
         <Search className="h-4 w-4 text-slate-400 shrink-0" />
         <input

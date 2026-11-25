@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import Tabs from '../../../components/ui/Tabs';
+import Pagination from '../../../components/ui/Pagination';
 import { useAuth } from '../../../utils/AuthContext';
 import { getProducts, addEstimation, updateEstimation, addNotification } from '../../../utils/storage';
 import { openPdfBase64, downloadPdf } from '../../../utils/pdfHelper';
@@ -30,6 +31,8 @@ import { API_URL } from '../../../utils/api';
 import { trackEnquirySubmit } from '../../../utils/analytics';
 import { productTechnicalData } from '../../../data/productSlugs';
 import './CustomerQueryPage.css';
+
+const PAGE_SIZE = 6;
 
 const CustomerQueryPage = () => {
   const { session } = useAuth();
@@ -49,6 +52,7 @@ const CustomerQueryPage = () => {
   const [queries, setQueries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Edit Query State
   const [editingQuery, setEditingQuery] = useState(null);
@@ -253,8 +257,8 @@ const CustomerQueryPage = () => {
               animate={{ opacity: 1, y: 0, x: '-50%' }}
               exit={{ opacity: 0, y: -20, x: '-50%' }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              className={`fixed top-6 left-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-xl text-sm font-bold text-white ${
-                toast.type === 'success' ? 'bg-blue-600 border-blue-500' : 'bg-red-600 border-red-500'
+              className={`fixed top-6 left-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl border text-sm font-bold ${
+                toast.type === 'success' ? 'bg-emerald-200 text-emerald-950 border-emerald-300' : 'bg-red-200 text-red-950 border-red-300'
               }`}
             >
               {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
@@ -463,7 +467,7 @@ const CustomerQueryPage = () => {
             </div>
 
             <div className="cq-queries-grid">
-              {filteredQueries.map((query) => {
+              {filteredQueries.slice((Math.min(currentPage, Math.max(1, Math.ceil(filteredQueries.length / PAGE_SIZE))) - 1) * PAGE_SIZE, Math.min(currentPage, Math.max(1, Math.ceil(filteredQueries.length / PAGE_SIZE))) * PAGE_SIZE).map((query) => {
                 const badge = getStatusBadge(query.stage);
                 const dispDate = query.createdAt
                   ? new Date(query.createdAt).toLocaleDateString('en-IN', {
@@ -571,18 +575,24 @@ const CustomerQueryPage = () => {
                 );
               })}
             </div>
+            <Pagination
+              currentPage={Math.min(currentPage, Math.max(1, Math.ceil(filteredQueries.length / PAGE_SIZE)))}
+              totalItems={filteredQueries.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
           </div>
         )}
 
         {/* Edit Query Modal */}
         <AnimatePresence>
           {editingQuery && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs">
+            <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-xs">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full mx-4 p-6 shadow-2xl relative"
+                className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full mx-4 p-6 relative"
               >
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                   <h3 className="text-base font-bold text-slate-900">Update Query</h3>
@@ -636,7 +646,7 @@ const CustomerQueryPage = () => {
                   <button
                     type="button"
                     onClick={handleSaveEdit}
-                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition"
                   >
                     Save Changes
                   </button>
@@ -648,12 +658,12 @@ const CustomerQueryPage = () => {
         {/* View Query Details & Attachments Modal */}
         <AnimatePresence>
           {viewingQuery && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
+            <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white border border-slate-200 rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl relative max-h-[90vh] overflow-y-auto"
+                className="bg-white border border-slate-200 rounded-3xl max-w-xl w-full p-6 sm:p-7 relative max-h-[90vh] overflow-y-auto"
               >
                 {/* Modal Header */}
                 <div className="flex items-start justify-between pb-4 border-b border-slate-100">
@@ -738,7 +748,7 @@ const CustomerQueryPage = () => {
                       Official Quotation & Attachments
                     </label>
                     {viewingQuery.attachmentUrl ? (
-                      <div className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+                      <div className="p-4 rounded-2xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                             <FileText size={20} />
@@ -773,7 +783,7 @@ const CustomerQueryPage = () => {
                                 : `${API_URL}${viewingQuery.attachmentUrl.startsWith('/') ? '' : '/'}${viewingQuery.attachmentUrl}`;
                               downloadPdf(targetUrl, `Quotation-${viewingQuery.id}.pdf`);
                             }}
-                            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs"
+                            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 transition"
                           >
                             <Download size={13} />
                             <span>Download</span>
@@ -793,7 +803,7 @@ const CustomerQueryPage = () => {
                   <button
                     type="button"
                     onClick={() => setViewingQuery(null)}
-                    className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition"
                   >
                     Close
                   </button>

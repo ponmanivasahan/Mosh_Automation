@@ -35,7 +35,7 @@ const CustomerSuccessStoriesPage = () => {
 
         <div className="story-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {stories.map((story) => (
-            <article key={story.id} className="story-card bg-white border border-slate-200 p-5 rounded-2xl shadow-xs flex flex-col justify-between hover:shadow-md transition">
+            <article key={story.id} className="story-card bg-white border border-slate-200 p-5 rounded-2xl flex flex-col justify-between transition">
               <div>
                 <img className="story-image w-full h-48 object-cover rounded-xl border border-slate-100" src={story.image} alt={story.title} />
                 <div className="story-body mt-4 space-y-2">

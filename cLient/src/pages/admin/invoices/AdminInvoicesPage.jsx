@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, CheckCircle, Search, FileText, Download, X, Eye } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import Tabs from '../../../components/ui/Tabs';
+import Pagination from '../../../components/ui/Pagination';
 import CustomSelect from '../../../components/CustomSelect';
 import { adminLinks } from '../../../utils/customerLinks';
 import { getInvoices, addInvoice, deleteInvoice, getProducts } from '../../../utils/storage';
@@ -20,11 +21,14 @@ const emptyItem = {
   amount: 0
 };
 
+const PAGE_SIZE = 10;
+
 const AdminInvoicesPage = () => {
   const [invoices, setInvoices] = useState([]);
   const [products, setProducts] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
   const [message, setMessage] = useState('');
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -203,14 +207,14 @@ const AdminInvoicesPage = () => {
 
   return (
     <AppShell title="Billing & Invoices" links={adminLinks}>
-      <div className="max-w-7xl mx-auto space-y-8 pb-16">
+      <div className="space-y-8 pb-16">
         <AnimatePresence>
           {message && (
             <motion.div
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl shadow-xl border backdrop-blur-xl bg-blue-600 text-white border-blue-500 font-bold text-xs"
+              className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-xl border bg-emerald-200 text-emerald-950 border-emerald-300 font-bold text-xs"
             >
               <CheckCircle size={16} />
               <span>{message}</span>
@@ -218,7 +222,7 @@ const AdminInvoicesPage = () => {
           )}
         </AnimatePresence>
 
-        <article className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs">
+        <article className="bg-white p-6 rounded-2xl border border-slate-200/90">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-xl font-bold text-slate-900">Billing & GST Invoices</h2>
@@ -248,14 +252,14 @@ const AdminInvoicesPage = () => {
 
               <button
                 onClick={() => setShowAddModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 rounded-xl shadow-xs transition flex items-center gap-1.5"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-4 rounded-xl transition flex items-center gap-1.5"
               >
                 <Plus size={14} /> Create Invoice
               </button>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm overflow-x-auto">
+          <div className="bg-white rounded-lg border border-slate-200 overflow-hidden overflow-x-auto">
             <table className="w-full text-left text-xs whitespace-nowrap">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-bold text-[10px]">
                 <tr>
@@ -268,7 +272,7 @@ const AdminInvoicesPage = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredInvoices.map((inv) => {
+                {filteredInvoices.slice((Math.min(currentPage, Math.max(1, Math.ceil(filteredInvoices.length / PAGE_SIZE))) - 1) * PAGE_SIZE, Math.min(currentPage, Math.max(1, Math.ceil(filteredInvoices.length / PAGE_SIZE))) * PAGE_SIZE).map((inv) => {
                   const uiInv = {
                     customerName: inv.customer_name,
                     customerAddress: inv.customer_address,
@@ -328,14 +332,20 @@ const AdminInvoicesPage = () => {
               </tbody>
             </table>
           </div>
+          <Pagination
+            currentPage={Math.min(currentPage, Math.max(1, Math.ceil(filteredInvoices.length / PAGE_SIZE)))}
+            totalItems={filteredInvoices.length}
+            pageSize={PAGE_SIZE}
+            onPageChange={setCurrentPage}
+          />
         </article>
       </div>
 
       {/* CREATE MODAL */}
       <AnimatePresence>
         {showAddModal && (
-          <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-lg max-w-4xl w-full p-6 shadow-2xl border flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-lg max-w-4xl w-full p-6 border flex flex-col max-h-[90vh] overflow-hidden">
               <div className="flex justify-between items-center mb-4 pb-4 border-b">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><FileText size={18} className="text-blue-600" /> Create Tax Invoice</h2>
                 <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-700 bg-slate-100 p-1.5 rounded-full"><X size={16} /></button>
@@ -396,7 +406,7 @@ const AdminInvoicesPage = () => {
 
               <div className="pt-4 border-t mt-4 flex justify-end gap-3 bg-white">
                 <button onClick={() => setShowAddModal(false)} className="px-5 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-lg">Cancel</button>
-                <button onClick={handleSubmit} className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-lg flex items-center gap-2"><CheckCircle size={14}/> Save & Generate Invoice</button>
+                <button onClick={handleSubmit} className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center gap-2"><CheckCircle size={14}/> Save & Generate Invoice</button>
               </div>
             </motion.div>
           </div>
@@ -406,7 +416,7 @@ const AdminInvoicesPage = () => {
       {/* PREVIEW MODAL */}
       <AnimatePresence>
         {showPreviewModal && (
-          <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 p-4">
+          <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center bg-black/80 p-4">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-lg w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden">
               <div className="flex justify-between items-center p-3 border-b bg-slate-50">
                 <h3 className="font-bold text-sm flex items-center gap-2"><FileText size={14} className="text-blue-600"/> Invoice Preview</h3>

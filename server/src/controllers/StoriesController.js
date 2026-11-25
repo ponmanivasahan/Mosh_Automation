@@ -35,7 +35,7 @@ const createStory = async (req, res) => {
         String(title).slice(0, 200),
         (subtitle || '').slice(0, 200),
         (description || '').slice(0, 2000),
-        String(image).slice(0, 500),
+        String(image),
         (youtubeUrl || '').slice(0, 500),
         (instagramUrl || '').slice(0, 500)
       ]
@@ -63,7 +63,7 @@ const updateStory = async (req, res) => {
         String(title).slice(0, 200),
         (subtitle || '').slice(0, 200),
         (description || '').slice(0, 2000),
-        String(image).slice(0, 500),
+        String(image),
         (youtubeUrl || '').slice(0, 500),
         (instagramUrl || '').slice(0, 500),
         id

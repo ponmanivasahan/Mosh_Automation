@@ -13,9 +13,12 @@ import {
   Hash
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
+import Pagination from '../../../components/ui/Pagination';
 import { adminLinks } from '../../../utils/customerLinks';
 import { API_URL } from '../../../utils/api';
 import { formatDateTime } from '../../../utils/format';
+
+const PAGE_SIZE = 10;
 
 const AdminCustomersPage = () => {
   const [customers, setCustomers] = useState([]);
@@ -23,6 +26,7 @@ const AdminCustomersPage = () => {
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [syncing, setSyncing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchCustomers = async (showSyncState = false) => {
     if (showSyncState) setSyncing(true);
@@ -102,7 +106,7 @@ const AdminCustomersPage = () => {
     <AppShell title="Customers Database" links={adminLinks}>
       <div className="admin-customers-page space-y-6">
         {/* Top Control Panel */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs gap-4">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl border border-slate-200/90 gap-4">
           <div>
             <p className="text-blue-700 uppercase tracking-wider text-[10px] font-bold">Mosh Systems HQ</p>
             <h2 className="text-2xl font-bold text-slate-800">Customer Accounts & Sync</h2>
@@ -112,7 +116,7 @@ const AdminCustomersPage = () => {
           </div>
           <button
             onClick={() => fetchCustomers(true)}
-            className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl border border-slate-200 shadow-xs text-xs font-bold transition duration-200"
+            className="flex items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold transition duration-200"
           >
             <RefreshCw size={14} className={syncing ? 'animate-spin text-blue-600' : 'text-slate-500'} />
             <span>{syncing ? 'Syncing...' : 'Sync Now'}</span>
@@ -121,35 +125,35 @@ const AdminCustomersPage = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-white border rounded-2xl p-5 shadow-sm">
+          <div className="bg-white border rounded-2xl p-5">
             <p className="text-[10px] uppercase font-bold text-slate-400">Total Customers</p>
             <h3 className="text-2xl font-extrabold text-slate-800 mt-2 flex items-center gap-2">
               <Users size={20} className="text-indigo-500" />
               {customers.length}
             </h3>
           </div>
-          <div className="bg-white border rounded-2xl p-5 shadow-sm">
+          <div className="bg-white border rounded-2xl p-5">
             <p className="text-[10px] uppercase font-bold text-slate-400">Active Status</p>
             <h3 className="text-2xl font-extrabold text-emerald-600 mt-2 flex items-center gap-2">
               <CheckCircle size={20} className="text-emerald-500" />
               {stats.activeCustomers}
             </h3>
           </div>
-          <div className="bg-white border rounded-2xl p-5 shadow-sm">
+          <div className="bg-white border rounded-2xl p-5">
             <p className="text-[10px] uppercase font-bold text-slate-400">Total Orders</p>
             <h3 className="text-2xl font-extrabold text-blue-600 mt-2 flex items-center gap-2">
               <ShoppingCart size={20} className="text-blue-500" />
               {stats.totalOrders}
             </h3>
           </div>
-          <div className="bg-white border rounded-2xl p-5 shadow-sm">
+          <div className="bg-white border rounded-2xl p-5">
             <p className="text-[10px] uppercase font-bold text-slate-400">Total Queries</p>
             <h3 className="text-2xl font-extrabold text-amber-600 mt-2 flex items-center gap-2">
               <ClipboardList size={20} className="text-amber-500" />
               {stats.totalQueries}
             </h3>
           </div>
-          <div className="bg-white border rounded-2xl p-5 shadow-sm col-span-2 md:col-span-1">
+          <div className="bg-white border rounded-2xl p-5 col-span-2 md:col-span-1">
             <p className="text-[10px] uppercase font-bold text-slate-400">Total Reviews</p>
             <h3 className="text-2xl font-extrabold text-rose-600 mt-2 flex items-center gap-2">
               <MessageSquare size={20} className="text-rose-500" />
@@ -159,7 +163,7 @@ const AdminCustomersPage = () => {
         </div>
 
         {/* Search bar */}
-        <div className="relative bg-white rounded-2xl border p-2 flex items-center shadow-sm">
+        <div className="relative bg-white rounded-2xl border p-2 flex items-center">
           <Search size={18} className="text-slate-400 ml-3" />
           <input
             type="text"
@@ -179,7 +183,7 @@ const AdminCustomersPage = () => {
         </div>
 
         {/* Customer List Panel */}
-        <section className="bg-white border rounded-2xl p-5 md:p-6 shadow-sm">
+        <section className="bg-white border rounded-2xl p-5 md:p-6">
           {loading ? (
             <div className="text-center py-20">
               <RefreshCw size={24} className="animate-spin text-blue-600 mx-auto" />
@@ -201,6 +205,7 @@ const AdminCustomersPage = () => {
               <p className="text-sm text-slate-450 italic">No customers found matching search criteria.</p>
             </div>
           ) : (
+            <>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
@@ -214,7 +219,7 @@ const AdminCustomersPage = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredCustomers.map((cust) => (
+                  {filteredCustomers.slice((Math.min(currentPage, Math.max(1, Math.ceil(filteredCustomers.length / PAGE_SIZE))) - 1) * PAGE_SIZE, Math.min(currentPage, Math.max(1, Math.ceil(filteredCustomers.length / PAGE_SIZE))) * PAGE_SIZE).map((cust) => (
                     <tr key={cust.phone} className="hover:bg-slate-50/50 transition">
                       {/* Customer ID */}
                       <td className="py-4 pl-2 font-mono font-bold text-slate-500">
@@ -254,8 +259,8 @@ const AdminCustomersPage = () => {
                       {/* Status */}
                       <td className="py-4 text-center">
                         <span className={`inline-block text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase ${
-                          cust.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
-                        }`}>
+ cust.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
+ }`}>
                           {cust.status}
                         </span>
                       </td>
@@ -305,6 +310,13 @@ const AdminCustomersPage = () => {
                 </tbody>
               </table>
             </div>
+            <Pagination
+              currentPage={Math.min(currentPage, Math.max(1, Math.ceil(filteredCustomers.length / PAGE_SIZE)))}
+              totalItems={filteredCustomers.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+            </>
           )}
         </section>
       </div>

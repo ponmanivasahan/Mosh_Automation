@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Package, ShoppingCart, TrendingUp, HelpCircle, ChevronRight, Clock, Star, Award } from "lucide-react";
 import AppShell from "../../../components/AppShell";
-import { getOrders, getReviews } from "../../../utils/storage";
+import DashboardNotificationModal from "../../../components/ui/DashboardNotificationModal";
+import { getOrders, getReviews, getEstimations, getNotifications, markNotificationRead, updateEstimation } from "../../../utils/storage";
 import { formatCurrency } from "../../../utils/format";
 import { API_URL } from "../../../utils/api";
 import Card from "../../../components/ui/Card";
@@ -30,10 +31,13 @@ const StarRating = ({ rating, count }) => (
 
 const CustomerDashboardPage = () => {
   const { session } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [customerNotifications, setCustomerNotifications] = useState([]);
+  const [notifDismissed, setNotifDismissed] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,6 +55,41 @@ const CustomerDashboardPage = () => {
       const allOrders = getOrders();
       const userOrders = allOrders.filter((o) => o.customerPhone === session?.phone);
       setOrders(userOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+
+      // Gather unseen customer notifications (replied queries & unread order updates)
+      const pendingList = [];
+      try {
+        const estRes = await fetch(`${API_URL}/api/estimations`, { credentials: "include" });
+        const estList = estRes.ok ? ((await estRes.json().catch(() => ({}))).estimations || getEstimations()) : getEstimations();
+        estList
+          .filter((e) => e.customerPhone === session?.phone && e.stage === "replied" && !e.seen)
+          .forEach((e) => {
+            pendingList.push({
+              id: `est-${e.id}`,
+              type: "estimation",
+              rawEstimation: e,
+              title: "Engineering Reply & Quotation Ready",
+              message: `MOSH Team replied to your query for ${e.productName || "your controller"}. Mark seen to view details.`,
+              createdAt: e.createdAt,
+              targetPath: "/customer/query-section"
+            });
+          });
+      } catch {}
+
+      getNotifications()
+        .filter((n) => !n.read && (!n.targetPhone || n.targetPhone === session?.phone))
+        .forEach((n) => {
+          pendingList.push({
+            id: n.id,
+            type: "notification",
+            title: n.title || "Order Update",
+            message: n.message,
+            createdAt: n.createdAt,
+            targetPath: "/customer/cart"
+          });
+        });
+
+      setCustomerNotifications(pendingList);
       setIsLoading(false);
     };
     fetchData();
@@ -142,14 +181,14 @@ const CustomerDashboardPage = () => {
           </div>
           <Link
             to="/customer/products"
-            className="hidden sm:inline-flex items-center gap-1.5 bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+            className="hidden sm:inline-flex items-center gap-1.5 bg-blue-600 text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors"
           >
             <ShoppingCart size={15} /> Shop Now
           </Link>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           {isLoading
             ? Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-24" />)
             : stats.map((s, i) => (
@@ -164,7 +203,7 @@ const CustomerDashboardPage = () => {
         </div>
 
         {/* Orders + Support */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
           <div className="lg:col-span-2">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-base font-semibold text-neutral-900">Recent Orders</h3>
@@ -191,7 +230,10 @@ const CustomerDashboardPage = () => {
                         <Package size={18} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-neutral-900">Order #{order.id?.slice(-6)}</p>
+                        <p className="text-sm font-semibold text-neutral-900 truncate">
+                          {order.items?.[0]?.name || "Order"}
+                          {order.items?.length > 1 ? ` +${order.items.length - 1} more` : ""}
+                        </p>
                         <p className="text-xs text-neutral-400">{new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
                       </div>
                       <div className="text-right shrink-0">
@@ -217,7 +259,7 @@ const CustomerDashboardPage = () => {
           {/* Help Card */}
           <div>
             <h3 className="text-base font-semibold text-neutral-900 mb-3">Support</h3>
-            <div className="rounded-2xl shadow-sm border border-blue-700 p-6 bg-blue-600 text-white overflow-hidden relative">
+            <div className="rounded-2xl border border-blue-700 p-6 bg-blue-600 text-white overflow-hidden relative">
               <div className="absolute -top-10 -right-10 w-28 h-28 rounded-full bg-white/10 pointer-events-none" />
               <div className="absolute -bottom-8 -left-6 w-20 h-20 rounded-full bg-white/5 pointer-events-none" />
               <div className="relative z-10">
@@ -264,12 +306,12 @@ const CustomerDashboardPage = () => {
                           className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105"
                         />
                         {/* Rank badge */}
-                        <span className="absolute top-3 left-3 bg-blue-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-lg shadow">
+                        <span className="absolute top-3 left-3 bg-blue-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-lg">
                           #{idx + 1}
                         </span>
                         {/* Offer badge */}
                         {badgeText && (
-                          <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow whitespace-nowrap">
+                          <span className="absolute top-3 right-3 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap">
                             {badgeText}
                           </span>
                         )}
@@ -303,7 +345,7 @@ const CustomerDashboardPage = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             {offerCount > 0 && (
-                              <span className="inline-flex items-center gap-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                              <span className="inline-flex items-center gap-1 bg-amber-400 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-full">
                                 <Award size={10} strokeWidth={2.5} /> {offerCount} OFFER{offerCount > 1 ? 'S' : ''}
                               </span>
                             )}
@@ -325,7 +367,7 @@ const CustomerDashboardPage = () => {
                           <Link
                             to="/customer/query-section"
                             state={{ productId: product.id }}
-                            className="flex items-center justify-center w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
+                            className="flex items-center justify-center w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors"
                           >
                             Get Estimate →
                           </Link>
@@ -338,6 +380,21 @@ const CustomerDashboardPage = () => {
         </div>
 
       </div>
+
+      <DashboardNotificationModal
+        notifications={customerNotifications}
+        isOpen={!notifDismissed && customerNotifications.length > 0}
+        onDismiss={() => setNotifDismissed(true)}
+        onMarkSeen={async (item) => {
+          if (item.type === "estimation" && item.rawEstimation) {
+            await updateEstimation({ ...item.rawEstimation, seen: true });
+          } else {
+            await markNotificationRead(item.id);
+          }
+          setCustomerNotifications((prev) => prev.filter((n) => n.id !== item.id));
+          navigate(item.targetPath || "/customer/query-section");
+        }}
+      />
     </AppShell>
   );
 };

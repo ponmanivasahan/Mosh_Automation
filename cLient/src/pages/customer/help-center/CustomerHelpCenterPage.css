@@ -38,7 +38,7 @@
 .ch-accent-bar {
   width: 3px;
   height: 26px;
-  background: #0f172a;
+  background: #2563eb;
   border-radius: 2px;
 }
 
@@ -80,7 +80,7 @@
   background: #ffffff;
   font-size: 14px;
   color: #0f172a;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: none;
   transition: all 0.2s ease;
 }
 
@@ -91,7 +91,7 @@
 .ch-search-input:focus {
   outline: none;
   border-color: #0080ff;
-  box-shadow: 0 0 0 3px rgba(0, 128, 255, 0.1);
+  box-shadow: none;
 }
 
 /* Layout columns */
@@ -136,7 +136,7 @@
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
-  box-shadow: 0 8px 20px rgba(0, 128, 255, 0.25);
+  box-shadow: none;
 }
 
 .section-title {
@@ -162,7 +162,7 @@
 
 .faq-accordion-card:hover {
   border-color: rgba(0, 128, 255, 0.2);
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
 }
 
 .faq-question-trigger {
@@ -230,7 +230,7 @@
   border: 1px solid var(--edge);
   border-radius: 10px;
   padding: 24px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
 }
 
 .wizard-head {
@@ -374,7 +374,7 @@
   border: 1px solid var(--edge);
   border-radius: 10px;
   padding: 24px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
 }
 
 .support-contact-card h3 {
@@ -413,7 +413,7 @@
 
 .contact-link-item:not(.no-hover):hover {
   border-color: var(--accent);
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
   transform: translateY(-2px);
 }
 
@@ -461,7 +461,7 @@
   border: 1px solid var(--edge);
   border-radius: 16px;
   padding: 20px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -519,7 +519,7 @@
 .location-tab-btn.active {
   background: #ffffff;
   color: #0080ff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: none;
 }
 
 .location-tab-dot {

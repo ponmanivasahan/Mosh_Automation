@@ -42,26 +42,26 @@ const Tabs = ({
                 type="button"
                 onClick={() => onChange(id)}
                 className={`group inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-all duration-150 ${
-                  isActive
-                    ? 'border-blue-600 text-blue-700 font-semibold'
-                    : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
-                }`}
+ isActive
+ ? 'border-blue-600 text-blue-700 font-semibold'
+ : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
+ }`}
               >
                 {Icon && (
                   <Icon
                     className={`h-4 w-4 mr-2 transition-colors ${
-                      isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-500'
-                    }`}
+ isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-500'
+ }`}
                   />
                 )}
                 <span>{label}</span>
                 {count !== undefined && (
                   <span
                     className={`ml-2 rounded-full font-bold transition-colors ${badgeSizeClasses[size]} ${
-                      isActive
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
-                    }`}
+ isActive
+ ? 'bg-blue-100 text-blue-800'
+ : 'bg-slate-100 text-slate-600 group-hover:bg-slate-200'
+ }`}
                   >
                     {count}
                   </span>
@@ -78,8 +78,8 @@ const Tabs = ({
   return (
     <div
       className={`inline-flex items-center p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 max-w-full overflow-x-auto no-scrollbar scroll-smooth ${
-        fullWidth ? 'w-full justify-between' : ''
-      } ${className}`}
+ fullWidth ? 'w-full justify-between' : ''
+ } ${className}`}
     >
       <div className={`flex items-center gap-1 min-w-max ${fullWidth ? 'w-full' : ''}`}>
         {tabs.map((tab) => {
@@ -95,28 +95,28 @@ const Tabs = ({
               type="button"
               onClick={() => onChange(id)}
               className={`inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 whitespace-nowrap select-none ${
-                sizeClasses[size]
-              } ${fullWidth ? 'flex-1' : ''} ${
-                isActive
-                  ? 'bg-white text-blue-800 shadow-sm border border-slate-200/60 font-semibold'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-              }`}
+ sizeClasses[size]
+ } ${fullWidth ? 'flex-1' : ''} ${
+ isActive
+ ? 'bg-white text-blue-800 border border-slate-200/60 font-semibold'
+ : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+ }`}
             >
               {Icon && (
                 <Icon
                   className={`h-3.5 w-3.5 transition-colors ${
-                    isActive ? 'text-blue-600' : 'text-slate-400'
-                  }`}
+ isActive ? 'text-blue-600' : 'text-slate-400'
+ }`}
                 />
               )}
               <span>{label}</span>
               {count !== undefined && (
                 <span
                   className={`rounded-full font-bold transition-colors ${badgeSizeClasses[size]} ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
-                      : 'bg-slate-200/70 text-slate-600'
-                  }`}
+ isActive
+ ? 'bg-blue-50 text-blue-700 border border-blue-200/60'
+ : 'bg-slate-200/70 text-slate-600'
+ }`}
                 >
                   {count}
                 </span>

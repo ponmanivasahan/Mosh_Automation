@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -22,22 +23,30 @@ import {
 } from 'lucide-react';
 import AppShell from '../../../components/AppShell';
 import Tabs from '../../../components/ui/Tabs';
+import Pagination from '../../../components/ui/Pagination';
+import DashboardNotificationModal from '../../../components/ui/DashboardNotificationModal';
 import { adminLinks } from '../../../utils/customerLinks';
-import { getProducts, getOrders, getReviews, updateOrder, addNotification, getDbStatus } from '../../../utils/storage';
+import { getProducts, getOrders, getReviews, updateOrder, addNotification, getDbStatus, getNotifications, markNotificationRead } from '../../../utils/storage';
 import { formatCurrency, formatDateTime } from '../../../utils/format';
 import { API_URL } from '../../../utils/api';
 import './AdminDashboardPage.css';
 
+const PAGE_SIZE = 3;
+
 const AdminDashboardPage = () => {
+  const navigate = useNavigate();
   const [products, setProducts] = useState(() => getProducts());
   const [orders, setOrders] = useState(() => getOrders());
   const [reviews, setReviews] = useState(() => getReviews());
   const [dbConnected, setDbConnected] = useState(() => getDbStatus());
   const [customers, setCustomers] = useState([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(() => getNotifications().filter((n) => !n.read));
+  const [notifPopupDismissed, setNotifPopupDismissed] = useState(false);
 
   const [activeModalType, setActiveModalType] = useState(null);
   const [selectedAdminOrder, setSelectedAdminOrder] = useState(null);
   const [orderFilter, setOrderFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Lock body background scroll when any modal is open
   useEffect(() => {
@@ -58,6 +67,7 @@ const AdminDashboardPage = () => {
       setOrders(getOrders());
       setReviews(getReviews());
       setDbConnected(getDbStatus());
+      setUnreadNotifications(getNotifications().filter((n) => !n.read));
       try {
         const res = await fetch(`${API_URL}/api/admin/customers`, { credentials: 'include' });
         if (res.ok) {
@@ -169,32 +179,32 @@ const AdminDashboardPage = () => {
   return (
     <AppShell title="Admin Portal Control Dashboard" links={adminLinks}>
       {!dbConnected ? (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center bg-rose-50 border border-rose-100 rounded-2xl m-4">
+        <div className="flex flex-col items-center justify-center min-h-[50vh]  text-center bg-rose-50 border border-rose-100 rounded-2xl m-4">
           <p className="text-sm font-bold text-rose-600">Unable to load data from server. Please try again.</p>
         </div>
       ) : (
         <div className="admin-dashboard-page space-y-8">
         
         {/* Top Header Overview Panel */}
-        <header className="admin-topbar panel flex justify-between items-center bg-slate-100 p-6 rounded-lg border border-slate-200">
+        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white  rounded-2xl border border-slate-200/90">
           <div>
-            <p className="dashboard-eyebrow text-blue-700 uppercase tracking-wider text-[10px] font-bold">HQ Systems Control</p>
-            <h2 className="text-2xl font-bold text-slate-800">Admin Portal Overview</h2>
+            <p className="text-blue-600 uppercase tracking-wider text-[10px] font-bold">HQ Systems Control</p>
+            <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 mt-0.5">Admin Portal Overview</h2>
             <p className="text-xs text-slate-500 mt-1">Real-time telemetry tracking client orders, products catalog status, and customer reviews.</p>
           </div>
-          <div className="admin-topbar-chip flex items-center gap-2 bg-white text-blue-700 px-4 py-2 rounded-xl border shadow-sm">
+          <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3.5 py-2 rounded-xl border border-blue-100 shrink-0">
             <RefreshCw size={14} className="animate-spin text-blue-600" />
             <strong className="text-xs font-bold">Live Sync Active</strong>
           </div>
         </header>
 
         {/* Dynamic Metric Cards Grid */}
-        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2">
           {/* Card 1: Total Products */}
           <motion.article
             whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('products')}
-            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-300 transition-all group"
           >
             <div className="flex justify-between items-center">
               <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Products</span>
@@ -212,7 +222,7 @@ const AdminDashboardPage = () => {
           <motion.article
             whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('active-orders')}
-            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-300 transition-all group"
           >
             <div className="flex justify-between items-center">
               <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Active</span>
@@ -230,7 +240,7 @@ const AdminDashboardPage = () => {
           <motion.article
             whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('dispatched-orders')}
-            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-300 transition-all group"
           >
             <div className="flex justify-between items-center">
               <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Dispatched</span>
@@ -248,7 +258,7 @@ const AdminDashboardPage = () => {
           <motion.article
             whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('completed-orders')}
-            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-300 transition-all group"
           >
             <div className="flex justify-between items-center">
               <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Delivered</span>
@@ -266,7 +276,7 @@ const AdminDashboardPage = () => {
           <motion.article
             whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('cancelled-orders')}
-            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-300 transition-all group"
           >
             <div className="flex justify-between items-center">
               <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Cancelled</span>
@@ -284,7 +294,7 @@ const AdminDashboardPage = () => {
           <motion.article
             whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('customers')}
-            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-300 transition-all group"
           >
             <div className="flex justify-between items-center">
               <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Customers</span>
@@ -302,7 +312,7 @@ const AdminDashboardPage = () => {
           <motion.article
             whileHover={{ y: -3 }}
             onClick={() => setActiveModalType('revenue')}
-            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:shadow-md hover:border-slate-300 transition-all shadow-xs group"
+            className="bg-white border border-slate-200/90 rounded-2xl p-4 flex flex-col justify-between cursor-pointer hover:border-slate-300 transition-all group"
           >
             <div className="flex justify-between items-center">
               <span className="font-bold text-[10px] uppercase tracking-wider text-slate-400">Revenue</span>
@@ -320,8 +330,8 @@ const AdminDashboardPage = () => {
 
 
         {/* Recent Orders - Live management list */}
-        <section className="bg-white border border-slate-200/90 rounded-2xl p-5 md:p-6 space-y-5 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <section className="bg-white border border-slate-200/90 rounded-2xl p-3 space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 ">
             <div>
               <p className="dashboard-eyebrow text-blue-700 uppercase tracking-wider text-[10px] font-bold">Client operations</p>
               <h2 className="text-xl font-bold text-slate-800">Manage Orders ({filteredOrders.length})</h2>
@@ -339,81 +349,87 @@ const AdminDashboardPage = () => {
           {!filteredOrders.length ? (
             <p className="text-xs text-slate-400 py-10 italic text-center bg-white rounded-2xl border">No orders found for filter "{orderFilter}".</p>
           ) : (
-            <div className="max-h-[580px] overflow-y-auto pr-1 space-y-4 scrollbar-thin">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {filteredOrders.map((order) => {
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
+                {filteredOrders.slice((Math.min(currentPage, Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE))) - 1) * PAGE_SIZE, Math.min(currentPage, Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE))) * PAGE_SIZE).map((order) => {
                   const isOrderPaid = order.paymentStatus === 'Paid' || order.status === 'Paid' || Boolean(order.transactionId);
                   return (
-                    <article key={order.id} className="border border-slate-200 p-5 rounded-2xl bg-white flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition duration-300 h-full">
-                      <div>
-                        <div className="flex justify-between items-start gap-2">
-                          <h3 className="text-sm font-bold text-slate-900 truncate">{order.customerName}</h3>
-                          <span className={`text-[9px] px-2.5 py-0.5 rounded-full font-bold uppercase shrink-0 ${
-                            order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' :
-                            order.status === 'Dispatched' ? 'bg-blue-50 text-blue-600' :
-                            order.status === 'Paid' ? 'bg-emerald-50 text-emerald-600 font-extrabold' :
-                            order.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-50 text-indigo-600'
-                          }`}>
+                    <article key={order.id} className="border border-slate-200/90 p-2.5 rounded-2xl bg-white flex flex-col justify-between gap-4 hover:border-blue-300 transition-all h-full">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-start gap-2 pb-3 border-b border-slate-100">
+                          <div className="min-w-0">
+                            <h3 className="text-sm font-bold text-slate-900 truncate">{order.customerName}</h3>
+                            <p className="text-xs text-slate-500 font-medium mt-0.5">{order.customerPhone}</p>
+                          </div>
+                          <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase shrink-0 ${
+ order.status === 'Cancelled' ? 'bg-rose-50 text-rose-600 border border-rose-200' :
+ order.status === 'Dispatched' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+ order.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+ order.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+ 'bg-slate-100 text-slate-700 border border-slate-200'
+ }`}>
                             {order.status}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 font-bold mt-1">Phone: {order.customerPhone}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">ID: #{order.id} · {formatDateTime(order.createdAt)}</p>
-                        
-                        {/* Payment Telemetry Box - Paid vs Pending */}
-                        <div className={`mt-3 p-3 rounded-xl border text-[10px] font-semibold space-y-1 ${
-                          isOrderPaid ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950' : 'bg-amber-50/80 border-amber-200 text-amber-950'
-                        }`}>
-                          <div className="flex justify-between items-center font-bold">
-                            <span className="flex items-center gap-1">
-                              <CreditCard size={12} className={isOrderPaid ? 'text-emerald-600' : 'text-amber-600'} />
-                              Payment:
+
+                        <div className="space-y-2 text-xs">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-slate-500 flex items-center gap-1.5">
+                              <Clock size={12} className="text-slate-400" />
+                              {formatDateTime(order.createdAt)}
                             </span>
-                            <span className={`uppercase font-extrabold px-2 py-0.5 rounded-full text-[9px] ${
-                              isOrderPaid ? 'bg-emerald-100 text-emerald-700 flex items-center gap-1' : 'bg-amber-100 text-amber-700'
-                            }`}>
-                              {isOrderPaid ? <><Check size={10} strokeWidth={3} /> Paid</> : 'Pending (Unpaid)'}
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+ isOrderPaid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+ }`}>
+                              {isOrderPaid ? <><Check size={10} strokeWidth={3} /> Paid</> : 'Unpaid'}
                             </span>
                           </div>
-                          <p className="text-slate-600">Gateway: <strong className="text-slate-800 font-bold">{order.paymentMethod || 'Google Pay'}</strong></p>
-                          {isOrderPaid && order.transactionId && (
-                            <p className="text-slate-600">UTR: <span className="font-mono font-bold text-slate-900">{order.transactionId}</span></p>
-                          )}
-                          {!isOrderPaid && (
-                            <p className="text-amber-700/90 italic text-[9.5px]">Awaiting customer payment verification</p>
+
+                          <div className="flex items-center justify-between gap-2 text-slate-600">
+                            <span className="flex items-center gap-1.5">
+                              <CreditCard size={12} className="text-slate-400" />
+                              {order.paymentMethod || 'Razorpay'}
+                            </span>
+                            {isOrderPaid && order.transactionId && (
+                              <span className="font-mono text-[11px] font-semibold text-slate-700 truncate max-w-[140px]">
+                                {order.transactionId}
+                              </span>
+                            )}
+                          </div>
+
+                          {order.shippingAddress && (
+                            <p className="text-slate-500 flex items-center gap-1.5 truncate">
+                              <MapPin size={12} className="text-blue-600 shrink-0" />
+                              <span className="truncate">
+                                {[order.shippingAddress.address, order.shippingAddress.city].filter(Boolean).join(', ')}
+                              </span>
+                            </p>
                           )}
                         </div>
 
-                        {order.shippingAddress && (
-                          <p className="text-[11px] text-slate-500 mt-2 bg-slate-50 p-2 rounded-xl border border-slate-100 flex items-center gap-1.5 font-bold">
-                            <MapPin size={12} className="text-blue-600 shrink-0" />
-                            <span className="truncate">Deliver: {order.shippingAddress.address || order.shippingAddress.city}, {order.shippingAddress.city}</span>
-                          </p>
-                        )}
-
-                        <div className="flex flex-wrap gap-1.5 mt-3">
+                        <div className="flex flex-wrap gap-1.5 pt-1">
                           {order.items?.map((it, idx) => (
-                            <span key={idx} className="text-[9px] bg-slate-50 border px-2 py-0.5 rounded-md text-slate-600 font-bold">
-                              {it.name} (x{it.quantity})
+                            <span key={idx} className="text-[11px] bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-lg text-slate-700 font-semibold">
+                              {it.name} ×{it.quantity}
                             </span>
                           ))}
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-100 pt-3 flex flex-col gap-3">
+                      <div className="border-t border-slate-100 pt-3 flex flex-col gap-2.5">
                         <div className="flex justify-between items-center">
-                          <span className="text-[10px] text-slate-400 font-bold uppercase">Total Amount</span>
-                          <strong className="text-base font-extrabold text-blue-600">{formatCurrency(order.total)}</strong>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Amount</span>
+                          <strong className="text-base font-extrabold text-slate-900">{formatCurrency(order.total)}</strong>
                         </div>
 
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           {(order.status !== 'Dispatched' && order.status !== 'Completed' && order.status !== 'Cancelled') && (
-                            <div className="grid grid-cols-2 gap-1.5">
+                            <>
                               {order.status === 'Paid' ? (
                                 <button
                                   type="button"
                                   onClick={() => handleStatusChange(order.id, 'Dispatched')}
-                                  className="text-[9px] bg-blue-50 border border-blue-200 text-blue-700 py-1.5 rounded-xl font-bold hover:bg-blue-100"
+                                  className="flex-1 text-xs bg-blue-600 text-white py-2 px-3 rounded-xl font-bold hover:bg-blue-700 transition"
                                 >
                                   Dispatch
                                 </button>
@@ -421,27 +437,27 @@ const AdminDashboardPage = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleStatusChange(order.id, 'Processing')}
-                                  className="text-[9px] bg-emerald-600 text-white py-1.5 rounded-xl font-bold hover:bg-emerald-700 shadow-sm"
+                                  className="flex-1 text-xs bg-blue-600 text-white py-2 px-3 rounded-xl font-bold hover:bg-blue-700 transition"
                                 >
-                                  Approve Order
+                                  Approve
                                 </button>
                               )}
                               <button
                                 type="button"
                                 onClick={() => handleStatusChange(order.id, 'Cancelled')}
-                                className="text-[9px] bg-rose-50 border border-rose-200 text-rose-700 py-1.5 rounded-xl font-bold hover:bg-rose-100"
+                                className="text-xs bg-rose-50 border border-rose-200 text-rose-600 py-2 px-3 rounded-xl font-bold hover:bg-rose-100 transition"
                               >
-                                Reject / Cancel
+                                Cancel
                               </button>
-                            </div>
+                            </>
                           )}
 
                           <button
                             type="button"
                             onClick={() => setSelectedAdminOrder(order)}
-                            className="text-[10px] bg-slate-100 border border-slate-200 text-slate-700 py-2 rounded-xl font-bold hover:bg-slate-200 flex items-center justify-center gap-1.5 transition"
+                            className="text-xs bg-slate-100 border border-slate-200 text-slate-700 py-2 px-3 rounded-xl font-bold hover:bg-slate-200 flex items-center justify-center gap-1.5 transition"
                           >
-                            <Eye size={12} /> View Payment & Order Details
+                            <Eye size={13} /> Details
                           </button>
                         </div>
                       </div>
@@ -449,6 +465,12 @@ const AdminDashboardPage = () => {
                   );
                 })}
               </div>
+              <Pagination
+                currentPage={Math.min(currentPage, Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE)))}
+                totalItems={filteredOrders.length}
+                pageSize={PAGE_SIZE}
+                onPageChange={setCurrentPage}
+              />
             </div>
           )}
         </section>
@@ -456,12 +478,12 @@ const AdminDashboardPage = () => {
         {/* Modal overlays */}
         <AnimatePresence>
           {activeModalType && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-lg max-w-3xl w-full p-6 shadow-2xl border flex flex-col space-y-4 max-h-[85vh] overflow-y-auto"
+                className="bg-white rounded-lg max-w-3xl w-full p-6 border flex flex-col space-y-4 max-h-[85vh] overflow-y-auto"
               >
                 <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                   <div>
@@ -496,7 +518,7 @@ const AdminDashboardPage = () => {
                         <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
                           <div>
                             <h4 className="font-bold text-slate-800">{o.customerName} ({o.customerPhone})</h4>
-                            <p className="text-[10px] text-slate-400 mt-0.5">ID: #{o.id} · {formatDateTime(o.createdAt)}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(o.createdAt)}</p>
                           </div>
                           <div className="text-right">
                             <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-bold uppercase mb-1">{o.status}</span>
@@ -516,7 +538,7 @@ const AdminDashboardPage = () => {
                         <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
                           <div>
                             <h4 className="font-bold text-slate-800">{o.customerName} ({o.customerPhone})</h4>
-                            <p className="text-[10px] text-slate-400 mt-0.5">ID: #{o.id} · {formatDateTime(o.createdAt)}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(o.createdAt)}</p>
                           </div>
                           <div className="text-right">
                             <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-bold uppercase mb-1">{o.status}</span>
@@ -536,7 +558,7 @@ const AdminDashboardPage = () => {
                         <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
                           <div>
                             <h4 className="font-bold text-slate-800">{o.customerName} ({o.customerPhone})</h4>
-                            <p className="text-[10px] text-slate-400 mt-0.5">ID: #{o.id} · {formatDateTime(o.createdAt)}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(o.createdAt)}</p>
                           </div>
                           <div className="text-right">
                             <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold uppercase mb-1">{o.status}</span>
@@ -575,7 +597,7 @@ const AdminDashboardPage = () => {
                         <div key={o.id} className="p-3 border rounded-lg bg-slate-50 flex justify-between items-center text-xs">
                           <div>
                             <h4 className="font-bold text-slate-800">{o.customerName} ({o.customerPhone})</h4>
-                            <p className="text-[10px] text-slate-400 mt-0.5">ID: #{o.id} · {formatDateTime(o.createdAt)}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{formatDateTime(o.createdAt)}</p>
                           </div>
                           <div className="text-right">
                             <span className="inline-block text-[9px] px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-bold uppercase mb-1">{o.status}</span>
@@ -598,17 +620,17 @@ const AdminDashboardPage = () => {
         {/* Selected Admin Order Details Modal */}
         <AnimatePresence>
           {selectedAdminOrder && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overscroll-contain">
+            <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 overscroll-contain">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border flex flex-col space-y-4 max-h-[85vh] overflow-y-auto overscroll-contain"
+                className="bg-white rounded-2xl max-w-xl w-full p-6 border flex flex-col space-y-4 max-h-[85vh] overflow-y-auto overscroll-contain"
               >
                 <div className="flex justify-between items-start border-b border-slate-100 pb-3">
                   <div>
                     <span className="badge-kicker text-blue-600 font-bold uppercase tracking-wider text-[10px]">Order & Payment Details</span>
-                    <h2 className="text-lg font-bold text-slate-800">Order #{selectedAdminOrder.id}</h2>
+                    <h2 className="text-lg font-bold text-slate-800">{selectedAdminOrder.customerName} — Order Details</h2>
                   </div>
                   <button onClick={() => setSelectedAdminOrder(null)} className="p-1.5 rounded-lg hover:bg-slate-100 transition">
                     <X size={18} className="text-slate-400" />
@@ -617,7 +639,7 @@ const AdminDashboardPage = () => {
 
                 <div className="space-y-4 text-xs font-semibold text-slate-600">
                   {/* Customer info */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-3 bg-slate-50 border rounded-xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 bg-slate-50 border rounded-xl">
                     <div>
                       <p className="text-[10px] text-slate-400 uppercase font-bold">Customer</p>
                       <p className="text-slate-800 font-bold text-sm mt-0.5">{selectedAdminOrder.customerName}</p>
@@ -640,11 +662,11 @@ const AdminDashboardPage = () => {
                     const isModalPaid = selectedAdminOrder.paymentStatus === 'Paid' || selectedAdminOrder.status === 'Paid' || Boolean(selectedAdminOrder.transactionId);
                     return (
                       <div className={`p-4 rounded-xl border space-y-2 ${
-                        isModalPaid ? 'bg-emerald-50/80 border-emerald-200' : 'bg-amber-50/80 border-amber-200'
-                      }`}>
+ isModalPaid ? 'bg-emerald-50/80 border-emerald-200' : 'bg-amber-50/80 border-amber-200'
+ }`}>
                         <h4 className={`text-[10px] uppercase font-extrabold tracking-wider flex items-center gap-1.5 mb-1 ${
-                          isModalPaid ? 'text-emerald-800' : 'text-amber-800'
-                        }`}>
+ isModalPaid ? 'text-emerald-800' : 'text-amber-800'
+ }`}>
                           <CreditCard size={12} className={isModalPaid ? 'text-emerald-600' : 'text-amber-600'} />
                           {isModalPaid ? 'Bank Settlement & Payment Telemetry (Paid)' : 'Payment Telemetry Status (Pending / Unpaid)'}
                         </h4>
@@ -652,8 +674,8 @@ const AdminDashboardPage = () => {
                           <div>
                             <span className="text-[10px] text-slate-500 font-bold uppercase">Payment Status:</span>
                             <strong className={`block text-xs uppercase font-extrabold mt-0.5 flex items-center gap-1 ${
-                              isModalPaid ? 'text-emerald-700' : 'text-amber-700'
-                            }`}>
+ isModalPaid ? 'text-emerald-700' : 'text-amber-700'
+ }`}>
                               {isModalPaid ? <><Check size={12} strokeWidth={3} /> PAID (BANK RECEIVED)</> : <><Clock size={12} /> PENDING (UNPAID)</>}
                             </strong>
                           </div>
@@ -709,7 +731,7 @@ const AdminDashboardPage = () => {
                             handleStatusChange(selectedAdminOrder.id, 'Processing');
                             setSelectedAdminOrder(null);
                           }}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow transition"
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition"
                         >
                           Approve Order
                         </button>
@@ -743,6 +765,17 @@ const AdminDashboardPage = () => {
         </AnimatePresence>
       </div>
       )}
+
+      <DashboardNotificationModal
+        notifications={unreadNotifications}
+        isOpen={!notifPopupDismissed && unreadNotifications.length > 0}
+        onDismiss={() => setNotifPopupDismissed(true)}
+        onMarkSeen={async (notif) => {
+          await markNotificationRead(notif.id);
+          setUnreadNotifications((prev) => prev.filter((n) => n.id !== notif.id));
+          navigate('/admin/notifications');
+        }}
+      />
     </AppShell>
   );
 };

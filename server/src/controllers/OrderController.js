@@ -231,7 +231,10 @@ const updateOrderStatus = async (req, res) => {
     // Send notifications on status change
     const notifId = `not-${Date.now()}`;
     const notifTitle = `Order ${status}`;
-    const notifMessage = `Order #${id} has been marked as ${status}.`;
+    const customerInfo = order.customer_name
+      ? `${order.customer_name}${order.user_phone ? ` (${order.user_phone})` : ''}`
+      : (order.user_phone || 'Customer');
+    const notifMessage = `Order for ${customerInfo} has been marked as ${status}.`;
     await pool.query(
       'INSERT INTO notifications (id, title, message, order_id) VALUES (?, ?, ?, ?)',
       [notifId, notifTitle, notifMessage, id]
@@ -297,7 +300,10 @@ const verifyPayment = async (req, res) => {
 
     // Auto-create notification for admin
     const notifId = `not-${Date.now()}`;
-    const notifMessage = `Payment of ₹${order.total} verified for Order #${id} via ${cleanMethod}. Transaction ID: ${cleanTxnId}.`;
+    const customerInfo = order.customer_name
+      ? `${order.customer_name}${order.user_phone ? ` (${order.user_phone})` : ''}`
+      : (order.user_phone || 'Customer');
+    const notifMessage = `Payment of ₹${order.total} verified for ${customerInfo} via ${cleanMethod}. Transaction ID: ${cleanTxnId}.`;
     await pool.query(
       'INSERT INTO notifications (id, title, message, order_id) VALUES (?, ?, ?, ?)',
       [notifId, 'Order Paid Successfully', notifMessage, id]

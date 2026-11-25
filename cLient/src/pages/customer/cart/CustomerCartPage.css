@@ -23,7 +23,7 @@
   border: 1px solid rgba(15, 23, 42, 0.05);
   border-radius: 24px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.02);
+  box-shadow: none;
 }
 
 .panel-header-row {
@@ -441,7 +441,7 @@
   border: 1px solid rgba(15, 23, 42, 0.05);
   border-radius: 24px;
   padding: 24px;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.02);
+  box-shadow: none;
 }
 
 .sidebar-title {
@@ -504,7 +504,7 @@
 
 .btn-checkout-primary {
   width: 100%;
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background: #2563eb;
   color: #ffffff;
   border: none;
   padding: 13px;
@@ -517,12 +517,12 @@
   gap: 6px;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.2);
+  box-shadow: none;
   margin-top: 20px;
 }
 
 .btn-checkout-primary:hover {
-  box-shadow: 0 8px 20px rgba(217, 119, 6, 0.35);
+  box-shadow: none;
   transform: translateY(-1px);
 }
 

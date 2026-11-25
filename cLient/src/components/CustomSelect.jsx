@@ -96,11 +96,11 @@ const CustomSelect = ({
           disabled={disabled}
           onClick={() => setIsOpen(!isOpen)}
           className={`w-full flex items-center justify-between px-4 py-3 min-h-[48px] rounded-xl border transition-all duration-200 outline-none
-            ${disabled ? 'bg-slate-50 text-slate-400 cursor-not-allowed border-slate-200' : 
-              error ? 'bg-rose-50/50 border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20' : 
-              isOpen ? 'bg-white border-blue-500 ring-2 ring-blue-500/20' : 
-              'bg-white border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:bg-slate-50/50'
-            }`}
+ ${disabled ? 'bg-slate-50 text-slate-400 cursor-not-allowed border-slate-200' : 
+ error ? 'bg-rose-50/50 border-rose-300 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20' : 
+ isOpen ? 'bg-white border-blue-500 ring-2 ring-blue-500/20' : 
+ 'bg-white border-slate-200 hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 hover:bg-slate-50/50'
+ }`}
         >
           <div className="flex items-center gap-3 overflow-hidden">
             {Icon && <Icon className={`h-4 w-4 shrink-0 ${disabled ? 'text-slate-300' : 'text-slate-400'}`} />}
@@ -123,8 +123,8 @@ const CustomSelect = ({
           
           <ChevronDown 
             className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-              disabled ? 'text-slate-300' : 'text-slate-400'
-            } ${isOpen ? 'rotate-180 text-blue-600' : ''}`} 
+ disabled ? 'text-slate-300' : 'text-slate-400'
+ } ${isOpen ? 'rotate-180 text-blue-600' : ''}`} 
           />
         </button>
 
@@ -135,9 +135,9 @@ const CustomSelect = ({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: openUpwards ? 4 : -4 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className={`absolute z-50 w-full bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden ${
-                openUpwards ? 'bottom-[calc(100%+8px)]' : 'top-[calc(100%+8px)]'
-              }`}
+              className={`absolute z-50 w-full bg-white border border-slate-200 rounded-xl overflow-hidden ${
+ openUpwards ? 'bottom-[calc(100%+8px)]' : 'top-[calc(100%+8px)]'
+ }`}
             >
               {searchable && (
                 <div className="p-2 border-b border-slate-100 bg-slate-50/50">
@@ -165,10 +165,10 @@ const CustomSelect = ({
                         type="button"
                         onClick={() => handleSelect(opt.value)}
                         className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-colors mb-0.5 last:mb-0
-                          ${isSelected 
-                            ? 'bg-blue-50 text-blue-900' 
-                            : 'hover:bg-slate-50 text-slate-700'
-                          }`}
+ ${isSelected 
+ ? 'bg-blue-50 text-blue-900' 
+ : 'hover:bg-slate-50 text-slate-700'
+ }`}
                       >
                         <div className="flex items-center gap-3 overflow-hidden">
                           {opt.image && (

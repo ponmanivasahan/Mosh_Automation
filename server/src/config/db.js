@@ -380,6 +380,68 @@ const initDB = async () => {
         await connection.query("UPDATE users SET password_hash = '$2a$12$qxaCBAHBEfsirzNJyAjJM.zXPh6snnJH0IpjoaCKcZhVclESKhA3W', role = 'admin' WHERE phone = '9514714441';");
       } catch(e) {}
 
+      // Ensure chat_messages table exists for AI Assistant chat history
+      try {
+        await connection.query(`
+          CREATE TABLE IF NOT EXISTS chat_messages (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            question TEXT NOT NULL,
+            reply TEXT NOT NULL,
+            sources JSON NULL,
+            latency_ms INT DEFAULT 0,
+            tokens INT DEFAULT 0,
+            model_used VARCHAR(100) DEFAULT 'Own Neural Core v2',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            INDEX idx_chat_user_id (user_id),
+            INDEX idx_chat_created_at (created_at)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        console.log("Migration SUCCESS: Ensured 'chat_messages' table.");
+      } catch(e) {
+        console.log("Migration INFO (chat_messages table):", e.message);
+      }
+
+      // Ensure chat_feedback & approved_qa_examples tables exist for admin-verified continuous learning
+      try {
+        await connection.query(`
+          CREATE TABLE IF NOT EXISTS chat_feedback (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            chat_message_id INT NULL,
+            user_id INT NOT NULL,
+            question TEXT NOT NULL,
+            bot_reply TEXT NOT NULL,
+            is_helpful BOOLEAN DEFAULT FALSE,
+            reported_issue TEXT NULL,
+            status ENUM('pending_review', 'approved', 'dismissed') DEFAULT 'pending_review',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            INDEX idx_feedback_status (status)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        await connection.query(`
+          CREATE TABLE IF NOT EXISTS approved_qa_examples (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            original_question TEXT NOT NULL,
+            normalized_question TEXT NOT NULL,
+            intent VARCHAR(160) NOT NULL,
+            related_product_id VARCHAR(64) DEFAULT NULL,
+            verified_answer TEXT NOT NULL,
+            alternative_patterns JSON NULL,
+            language VARCHAR(20) DEFAULT 'en',
+            category VARCHAR(60) DEFAULT 'general',
+            approved_by INT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_qa_intent (intent),
+            INDEX idx_qa_product (related_product_id)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        console.log("Migration SUCCESS: Ensured 'chat_feedback' and 'approved_qa_examples' tables.");
+      } catch(e) {
+        console.log("Migration INFO (chat_feedback/approved_qa_examples):", e.message);
+      }
+
       console.log('Database schema verified & seeded successfully.');
     } else {
       console.warn('Database schema.sql file not found. Skipping auto-seeding.');

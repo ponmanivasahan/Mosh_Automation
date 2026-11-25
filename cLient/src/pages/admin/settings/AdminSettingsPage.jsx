@@ -63,17 +63,17 @@ const AdminSettingsPage = () => {
 
   return (
     <AppShell title="Portal Settings" links={adminLinks}>
-      <div className="max-w-6xl mx-auto space-y-6 pb-16">
+      <div className="space-y-6 pb-16">
         
         {/* Toast Alert */}
         {toastMessage && (
-          <div className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded bg-blue-600 text-white border border-blue-500 font-bold text-xs shadow-xl">
+          <div className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded bg-emerald-200 text-emerald-950 border border-emerald-300 font-bold text-xs">
             <Check size={16} />
             <span>{toastMessage}</span>
           </div>
         )}
 
-        <div className="bg-white border border-slate-200/90 p-4 sm:p-6 rounded-2xl space-y-6 shadow-xs">
+        <div className="bg-white border border-slate-200/90 p-4 sm:p-6 rounded-2xl space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-100">
             <div>
               <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -82,13 +82,13 @@ const AdminSettingsPage = () => {
               </h2>
               <p className="text-xs text-slate-500 mt-1">Manage portal member credentials, admin access rights, and change account roles instantly.</p>
             </div>
-            <span className="text-xs bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-full font-bold shadow-xs text-slate-700">
+            <span className="text-xs bg-slate-50 border border-slate-200 px-3.5 py-1.5 rounded-full font-bold text-slate-700">
               {users.length} Registered Users
             </span>
           </div>
 
           {/* Unified Users Table */}
-          <div className="bg-white border border-slate-200 rounded overflow-x-auto shadow-sm">
+          <div className="bg-white border border-slate-200 rounded overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs font-bold text-slate-700">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px]">
@@ -106,8 +106,8 @@ const AdminSettingsPage = () => {
                     <td className="p-4 font-bold text-slate-500">{user.phone}</td>
                     <td className="p-4">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold uppercase text-[9px] ${
-                        user.role === 'admin' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-blue-50 text-blue-600 border border-blue-100'
-                      }`}>
+ user.role === 'admin' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-blue-50 text-blue-600 border border-blue-100'
+ }`}>
                         {user.role === 'admin' ? 'Admin' : 'Customer'}
                       </span>
                     </td>
@@ -119,10 +119,10 @@ const AdminSettingsPage = () => {
                       <button
                         onClick={() => toggleUserRole(user.phone)}
                         className={`inline-flex items-center gap-1 px-3 py-1.5 rounded text-[10px] font-bold border transition ${
-                          user.role === 'admin' 
-                            ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
-                            : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
-                        }`}
+ user.role === 'admin' 
+ ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+ : 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+ }`}
                       >
                         {user.role === 'admin' ? (
                           <>

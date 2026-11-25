@@ -17,6 +17,9 @@ import Button from '../../../components/ui/Button';
 import Skeleton from '../../../components/ui/Skeleton';
 import EmptyState from '../../../components/ui/EmptyState';
 import Tabs from '../../../components/ui/Tabs';
+import Pagination from '../../../components/ui/Pagination';
+
+const PAGE_SIZE = 8;
 
 const CustomerProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -63,6 +66,7 @@ const CustomerProductsPage = () => {
     };
   }, []);
   const [filters, setFilters] = useState({ q: '', category: '', sort: 'newest' });
+  const [currentPage, setCurrentPage] = useState(1);
   const [viewProduct, setViewProduct] = useState(null);
   const [checkoutProduct, setCheckoutProduct] = useState(null);
   const [addedToCart, setAddedToCart] = useState(null);
@@ -181,7 +185,7 @@ const CustomerProductsPage = () => {
           description="Unable to load data from server. Please try again."
         />
       ) : (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="py-2">
         {/* Page header with kicker */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
           <div>
@@ -215,14 +219,15 @@ const CustomerProductsPage = () => {
 
         {/* Loading state / Grid state */}
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <Skeleton key={i} className="h-96 w-full" variant="rectangular" />
             ))}
           </div>
         ) : filtered.length ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((product) => {
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {filtered.slice((Math.min(currentPage, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))) - 1) * PAGE_SIZE, Math.min(currentPage, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))) * PAGE_SIZE).map((product) => {
               const activeOffers = (product.offers || []).filter(o => {
                 if (!o.showOffer) return false;
                 if (o.validUntil) {
@@ -258,11 +263,11 @@ const CustomerProductsPage = () => {
                 <div className="relative bg-neutral-50 overflow-hidden cursor-pointer" onClick={() => setViewProduct(product)}>
                   {/* Overlay Badges */}
                   <div className="absolute top-3 left-3 right-3 flex justify-between items-start z-10 pointer-events-none">
-                    <Badge variant="primary" className="shadow-sm">
+                    <Badge variant="primary" className="">
                       {product.category || 'Automation'}
                     </Badge>
                     {activeOffers.length > 0 && (
-                      <Badge variant="warning" className="shadow-sm flex items-center gap-1">
+                      <Badge variant="warning" className="flex items-center gap-1">
                         <Award size={12} /> {activeOffers.length} Offer{activeOffers.length > 1 ? 's' : ''}
                       </Badge>
                     )}
@@ -279,7 +284,7 @@ const CustomerProductsPage = () => {
                   
                   {/* Hover Quick View */}
                   <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <span className="bg-white/90 backdrop-blur-sm text-neutral-800 px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-md">
+                    <span className="bg-white/90 backdrop-blur-sm text-neutral-800 px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all">
                       <Eye size={16} /> Quick View
                     </span>
                   </div>
@@ -355,7 +360,14 @@ const CustomerProductsPage = () => {
               </Card>
               );
             })}
-          </div>
+            </div>
+            <Pagination
+              currentPage={Math.min(currentPage, Math.max(1, Math.ceil(filtered.length / PAGE_SIZE)))}
+              totalItems={filtered.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setCurrentPage}
+            />
+          </>
         ) : (
           <EmptyState 
             icon={Info}
@@ -371,8 +383,8 @@ const CustomerProductsPage = () => {
 
         {/* Alert Notification Toast (Top Center) */}
         {message && (
-          <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-6 py-3.5 rounded-2xl shadow-xl flex items-center gap-3 z-50 animate-in fade-in slide-in-from-top-4">
-            <Award size={20} className="text-blue-100" />
+          <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-emerald-200 text-emerald-950 border border-emerald-300 px-6 py-3.5 rounded-2xl flex items-center gap-3 z-50 animate-in fade-in slide-in-from-top-4">
+            <Award size={20} className="text-emerald-800" />
             <span className="font-semibold text-sm">{message}</span>
           </div>
         )}

@@ -16,7 +16,7 @@
   border-radius: 28px;
   padding: 40px;
   margin-bottom: 50px;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
 }
 
 /* Image Showcase */
@@ -175,7 +175,7 @@
   font-weight: 700;
   border-radius: 12px;
   text-decoration: none;
-  box-shadow: 0 6px 16px -2px rgba(0, 128, 255, 0.4);
+  box-shadow: none;
   transition: all 0.2s ease;
 }
 

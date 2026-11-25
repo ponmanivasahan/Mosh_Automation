@@ -15,7 +15,7 @@
   border-radius: 28px;
   padding: 48px;
   text-align: center;
-  box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
 }
 
 .not-found-code {

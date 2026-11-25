@@ -47,7 +47,7 @@
 .form-textarea-element:focus,
 .form-select-element:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 4px rgba(0, 128, 255, 0.12);
+  box-shadow: none;
 }
 
 .price-input-wrapper {
@@ -69,7 +69,7 @@
 }
 
 .asset-preview-card {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: none;
 }
 
 .preview-asset-frame {
@@ -85,7 +85,7 @@
 
 .btn-primary-action {
   flex: 1;
-  background: linear-gradient(135deg, var(--accent) 0%, #0080ff 100%);
+  background: #2563eb;
   color: #fff;
   border: none;
   padding: 14px 20px;
@@ -98,12 +98,12 @@
   justify-content: center;
   gap: 8px;
   transition: all 0.2s ease;
-  box-shadow: 0 8px 24px rgba(0, 128, 255, 0.2);
+  box-shadow: none;
 }
 
 .btn-primary-action:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 28px rgba(0, 128, 255, 0.35);
+  box-shadow: none;
 }
 
 .btn-secondary-action {
@@ -136,14 +136,14 @@
   border: 1px solid var(--edge);
   background: var(--surface);
   border-radius: 24px;
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
   transition: all 0.2s ease;
 }
 
 .product-catalog-card:hover {
   border-color: rgba(0, 128, 255, 0.25);
   transform: translateY(-2px);
-  box-shadow: 0 16px 36px rgba(0, 128, 255, 0.08);
+  box-shadow: none;
 }
 
 .card-image-wrapper {

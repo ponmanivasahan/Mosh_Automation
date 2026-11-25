@@ -1,0 +1,220 @@
+/* Simple Animated Floating AI Chat Icon & Compact Popup */
+.floating-chat-fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 55;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: #2563eb;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: chat-fab-float 3s ease-in-out infinite;
+}
+
+.floating-chat-fab:hover {
+  transform: scale(1.07);
+  box-shadow: none;
+}
+
+.floating-chat-fab.is-open {
+  animation: none;
+  background: #1d4ed8;
+  box-shadow: none;
+}
+
+.floating-chat-fab-icon {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-chat-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(37, 99, 235, 0.45);
+  animation: chat-fab-pulse 2.2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+  z-index: 1;
+}
+
+@keyframes chat-fab-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes chat-fab-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  75%, 100% {
+    transform: scale(1.48);
+    opacity: 0;
+  }
+}
+
+/* Compact Floating Chat Popup */
+.floating-chat-popup {
+  position: fixed;
+  right: 24px;
+  bottom: 92px;
+  z-index: 55;
+  width: min(420px, calc(100vw - 32px));
+  height: min(580px, calc(100vh - 130px));
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.2s ease, height 0.2s ease, border-radius 0.2s ease, inset 0.2s ease;
+  animation: chat-popup-in 0.2s ease-out;
+}
+
+.floating-chat-popup.is-maximized {
+  inset: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  border-radius: 0;
+  border: none;
+  z-index: 65;
+}
+
+@keyframes chat-popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.floating-chat-header {
+  padding: 0.85rem 1rem;
+  background: #ffffff;
+  color: #0f172a;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.floating-chat-title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.floating-chat-title-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.floating-chat-title h3 {
+  margin: 0;
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.floating-chat-title span {
+  font-size: 0.72rem;
+  color: #64748b;
+  display: block;
+}
+
+.floating-chat-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.floating-chat-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: #f1f5f9;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.floating-chat-icon-btn:hover {
+  background: #e2e8f0;
+}
+
+.floating-chat-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.floating-chat-body .chat-window {
+  padding: 0.9rem;
+}
+
+.floating-chat-body .chat-quick-grid {
+  grid-template-columns: 1fr;
+}
+
+.floating-chat-body .chat-bubble {
+  max-width: 86%;
+}
+
+.floating-chat-body .chat-input-container {
+  padding: 0.65rem 0.85rem 0.75rem;
+}
+
+.floating-chat-body .chat-input-hint {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .floating-chat-fab {
+    right: 16px;
+    bottom: 74px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .floating-chat-popup {
+    right: 12px;
+    left: 12px;
+    bottom: 136px;
+    width: auto;
+    height: min(520px, calc(100vh - 165px));
+  }
+}

@@ -185,7 +185,7 @@ const OfferManager = ({ offers, onChange }) => {
             isExpired = until < new Date();
           }
           return (
-            <div key={index} className={`p-4 rounded-xl border relative ${offer.showOffer ? 'bg-white border-blue-100 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-75'}`}>
+            <div key={index} className={`p-4 rounded-xl border relative ${offer.showOffer ? 'bg-white border-blue-100 ' : 'bg-slate-50 border-slate-200 opacity-75'}`}>
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center gap-2">
                   <h5 className="text-sm font-extrabold text-slate-800 uppercase tracking-wide">{offer.title}</h5>

@@ -54,10 +54,10 @@
   color: #fff;
 }
 
-.dash-stat-products .dash-stat-icon { background: linear-gradient(135deg, #0080ff, #3b82f6); }
-.dash-stat-cart     .dash-stat-icon { background: linear-gradient(135deg, #0284c7, #0ea5e9); }
-.dash-stat-rating   .dash-stat-icon { background: linear-gradient(135deg, #d97706, #f59e0b); }
-.dash-stat-revenue  .dash-stat-icon { background: linear-gradient(135deg, #059669, #10b981); }
+.dash-stat-products .dash-stat-icon { background: #2563eb; }
+.dash-stat-cart     .dash-stat-icon { background: #0284c7; }
+.dash-stat-rating   .dash-stat-icon { background: #f59e0b; }
+.dash-stat-revenue  .dash-stat-icon { background: #10b981; }
 
 .dash-stat-label {
   margin: 0;
@@ -188,7 +188,7 @@
   flex-direction: column;
   scroll-snap-align: start;
   border-radius: 22px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafb 100%);
+  background: #ffffff;
   border: 1px solid rgba(15, 23, 42, 0.06);
   overflow: hidden;
   transition: transform 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -210,7 +210,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: linear-gradient(135deg, #0080ff, #0284c7);
+  background: #0284c7;
   color: #fff;
   font-size: 12px;
   font-weight: 800;
@@ -223,7 +223,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(0, 128, 255, 0.04), rgba(14, 165, 233, 0.04));
+  background: #eff6ff;
   padding: 16px;
   overflow: hidden;
 }
@@ -324,7 +324,7 @@
   margin-top: auto;
   padding: 8px 14px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #0080ff, #0284c7);
+  background: #0284c7;
   color: #fff;
   font-size: 13px;
   font-weight: 700;
@@ -358,7 +358,7 @@
   width: 100%;
   max-width: 100%;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.02);
+  box-shadow: none;
 }
 
 .dash-chart-head {
@@ -385,11 +385,11 @@
 }
 
 .bar-icon {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: #2563eb;
 }
 
 .pie-icon {
-  background: linear-gradient(135deg, #0080ff, #38bdf8);
+  background: #2563eb;
 }
 
 /* ── Bar Chart SVG ── */

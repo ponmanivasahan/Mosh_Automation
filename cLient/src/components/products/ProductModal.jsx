@@ -84,12 +84,12 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
   const gallery = [product.image, product.image, product.image];
 
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+    <div className="fixed inset-0 !mt-0 z-[999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        className="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 shadow-2xl overflow-y-auto max-h-[92vh] border border-slate-100 flex flex-col space-y-5"
+        className="bg-white rounded-2xl max-w-4xl w-full p-4 sm:p-6 overflow-y-auto max-h-[92vh] border border-slate-100 flex flex-col space-y-5"
       >
         {/* Modal Header */}
         <div className="flex items-start justify-between border-b border-slate-100 pb-3">
@@ -118,8 +118,8 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
                   key={i}
                   onClick={() => setSelectedImage(img)}
                   className={`w-14 h-14 p-1 bg-white border rounded-xl flex items-center justify-center hover:border-blue-500 transition ${
-                    selectedImage === img ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'
-                  }`}
+ selectedImage === img ? 'border-blue-500 ring-2 ring-blue-100' : 'border-slate-200'
+ }`}
                 >
                   <img src={img} alt="thumb" className="max-h-full max-w-full object-contain" />
                 </button>
@@ -151,7 +151,7 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
                 {promoPrice ? (
                   <div className="flex flex-col items-start">
                     <span className="text-sm text-slate-400 line-through decoration-rose-500 decoration-2 font-bold mb-0.5">{formatCurrency(product.price)}</span>
-                    <strong className="text-3xl font-extrabold text-rose-600 drop-shadow-sm scale-105 origin-left transition-transform animate-pulse">{formatCurrency(promoPrice)}</strong>
+                    <strong className="text-3xl font-extrabold text-rose-600 drop- scale-105 origin-left transition-transform animate-pulse">{formatCurrency(promoPrice)}</strong>
                   </div>
                 ) : (
                   <strong className="text-2xl font-extrabold text-blue-600">{formatCurrency(product.price)}</strong>
@@ -162,7 +162,7 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
                   onAdd && onAdd(product);
                   onClose();
                 }}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all flex items-center gap-2"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-5 rounded-xl -blue-200 -blue-300 transition-all flex items-center gap-2"
               >
                 <ShoppingCart size={14} /> Add to Cart
               </button>
@@ -271,7 +271,7 @@ const ProductModal = ({ open, onClose, product, onAdd }) => {
                 </h4>
                 <div className="grid grid-cols-3 gap-3">
                   {relatedProducts.map(p => (
-                    <div key={p.id} className="bg-slate-50 border p-2.5 rounded-xl flex flex-col items-center text-center gap-1.5 hover:shadow transition">
+                    <div key={p.id} className="bg-slate-50 border p-2.5 rounded-xl flex flex-col items-center text-center gap-1.5 transition">
                       <img src={p.image} alt={p.name} className="h-10 object-contain" />
                       <span className="text-[10px] font-bold text-slate-800 truncate w-full">{p.name}</span>
                       <strong className="text-[10px] text-blue-600 font-bold">{formatCurrency(p.price)}</strong>
