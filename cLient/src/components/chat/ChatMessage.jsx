@@ -192,25 +192,7 @@ export default function ChatMessage({ message }) {
         )}
 
         {!isUser && (
-          <div className="chat-meta-footer">
-            <div className="chat-meta-stats">
-              {message.meta?.latency_ms ? (
-                <span className="chat-meta-pill" title="Response Latency">
-                  <Zap size={11} /> {message.meta.latency_ms} ms
-                </span>
-              ) : null}
-              {message.meta?.model ? (
-                <span className="chat-meta-pill" title="Active Model Engine">
-                  <Cpu size={11} /> {formatModelDisplayName(message.meta.model)}
-                </span>
-              ) : null}
-              {message.meta?.tokens ? (
-                <span className="chat-meta-pill" title="Token Output Count">
-                  <FileText size={11} /> {message.meta.tokens} tokens
-                </span>
-              ) : null}
-            </div>
-
+          <div className="chat-meta-footer justify-end">
             <button
               type="button"
               className="chat-copy-btn"

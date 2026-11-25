@@ -150,7 +150,15 @@ const CustomerDashboardPage = () => {
 
   /* Offer info using correct field names */
   const getOfferInfo = (product) => {
-    const activeOffers = (product.offers || []).filter((o) => o.showOffer);
+    const activeOffers = (product.offers || []).filter((o) => {
+      if (!o.showOffer) return false;
+      if (o.validUntil) {
+        const until = new Date(o.validUntil);
+        until.setHours(23, 59, 59, 999);
+        if (until < new Date()) return false;
+      }
+      return true;
+    });
     const offerCount = activeOffers.length;
     for (const offer of activeOffers) {
       if (offer.type === "Percentage Discount" && Number(offer.value) > 0) {

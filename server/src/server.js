@@ -9,7 +9,7 @@ try {
 }
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config();
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 const { initDB, pool } = require('./config/db');
 const { setCsrfCookie, csrfProtect, getAllowedOrigins } = require('./middleware/csrf');
