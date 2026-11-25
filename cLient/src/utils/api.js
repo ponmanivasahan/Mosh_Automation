@@ -21,11 +21,6 @@ const getApiUrl = () => {
   };
   
   // 3. Resolve API URL
-  // When deployed on Vercel with rewrites, use same-origin relative URL so cookies are first-party and never blocked by mobile browsers
-  if (isBrowser && isPageVercel) {
-    return '';
-  }
-
   // When developing locally with Vite dev proxy, use same-origin relative URL
   if (isBrowser && isPageLocal) {
     return '';
@@ -36,6 +31,14 @@ const getApiUrl = () => {
   }
   if (isPageIp) {
     return `http://${hostname}:5001`;
+  }
+
+  // On Vercel / custom domain, call Render backend directly so Cloudflare does not challenge Vercel's proxy IPs with 429
+  if (isBrowser && isPageVercel) {
+    if (envUrl && !isUrlLocal(envUrl)) {
+      return envUrl.replace(/\/+$/, '');
+    }
+    return 'https://mosh-automation.onrender.com';
   }
 
   // If explicitly configured, use it (sanitized for production)

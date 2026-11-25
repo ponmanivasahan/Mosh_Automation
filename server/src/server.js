@@ -7,7 +7,6 @@ try {
 } catch {
   helmet = null;
 }
-const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
@@ -110,51 +109,6 @@ app.use(cookieParser());
 
 // CSRF Cookie Issuer for GET/HEAD safe requests
 app.use(setCsrfCookie);
-
-// Rate Limiters
-const isLocalOrDev = (req) => {
-  if (process.env.NODE_ENV !== 'production') return true;
-  const ip = req.ip || req.connection?.remoteAddress || '';
-  return ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
-};
-
-const globalApiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5000,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: isLocalOrDev,
-  handler: (req, res, next, options) => {
-    res.status(options.statusCode).json(options.message);
-  },
-  message: {
-    success: false,
-    message: 'Too many requests from this client. Please try again after 15 minutes.'
-  }
-});
-
-const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true,
-  skip: isLocalOrDev,
-  handler: (req, res, next, options) => {
-    res.status(options.statusCode).json(options.message);
-  },
-  message: {
-    success: false,
-    message: 'Too many authentication attempts. Please try again after 15 minutes.'
-  }
-});
-
-// Apply rate limiting
-app.use('/api/', globalApiLimiter);
-app.use('/api/auth/send-otp', authRateLimiter);
-app.use('/api/auth/verify-otp', authRateLimiter);
-app.use('/api/auth/login', authRateLimiter);
-app.use('/api/auth/register', authRateLimiter);
 
 // CSRF Protection on state-mutating requests
 app.use('/api/', csrfProtect);
